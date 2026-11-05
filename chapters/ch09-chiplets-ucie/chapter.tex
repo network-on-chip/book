@@ -6,9 +6,9 @@
 \chapter{Multi-Chiplet Interconnects, 2.5D Systems \& UCIe}
 \label{chap:chiplets-ucie}
 
-\abstract*{As semiconductor manufacturing approaches atomic limits, the continuous growth of monolithic dies faces two fundamental barriers: the optical reticle limit ($\approx 858\,\mathrm{mm^2}$) and exponential yield degradation governed by Murphy-Seeds defect models ($Y \propto e^{-\sqrt{A \cdot D_0}}$). The multi-chiplet paradigm resolves these bottlenecks by disaggregating massive system-on-chip (SoC) architectures into smaller, functionally specialized dies (compute chiplets, I/O tiles, high-bandwidth memory stacks) integrated on silicon interposers, embedded bridges, or organic substrates. However, chiplet-based on-chip interconnects introduce heterogeneous die-to-die (D2D) packaging boundaries characterized by high interconnect parasitic latencies, restricted shoreline pinout densities, clock domain crossings (CDC), and complex inter-die routing deadlock conditions. This chapter presents a rigorous exploration of multi-chiplet network architectures. We establish packaging taxonomies spanning standard organic substrates, active interposers, and advanced 2.5D silicon bridges based on Chen et al. (IEEE TVLSI 2026) and Vivet et al. (IEEE JSSC 2021). We examine the Universal Chiplet Interconnect Express (UCIe) specification across its Physical, Die-to-Die Adapter, and Protocol layers. Finally, we formulate inter-chiplet flow control credit requirements and analyze the In/Outbound Swap backtracking deadlock recovery mechanism developed by Wang et al. (IEEE TCAD 2026), providing an executable cycle-accurate latency model and synthesizable Verilog D2D bridge implementation.}
+\abstract*{For over four decades, microchips grew more powerful by cramming billions of transistors onto a single continuous slice of silicon called a monolithic die. Today, that approach has hit a hard physical wall. As chips grow larger, they exceed the size of the camera lenses used to print them (the optical reticle limit of $\approx 858\,\mathrm{mm^2}$), and microscopic dust specks destroy huge numbers of chips during manufacturing, sending fabrication costs through the roof. The solution is the \textbf{multi-chiplet revolution}: instead of building one giant, fragile chip, engineers build smaller, specialized silicon tiles (chiplets) and snap them together like high-tech LEGO bricks on high-speed silicon bridges. This chapter explores how chiplets communicate. We explain the physical packaging technologies that connect them, walk step-by-step through the Universal Chiplet Interconnect Express (UCIe) standard, demystify why transmitters need buffer queues to avoid stalling (Little's law), and show how a clever traffic-cop algorithm called \emph{In/Outbound Swap} untangles multi-chiplet gridlock deadlocks, complete with real working Python models and synthesizable Verilog code.}
 
-\section{The Chiplet Revolution \& Modular Disaggregation}
+\section{The Chiplet Revolution: Breaking the Monolithic Barrier}
 \label{sec:chiplet-revolution}
 
 \begin{svgraybox}
@@ -18,22 +18,27 @@ Imagine you are baking a giant pizza the size of a dining table ($800\,\mathrm{m
 Now imagine instead baking four personal-sized pizzas ($200\,\mathrm{mm^2}$ each) and placing them side by side on a serving board. If a dust speck lands on one, you toss only that single small pizza and keep the other three! Your success rate jumps from $25\%$ to over $82\%$. This is why the semiconductor industry switched from giant monolithic chips to modular \textbf{chiplets}.
 \end{svgraybox}
 
-For over four decades, Moore's law progressed through monolithic integration, scaling transistor densities while preserving the entire system on a single monolithic silicon die. In cutting-edge sub-3\,nm nodes, monolithic scaling has encountered severe economic and physical barriers:
+The word \emph{monolithic} comes from the Greek words \emph{mono} (single) and \emph{lithos} (stone). In computer engineering, a monolithic chip is carved out of a single continuous crystal of silicon. For decades, following Moore's Law, engineers doubled transistor counts by shrinking transistor sizes on monolithic dies. However, in modern sub-3\,nm manufacturing nodes, this single-stone approach has run into three insurmountable walls:
 
 \begin{enumerate}
-    \item \textbf{The Reticle Limit}: Photolithographic exposure tools are physically bounded by optical reticle dimensions (typically $26\,\mathrm{mm} \times 33\,\mathrm{mm} \approx 858\,\mathrm{mm^2}$). Complex AI accelerators, high-end server processors, and graphics pipelines require die areas exceeding $1000\text{--}1500\,\mathrm{mm^2}$, making monolithic fabrication physically impossible without stitching techniques that drastically degrade throughput.
+    \item \textbf{The Optical Reticle Limit (The Camera Viewfinder)}: Chips are manufactured using photolithography machines, which shine ultraviolet light through a glass mask to project circuit patterns onto silicon. Just like a smartphone camera has a fixed rectangular viewfinder, the lithography machine has a maximum optical exposure area called the \textbf{reticle limit} (typically $26\,\mathrm{mm} \times 33\,\mathrm{mm} \approx 858\,\mathrm{mm^2}$). Modern AI processors (such as the NVIDIA Blackwell B200) require over $1000\text{--}1500\,\mathrm{mm^2}$ of silicon. They are simply too big to fit inside the machine's lens in a single shot!
     
-    \item \textbf{Defect Density and Yield Collapse}: Die yield $Y$ decreases exponentially with active silicon area $A$ according to the Seeds/Murphy yield model:
+    \item \textbf{Defect Density and Yield Collapse}: Silicon factories are among the cleanest rooms on Earth, but microscopic dust specks ($D_0$, measured in defects per square centimeter) still randomly fall onto wafers. If a dust speck strikes a critical wire, the entire die is dead. The percentage of functional surviving chips is called the \textbf{manufacturing yield} ($Y$). Under Murphy's classic defect model:
     \begin{equation}
-        Y = \left( \frac{1 - e^{-A \cdot D_0}}{A \cdot D_0} \right)^2 \quad \text{or} \quad Y = e^{-\sqrt{A \cdot D_0}}
+        Y = \left( \frac{1 - e^{-A \cdot D_0}}{A \cdot D_0} \right)^2 \quad \text{or approximately} \quad Y = e^{-\sqrt{A \cdot D_0}}
         \label{eq:chiplet-yield}
     \end{equation}
-    where $D_0$ is the defect density ($\mathrm{defects/cm^2}$). A single $800\,\mathrm{mm^2}$ monolithic die experiences yields below $20\text{--}30\%$, whereas four $200\,\mathrm{mm^2}$ chiplets achieve yields exceeding $80\%$, substantially reducing net silicon cost despite packaging overheads.
+    where $A$ is the active silicon area in $\mathrm{cm^2}$. Notice that area $A$ is in the exponent: as chip size grows, the chance of surviving drops \emph{exponentially}. For a defect density of $D_0 = 0.08\,\mathrm{defects/cm^2}$:
+    \begin{itemize}
+        \item A massive $800\,\mathrm{mm^2}$ die ($A = 8.0\,\mathrm{cm^2}$) achieves a yield of only $\approx 25\%$ (three out of every four chips are thrown away!).
+        \item Four small $200\,\mathrm{mm^2}$ chiplets ($A = 2.0\,\mathrm{cm^2}$) each achieve a yield of $\approx 82\%$.
+    \end{itemize}
+    Discarding fewer ruined chips saves hundreds of millions of dollars in factory costs.
     
-    \item \textbf{Process Node Specialization}: Not all SoC components scale equally with advanced lithography. Compute cores (CPUs, GPUs, systolic tensor arrays) benefit substantially from 3\,nm density and power scaling, whereas analog circuits, phase-locked loops (PLLs), high-voltage I/O pads, and PCIe/CXL physical interfaces scale poorly or experience severe layout penalties. Chiplet modularity allows each function to be fabricated in its economically optimal process node (e.g., 3\,nm compute cores coupled to a 14\,nm I/O die and 7\,nm memory controllers).
+    \item \textbf{The LEGO Principle (Process Node Specialization)}: Cutting-edge 3\,nm silicon manufacturing is astronomical in cost. High-speed compute cores (AI matrix multipliers and CPU arithmetic units) benefit tremendously from 3\,nm density. However, analog circuits, phase-locked loops (PLL clock generators), and external USB/PCIe memory controllers do not shrink well in 3\,nm. Building memory controllers in 3\,nm is like making car tires out of gold when rubber works better! Chiplets allow architects to build compute cores in 3\,nm, while building memory controllers in mature, inexpensive 14\,nm silicon, snapping them together like LEGO bricks.
 \end{enumerate}
 
-\section{2.5D Packaging Taxonomies \& Interposer Technologies}
+\section{2.5D Packaging Taxonomies: How Chiplets Connect}
 \label{sec:chiplet-packaging}
 
 \begin{svgraybox}
@@ -41,7 +46,7 @@ For over four decades, Moore's law progressed through monolithic integration, sc
 Connecting chiplets across a standard organic circuit board is like driving on a bumpy, slow dirt road: the metal traces are thick ($110\,\mu\mathrm{m}$ bump pitch) and consume $1.2\,\mathrm{pJ/bit}$ to push signals across centimeters of board. In contrast, an \textbf{advanced 2.5D silicon interposer} is like building a 16-lane high-speed glass bridge directly between two houses! Microscopic micro-bumps ($45\,\mu\mathrm{m}$) and ultra-short wires ($1.8\,\mathrm{mm}$) slash energy consumption to $0.33\,\mathrm{pJ/bit}$ while carrying over $4\times$ more data per second.
 \end{svgraybox}
 
-Integrating multiple chiplets into a coherent computing substrate relies on advanced packaging substrates. As categorized by Chen et al.~\cite{Chen2026} and illustrated in Fig.~\ref{fig:chen-chiplet-packaging}, multi-chiplet packaging spans four distinct integration regimes.
+Once you have separate chiplets, how do you wire them together? As categorized by Chen et al.~\cite{Chen2026} and illustrated in Fig.~\ref{fig:chen-chiplet-packaging}, the semiconductor industry uses four distinct packaging technologies:
 
 \begin{figure}[htbp]
 \centering
@@ -50,16 +55,14 @@ Integrating multiple chiplets into a coherent computing substrate relies on adva
 \label{fig:chen-chiplet-packaging}
 \end{figure}
 
-\subsection{Packaging Comparison \& Physical Trade-offs}
-
 \begin{enumerate}
-    \item \textbf{Standard Organic Substrate}: Chiplets are mounted directly onto a multi-layer printed circuit board (PCB) or organic laminate packaging substrate using standard flip-chip solder bumps (C4 bumps) with a pitch of $100\text{--}130\,\mu\mathrm{m}$. While low in cost, trace escape pitch constraints limit edge shoreline bandwidth density to $\approx 100\text{--}150\,\mathrm{Gbps/mm}$, and high trace capacitance results in energy dissipation of $1.0\text{--}1.5\,\mathrm{pJ/bit}$.
+    \item \textbf{Standard Organic Substrate}: Chiplets are glued onto a multi-layer fiberglass/epoxy printed circuit board. Connections use standard solder balls ($100\text{--}130\,\mu\mathrm{m}$ wide). This is the cheapest method, but wide wire spacing limits edge bandwidth to $\approx 150\,\mathrm{Gbps/mm}$, and high trace capacitance wastes energy ($1.0\text{--}1.5\,\mathrm{pJ/bit}$).
     
-    \item \textbf{Passive Silicon Interposer (2.5D, CoWoS-S)}: Chiplets are micro-bumped onto a passive silicon carrier wafer containing fine-pitch copper interconnect wiring ($0.4\text{--}0.8\,\mu\mathrm{m}$ minimum metal pitch) and through-silicon vias. Micro-bump pitches range from $25\text{--}55\,\mu\mathrm{m}$, enabling shoreline bandwidth densities exceeding $700\text{--}1300\,\mathrm{Gbps/mm}$ at ultra-low energy dissipation ($0.2\text{--}0.4\,\mathrm{pJ/bit}$). However, the interposer size itself faces reticle limit constraints, requiring multi-reticle lithography stitching.
+    \item \textbf{Passive Silicon Interposer (2.5D, e.g., TSMC CoWoS)}: Chiplets are flipped upside-down and mounted onto a thin, polished slice of silicon called an \textbf{interposer}. Because the interposer is made of pure silicon, copper wires can be printed microscopically thin ($0.5\,\mu\mathrm{m}$ wide) with microscopic solder micro-bumps ($25\text{--}55\,\mu\mathrm{m}$ pitch). This delivers massive bandwidth ($>700\,\mathrm{Gbps/mm}$) with very low energy dissipation ($0.2\text{--}0.4\,\mathrm{pJ/bit}$).
     
-    \item \textbf{Embedded Silicon Bridges (EMIB)}: Instead of a full-size monolithic interposer, small localized silicon bridges containing ultra-fine-pitch wires are embedded inside the organic package beneath adjacent chiplet edges. This avoids the cost of a full silicon interposer while providing local micro-bump interconnect density.
+    \item \textbf{Embedded Silicon Bridges (e.g., Intel EMIB)}: Instead of paying for a giant silicon floor underneath the entire package, architects carve small pockets in the organic board and drop tiny silicon bridges right under the seam where two chiplets touch.
     
-    \item \textbf{Active Silicon Interposers}: In active interposers, the carrier silicon is not passive; it incorporates active CMOS transistors, integrated routers, network switches, and voltage regulators.
+    \item \textbf{Active Silicon Interposers}: In passive interposers, the silicon base contains only passive copper wires. In an \textbf{active interposer}, the base die contains active transistors, voltage regulators, and its own network-on-chip router switches!
 \end{enumerate}
 
 \begin{figure}[htbp]
@@ -69,7 +72,7 @@ Integrating multiple chiplets into a coherent computing substrate relies on adva
 \label{fig:vivet-active-interposer}
 \end{figure}
 
-Fig.~\ref{fig:vivet-active-interposer} showcases the IntAct processor demonstrated by Vivet et al.~\cite{Vivet2021}. Six 16-core compute chiplets (each containing an $8 \times 2$ NoC tile array) are 3D-stacked via micro-bumps onto a large active interposer. The active interposer hosts a distributed $6 \times 4$ network-on-chip router fabric with asynchronous cross-die communication interfaces and on-chip DC-DC switched-capacitor voltage converters. This decouples compute-die routing from inter-chiplet global packet routing, achieving $3.0\,\mathrm{Tbps}$ cross-die bandwidth.
+Fig.~\ref{fig:vivet-active-interposer} illustrates the groundbreaking IntAct processor developed by Vivet et al.~\cite{Vivet2021}. Six 16-core compute chiplets (96 cores total) are mounted on an active silicon interposer. The base interposer houses a distributed $6 \times 4$ network-on-chip that routes packets between chiplets asynchronously, delivering $3.0\,\mathrm{Tbps}$ of total communication throughput.
 
 \section{The Universal Chiplet Interconnect Express (UCIe) Standard}
 \label{sec:ucie-standard}
@@ -79,54 +82,57 @@ Fig.~\ref{fig:vivet-active-interposer} showcases the IntAct processor demonstrat
 Can you plug an AMD compute chiplet into an Intel memory chiplet or an Apple graphics chiplet? Historically no, because each semiconductor company invented its own secret proprietary wires. The \textbf{Universal Chiplet Interconnect Express (UCIe)} standard acts as the universal ``USB-C'' standard for chiplets: an open industry rulebook that allows silicon tiles from any foundry in the world to connect and communicate seamlessly.
 \end{svgraybox}
 
-To prevent market fragmentation and proprietary interconnect lock-in, the open industry consortium established the \textbf{Universal Chiplet Interconnect Express (UCIe)} standard~\cite{UCIe2023}. UCIe provides a complete, standardized die-to-die interconnect stack partitioned into three hierarchical layers:
+To prevent a world where chiplets from different foundries cannot talk to one another, an open consortium of tech companies created the \textbf{UCIe standard}~\cite{UCIe2023}. UCIe organizes communication into three clear layers, exactly like sending a letter through the postal service:
 
 \begin{enumerate}
-    \item \textbf{Protocol Layer}: Maps native standard high-level protocols into structured Flits (Flow Control Units). UCIe natively supports PCIe 6.0/7.0 for standard I/O attach, CXL 2.0/3.0 (\texttt{CXL.io}, \texttt{CXL.cache}, \texttt{CXL.mem}) for coherent shared-memory pooling, and user-defined Raw Streaming protocols for custom low-overhead NoC flit tunneling.
+    \item \textbf{Protocol Layer (The Message)}: What language is the message written in? UCIe can carry standard PCIe 6.0/7.0 traffic (for peripherals), CXL 2.0/3.0 (for sharing memory across chiplets), or Raw Streaming NoC packets (for custom on-chip router flits).
     
-    \item \textbf{Die-to-Die (D2D) Adapter Layer}: Responsible for link state management, packet framing, cyclic redundancy check (CRC-16 or CRC-32) generation and checking, retry buffer management with link-level Go-Back-N or Selective Repeat retransmission, and flow control credit turnaround. It abstracts the physical signaling interface from the upper protocol stack.
+    \item \textbf{Die-to-Die (D2D) Adapter Layer (The Postal Envelope)}: Packages raw data into standardized Flits (Flow Control Units). It adds error-detecting checksums (CRC-16 or CRC-32) to catch corrupted bits, manages retry buffers to re-send lost data, and tracks return credits to ensure the receiver's mailbox never overflows.
     
-    \item \textbf{Physical Layer (PHY)}: Implements electrical drivers, receivers, clock forwarders, lane training, deskew logic, and sideband control channels. UCIe defines two primary physical packaging profiles:
-    \begin{itemize}
-        \item \emph{Standard Package (UCIe-S)}: Targeted at standard organic substrates, utilizing single-ended signaling at data rates of $4\text{--}32\,\mathrm{Gbps/lane}$ across bump pitches of $100\text{--}130\,\mu\mathrm{m}$, achieving trace channel lengths up to $25\,\mathrm{mm}$.
-        \item \emph{Advanced Package (UCIe-A)}: Targeted at silicon interposers, silicon bridges, and high-density fan-out substrates, utilizing micro-bump pitches of $25\text{--}55\,\mu\mathrm{m}$ with short channel lengths ($<2\text{--}3\,\mathrm{mm}$), achieving data rates up to $32\,\mathrm{Gbps/lane}$, shoreline bandwidth densities $>700\,\mathrm{Gbps/mm}$, and sub-$0.5\,\mathrm{pJ/bit}$ energy efficiency.
-    \end{itemize}
+    \item \textbf{Physical Layer (PHY, The Delivery Highway)}: The physical copper pins, transmitter drivers, receivers, and clock forwarding wires that blast bits across micro-bumps at up to $32\,\mathrm{Gbps}$ per lane.
 \end{enumerate}
 
-\section{Inter-Chiplet Latency, Bandwidth Density \& Credit Turnaround}
+\section{Inter-Chiplet Latency \& Credit Buffer Sizing}
 \label{sec:d2d-latency-credit}
 
-\subsection{Round-Trip Latency Decomposition}
+\subsection{Latency Decomposition: Where Does Time Go?}
 
-When a packet flit traverses a die-to-die chiplet boundary, it incurs latency contributions across multiple physical and protocol domains:
+When a packet travels from Chiplet A to Chiplet B, how long does the journey take? The total one-way transit time ($t_{\mathrm{D2D}}$) is the sum of several distinct steps:
 \begin{equation}
     t_{\mathrm{D2D}} = t_{\mathrm{CDC}} + t_{\mathrm{adapter}} + t_{\mathrm{PHY\_tx}} + t_{\mathrm{flight}} + t_{\mathrm{PHY\_rx}} + t_{\mathrm{deskew}} + t_{\mathrm{CDC}}
     \label{eq:d2d-latency}
 \end{equation}
-where:
 \begin{itemize}
-    \item $t_{\mathrm{CDC}}$ is the clock domain crossing synchronizer latency (typically 2 to 3 clock cycles of the receiving domain).
-    \item $t_{\mathrm{adapter}}$ is the D2D adapter framing, CRC computation, and header generation latency (1 to 2 cycles).
-    \item $t_{\mathrm{PHY\_tx}}$ and $t_{\mathrm{PHY\_rx}}$ denote serializer/deserializer and analog pad driving delays.
-    \item $t_{\mathrm{flight}} = L_{\mathrm{channel}} / v_{\mathrm{prop}}$ is the physical propagation flight time along the interposer trace ($v_{\mathrm{prop}} \approx 1.5 \times 10^8\,\mathrm{m/s}$ in $\mathrm{SiO_2}$, yielding $\approx 6.7\,\mathrm{ps/mm}$).
-    \item $t_{\mathrm{deskew}}$ represents the lane-to-lane phase alignment delay.
+    \item \textbf{Flight Time ($t_{\mathrm{flight}}$)}: Electricity moves along silicon traces at the speed of light in $\mathrm{SiO_2}$ ($v \approx 150\,\mathrm{mm/ns}$). Across a short $1.5\,\mathrm{mm}$ silicon bridge, electricity arrives in just $10\,\mathrm{picoseconds}$ ($0.01\,\mathrm{ns}$)—incredibly fast!
+    \item \textbf{Clock Crossing ($t_{\mathrm{CDC}}$)}: Chiplet A might run at $2.5\,\mathrm{GHz}$ while the interposer runs at $2.0\,\mathrm{GHz}$. Crossing between different clock ticks safely without scrambling data takes 2 to 3 clock cycles of synchronization.
+    \item \textbf{Adapter Framing ($t_{\mathrm{adapter}}$)}: Computing the CRC error-checking code and packaging the header takes 1 to 2 cycles.
 \end{itemize}
 
-\subsection{Credit Turnaround \& Buffer Sizing}
+\subsection{Little's Law: The Baseball Catching Problem}
 
-To maintain peak line-rate throughput without stalling the transmitting chiplet, credit-based flow control requires sufficient buffer depth at the receiver. The round-trip turnaround time ($\mathrm{RTT}_{\mathrm{credit}}$) for a credit token is:
+\begin{svgraybox}
+\textbf{High-School Intuition: Playing Catch with Baseballs} \\
+Imagine two friends playing catch across a football field. It takes 4 seconds for a thrown ball to fly across, and 4 seconds for your friend to throw a ball back. If you only own 1 baseball, you throw it, and then you have to stand with your hands in your pockets for 8 seconds waiting for the ball to return! 
+To keep throwing a ball every single second without ever stopping, how many balls do you need in your bucket? Exactly 8 balls!
+In computer networking, this is called \textbf{Little's Law}: you must have enough buffer space to hold all the data in flight during a complete round trip!
+\end{svgraybox}
+
+In credit-based flow control, the sender cannot transmit a flit unless it has an available credit token from the receiver. When the receiver consumes a flit, it sends the credit token back across the bridge. The total time for a flit to travel forward and its credit to return is the \textbf{Round-Trip Time} ($\mathrm{RTT}_{\mathrm{credit}}$):
 \begin{equation}
     \mathrm{RTT}_{\mathrm{credit}} = t_{\mathrm{forward}} + t_{\mathrm{rx\_process}} + t_{\mathrm{backward}} + t_{\mathrm{tx\_process}}
     \label{eq:credit-rtt}
 \end{equation}
-where $t_{\mathrm{forward}}$ is the forward flit latency, $t_{\mathrm{rx\_process}}$ is the receiver consumption and credit issue delay, $t_{\mathrm{backward}}$ is the reverse credit channel transmission delay, and $t_{\mathrm{tx\_process}}$ is the credit counter update time.
 
-The minimum receiver buffer depth $B_{\mathrm{min}}$ (in flits) required to guarantee stall-free streaming is strictly bounded by Little's law:
+By Little's Law, the minimum number of buffer slots ($B_{\mathrm{min}}$) the receiver must provide to prevent the transmitter from running out of credits and stalling is:
 \begin{equation}
-    B_{\mathrm{min}} \ge \left\lceil \frac{\mathrm{RTT}_{\mathrm{credit}}}{T_{\mathrm{flit}}} \right\rceil = \left\lceil \mathrm{RTT}_{\mathrm{credit}} \cdot f_{\mathrm{clk}} \right\rceil
+    B_{\mathrm{min}} \ge \lceil \mathrm{RTT}_{\mathrm{credit}} \cdot f_{\mathrm{clk}} \rceil
     \label{eq:credit-buffer}
 \end{equation}
-If $B < B_{\mathrm{min}}$, the transmitter exhausts its credit pool before receiving the return token, creating idle bubbled cycles on the high-bandwidth physical link.
+For example, if $\mathrm{RTT}_{\mathrm{credit}} = 8.5\,\mathrm{ns}$ and the clock frequency is $f_{\mathrm{clk}} = 2.0\,\mathrm{GHz}$ ($0.5\,\mathrm{ns}$ per cycle), the minimum buffer size is:
+\begin{equation}
+    B_{\mathrm{min}} = \lceil 8.5\,\mathrm{ns} \times 2.0\,\mathrm{GHz} \rceil = 17\,\mathrm{flits}
+\end{equation}
+If the buffer has fewer than 17 flits, the transmitter exhausts its credits and sits completely idle, wasting valuable line rate.
 
 \section{Deadlock in Multi-Chiplet Networks \& In/Outbound Swap Recovery}
 \label{sec:chiplet-deadlocks}
@@ -136,13 +142,11 @@ If $B < B_{\mathrm{min}}$, the transmitter exhausts its credit pool before recei
 Imagine four cars arrive at an intersection at the same time: Car 1 waits for Car 2, Car 2 waits for Car 3, Car 3 waits for Car 4, and Car 4 waits for Car 1. Nobody can move! That is a routing deadlock. The \textbf{In/Outbound Swap} mechanism acts like a smart traffic cop: after detecting cars waiting too long ($\tau_{\mathrm{stall}}$), the cop tells Car 1 to pull into a side driveway (a 2-flit escape register). Instantly, Cars 4, 3, and 2 drive through! Then Car 1 rejoins the road. The jam is cleared with zero dropped packets.
 \end{svgraybox}
 
-\subsection{The Inter-Chiplet Deadlock Anomaly}
+\subsection{Why Do Multi-Chiplet Networks Suffer Deadlocks?}
 
-In monolithic 2D NoCs, routing deadlocks are prevented using standard turn models (e.g., XY Dimension-Order Routing, West-First, Odd-Even) that maintain an acyclic Channel Dependency Graph (CDG)~\cite{DallyPrinciples}. 
+Inside a single chiplet, routing deadlocks are easily prevented using simple turn models like XY Dimension-Order Routing (DOR), which ensure packets never form closed loops in the Channel Dependency Graph (CDG)~\cite{DallyPrinciples}. 
 
-However, multi-chiplet systems are fundamentally \textbf{hierarchical networks}. Each individual chiplet typically runs an internal routing protocol (e.g., local 2D mesh DOR), while global traffic between chiplets is handled by bridge routers connected across D2D links. 
-
-As proved by Wang et al.~\cite{Wang2026}, composition of deadlock-free local networks does \emph{not} guarantee global deadlock-freedom. Cyclic buffer dependencies emerge across chiplet boundaries due to turn combination loops and mismatched D2D bridge queue capacities, as illustrated in Fig.~\ref{fig:wang-deadlock-subpath}.
+However, multi-chiplet systems connect multiple independent networks through die-to-die bridge routers. As discovered by Wang et al.~\cite{Wang2026} and shown in Fig.~\ref{fig:wang-deadlock-subpath}, even if every individual chiplet is $100\%$ deadlock-free on its own, sending packets across chiplet boundaries can accidentally form circular dependency loops spanning multiple dies!
 
 \begin{figure}[htbp]
 \centering
@@ -151,13 +155,13 @@ As proved by Wang et al.~\cite{Wang2026}, composition of deadlock-free local net
 \label{fig:wang-deadlock-subpath}
 \end{figure}
 
-\subsection{Deadlock Avoidance vs. Recovery}
+\subsection{Deadlock Avoidance vs. In/Outbound Swap Recovery}
 
-There are two primary paradigms to address multi-chiplet deadlocks:
+How can engineers eliminate these dangerous traffic jams?
 \begin{enumerate}
-    \item \textbf{Deadlock Avoidance via Dedicated Virtual Channels}: Dedicating separate virtual channels (VCs) for local intra-chiplet flits, inter-chiplet outbound flits, and inbound transit flits. While mathematically acyclic, this approach imposes severe buffer area overheads (doubling or tripling input FIFO queues at every bridge router) and degrades VC buffer utilization during non-congested execution.
+    \item \textbf{Deadlock Avoidance (The Expensive Way)}: Double or triple the number of Virtual Channel (VC) queues at every router, dedicating separate queues for local, outbound, and inbound packets. While this prevents cycles, it wastes enormous amounts of silicon area on empty buffer memory.
     
-    \item \textbf{Deadlock Recovery via Backtracking (In/Outbound Swap)}: Wang et al.~\cite{Wang2026} proposed the \textbf{In/Outbound Swap} mechanism. Instead of allocating costly redundant VCs, the network operates dynamically with minimal buffers. When a cyclic stall is detected at a bridge router boundary, stalled packets are systematically backtracked and swapped between inbound and outbound escape queues, untangling the dependency loop without dropping flits.
+    \item \textbf{In/Outbound Swap Recovery (The Smart Way)}: Wang et al.~\cite{Wang2026} proposed allowing the network to run with minimal, lightweight buffers. If a cyclic traffic jam occurs, the hardware automatically detects it and swaps stalled packets into a tiny escape register to untangle the knot!
 \end{enumerate}
 
 \begin{figure}[htbp]
@@ -167,30 +171,29 @@ There are two primary paradigms to address multi-chiplet deadlocks:
 \label{fig:wang-swap-flow}
 \end{figure}
 
-As depicted in Fig.~\ref{fig:wang-swap-flow}, the In/Outbound Swap architecture incorporates a threshold stall counter ($\tau_{\mathrm{stall}}$) at each D2D bridge interface. If a head flit remains blocked at the inter-chiplet output port for more than $\tau_{\mathrm{stall}}$ cycles while downstream credits remain zero, a potential deadlock cycle is flagged. The bridge controller triggers a bidirectional handshake across the D2D interface, rerouting the stalled head flit into a dedicated 2-flit swap escape register. This releases the upstream input port, enabling trailing flits from non-deadlocked flows to advance. Once the dependency cycle is broken, normal credit flow resumes.
+As shown in Fig.~\ref{fig:wang-swap-flow}, each D2D bridge router runs a small timeout counter ($\tau_{\mathrm{stall}}$). If a packet stays stuck at the front of a bridge queue for more than $\tau_{\mathrm{stall}}$ cycles while downstream credits remain zero, the hardware flags a potential deadlock. The bridge controller diverts the blocked packet into a 2-flit swap register. This immediately frees up the input queue, allowing trailing packets to drive through and breaking the circular deadlock loop!
 
-\section{Hardware Implementation: Chiplet D2D Bridge Controller}
+\section{Hardware Implementation: Synthesizable D2D Bridge}
 \label{sec:chiplet-verilog}
 
-Listing~\ref{lst:chiplet-bridge-verilog} shows the synthesizable Verilog implementation of an inter-chiplet bridge protocol controller with dual-clock asynchronous FIFO synchronization, credit-based flow control, CRC-8 error monitoring, and the In/Outbound Swap deadlock recovery mechanism.
+How do we build this in real silicon? In digital hardware design, circuits are described using Hardware Description Languages like Verilog. Listing~\ref{lst:chiplet-bridge-verilog} shows the synthesizable Verilog implementation of an inter-chiplet bridge controller complete with credit management, CRC-8 error verification, and the In/Outbound Swap deadlock recovery mechanism.
 
 \begin{lstlisting}[language=Verilog, caption={Synthesizable Multi-Chiplet D2D Bridge Protocol Controller with In/Outbound Swap Recovery (\texttt{chiplet\_bridge\_protocol.v})}, label={lst:chiplet-bridge-verilog}]
 module chiplet_bridge_protocol #(
-    parameter DATA_WIDTH     = 64,
-    parameter FIFO_DEPTH     = 16,
+    parameter DATA_WIDTH     = 64, // 64-bit flit width
+    parameter FIFO_DEPTH     = 16, // 16-flit input buffer
     parameter ADDR_WIDTH     = 4,
-    parameter STALL_TIMEOUT  = 64
+    parameter STALL_TIMEOUT  = 64  // Detect deadlock after 64 stall cycles
 )(
-    // Local Chiplet Clock & Reset
     input  wire                  local_clk,
     input  wire                  local_rst_n,
 
-    // Local Inbound NoC Interface
+    // Inbound packet from local on-chip router
     input  wire [DATA_WIDTH-1:0] tx_flit_data,
     input  wire                  tx_flit_valid,
     output wire                  tx_flit_ready,
 
-    // Local Outbound NoC Interface
+    // Outbound packet to local on-chip router
     output reg  [DATA_WIDTH-1:0] rx_flit_data,
     output reg                   rx_flit_valid,
     input  wire                  rx_flit_ready,
@@ -203,27 +206,25 @@ module chiplet_bridge_protocol #(
     input  wire [7:0]            d2d_rx_crc,
     output wire                  d2d_rx_credit,
 
-    // D2D Transmit Interface (Local Clock forward)
+    // D2D Transmit Interface (Forwarded Clock)
     output reg  [DATA_WIDTH-1:0] d2d_tx_data,
     output reg                   d2d_tx_valid,
     output reg  [7:0]            d2d_tx_crc,
     input  wire                  d2d_tx_credit,
 
-    // Deadlock Swap Recovery Signals
+    // Deadlock Swap Recovery Status
     output reg                   swap_active,
     output reg                   deadlock_detected
 );
 
-    // Credit Counter for Remote D2D Receiver
     reg [ADDR_WIDTH:0] d2d_tx_credits;
     wire has_tx_credit = (d2d_tx_credits > 0);
 
-    // Stall Timer for Deadlock Detection
     reg [15:0] stall_counter;
     reg [DATA_WIDTH-1:0] swap_buffer;
     reg swap_buffer_valid;
 
-    // CRC-8 Generation Function (x^8 + x^2 + x + 1)
+    // CRC-8 Checksum calculation: x^8 + x^2 + x + 1
     function [7:0] crc8_calc(input [DATA_WIDTH-1:0] data);
         integer b;
         reg [7:0] c;
@@ -239,7 +240,7 @@ module chiplet_bridge_protocol #(
         end
     endfunction
 
-    // Transmit & Stall Monitoring FSM
+    // Transmit & Deadlock Detection FSM
     always @(posedge local_clk or negedge local_rst_n) begin
         if (!local_rst_n) begin
             d2d_tx_data       <= {DATA_WIDTH{1'b0}};
@@ -252,20 +253,20 @@ module chiplet_bridge_protocol #(
             swap_buffer_valid <= 1'b0;
             swap_buffer       <= {DATA_WIDTH{1'b0}};
         end else begin
-            // Credit management
+            // Track return credits from remote chiplet
             if (d2d_tx_credit && !d2d_tx_valid)
                 d2d_tx_credits <= d2d_tx_credits + 1'b1;
             else if (!d2d_tx_credit && d2d_tx_valid && has_tx_credit)
                 d2d_tx_credits <= d2d_tx_credits - 1'b1;
 
-            // In/Outbound Swap Deadlock Recovery Trigger
+            // Stall Monitoring: Are we stuck waiting for credits?
             if (tx_flit_valid && !has_tx_credit) begin
                 stall_counter <= stall_counter + 1'b1;
                 if (stall_counter >= STALL_TIMEOUT) begin
+                    // Traffic jam detected! Trigger the swap cop:
                     deadlock_detected <= 1'b1;
                     swap_active       <= 1'b1;
-                    // Latch blocked flit into swap escape register
-                    swap_buffer       <= tx_flit_data;
+                    swap_buffer       <= tx_flit_data; // Divert to escape bay
                     swap_buffer_valid <= 1'b1;
                 end
             end else begin
@@ -273,7 +274,7 @@ module chiplet_bridge_protocol #(
                 deadlock_detected <= 1'b0;
             end
 
-            // Packet transmission
+            // Transmit packet across bridge
             if (has_tx_credit && (tx_flit_valid || swap_buffer_valid)) begin
                 if (swap_buffer_valid) begin
                     d2d_tx_data       <= swap_buffer;
@@ -294,7 +295,7 @@ module chiplet_bridge_protocol #(
 
     assign tx_flit_ready = has_tx_credit && !swap_buffer_valid;
 
-    // Receive Logic with CRC Checking
+    // Receive logic with CRC validation
     reg credit_return_pulse;
     assign d2d_rx_credit = credit_return_pulse;
 
@@ -307,7 +308,7 @@ module chiplet_bridge_protocol #(
             if (d2d_rx_valid && (crc8_calc(d2d_rx_data) == d2d_rx_crc)) begin
                 rx_flit_data        <= d2d_rx_data;
                 rx_flit_valid       <= 1'b1;
-                credit_return_pulse <= 1'b1; // Acknowledge credit return
+                credit_return_pulse <= 1'b1; // Send credit back!
             end else begin
                 rx_flit_valid       <= 1'b0;
                 credit_return_pulse <= 1'b0;
@@ -320,58 +321,63 @@ endmodule
 \section{Simulation Model \& Quantitative Evaluation}
 \label{sec:chiplet-sim-results}
 
-To evaluate D2D packaging trade-offs quantitatively, the accompanying Python model \texttt{ucie\_d2d\_latency\_model.py} analyzes latency, bandwidth, power, and credit requirements for standard organic packages versus advanced 2.5D silicon interposers. Table~\ref{tab:chiplet-pkg-eval} summarizes the comparative performance metrics.
+To compare standard circuit board packaging against advanced silicon interposers quantitatively, our Python simulation model \texttt{ucie\_d2d\_latency\_model.py} evaluates both technologies under identical clock speeds ($2.0\,\mathrm{GHz}$). Table~\ref{tab:chiplet-pkg-eval} presents the comparative results.
 
 \begin{table}[htbp]
 \centering
 \caption{Quantitative Packaging Comparison: Standard Organic vs. Advanced Silicon Interposer (UCIe)}
 \label{tab:chiplet-pkg-eval}
-\begin{tabular}{lcc}
+\begin{tabular}{lccl}
 \hline
-\textbf{Metric} & \textbf{Standard Organic} & \textbf{Advanced Silicon Interposer} \\
+\textbf{Metric} & \textbf{Standard Organic} & \textbf{Advanced Interposer} & \textbf{Why It Matters} \\
 \hline
-Bump / Pad Pitch & $110\,\mu\mathrm{m}$ & $\mathbf{45\,\mu\mathrm{m}}$ \\
-Trace Channel Length & $15.0\,\mathrm{mm}$ & $\mathbf{1.8\,\mathrm{mm}}$ \\
-Forward Propagation Delay & $100.0\,\mathrm{ps}$ & $\mathbf{12.0\,\mathrm{ps}}$ \\
-Clock Frequency & $2.0\,\mathrm{GHz}$ & $\mathbf{2.0\,\mathrm{GHz}}$ \\
-One-Way Latency ($t_{\mathrm{D2D}}$) & $4.25\,\mathrm{ns}$ ($8.5\,\mathrm{cycles}$) & $\mathbf{4.06\,\mathrm{ns}}$ ($8.1\,\mathrm{cycles}$) \\
-Credit Round-Trip Time ($\mathrm{RTT}_{\mathrm{credit}}$) & $8.50\,\mathrm{ns}$ ($17.0\,\mathrm{cycles}$) & $\mathbf{8.11\,\mathrm{ns}}$ ($16.2\,\mathrm{cycles}$) \\
-Minimum Buffer Depth ($B_{\mathrm{min}}$) & $17\,\mathrm{flits}$ & $\mathbf{17\,\mathrm{flits}}$ \\
-Total Raw Bandwidth & $0.51\,\mathrm{Tbps}$ ($64.0\,\mathrm{GB/s}$) & $\mathbf{2.05\,\mathrm{Tbps}}$ ($256.0\,\mathrm{GB/s}$) \\
-Shoreline Bandwidth Density & $145.5\,\mathrm{Gbps/mm}$ & $\mathbf{711.1\,\mathrm{Gbps/mm}}$ ($4.88\times$) \\
-Energy Efficiency & $1.200\,\mathrm{pJ/bit}$ & $\mathbf{0.330\,\mathrm{pJ/bit}}$ ($3.64\times\text{ lower}$) \\
-Total Interface Power & $614.4\,\mathrm{mW}$ & $\mathbf{675.8\,\mathrm{mW}}$ \\
-Protocol Framing Yield & $91.2\%$ & $\mathbf{97.7\%}$ \\
+Bump Pitch & $110\,\mu\mathrm{m}$ & $\mathbf{45\,\mu\mathrm{m}}$ & $2.44\times\text{ tighter pin spacing}$ \\
+Trace Length & $15.0\,\mathrm{mm}$ & $\mathbf{1.8\,\mathrm{mm}}$ & $8.3\times\text{ shorter wire distance}$ \\
+Wire Flight Time & $100.0\,\mathrm{ps}$ & $\mathbf{12.0\,\mathrm{ps}}$ & Electricity arrives $88\,\mathrm{ps}$ faster \\
+Clock Frequency & $2.0\,\mathrm{GHz}$ & $\mathbf{2.0\,\mathrm{GHz}}$ & Clock cycle time = $0.5\,\mathrm{ns}$ \\
+One-Way Latency & $4.25\,\mathrm{ns}$ ($8.5\,\mathrm{cycles}$) & $\mathbf{4.06\,\mathrm{ns}}$ ($8.1\,\mathrm{cycles}$) & Rapid packet response \\
+Credit Round-Trip & $8.50\,\mathrm{ns}$ ($17.0\,\mathrm{cycles}$) & $\mathbf{8.11\,\mathrm{ns}}$ ($16.2\,\mathrm{cycles}$) & Token turnaround speed \\
+Buffer Depth ($B_{\mathrm{min}}$) & $17\,\mathrm{flits}$ & $\mathbf{17\,\mathrm{flits}}$ & Little's law minimum queue \\
+Total Raw Bandwidth & $0.51\,\mathrm{Tbps}$ ($64\,\mathrm{GB/s}$) & $\mathbf{2.05\,\mathrm{Tbps}}$ ($256\,\mathrm{GB/s}$) & $\mathbf{4.02\times\text{ more data per second}}$ \\
+Shoreline Density & $145.5\,\mathrm{Gbps/mm}$ & $\mathbf{711.1\,\mathrm{Gbps/mm}}$ & $\mathbf{4.88\times\text{ more bits per mm of edge}}$ \\
+Energy Efficiency & $1.200\,\mathrm{pJ/bit}$ & $\mathbf{0.330\,\mathrm{pJ/bit}}$ & $\mathbf{3.64\times\text{ less battery / heat wasted}}$ \\
+Total Power & $614.4\,\mathrm{mW}$ & $\mathbf{675.8\,\mathrm{mW}}$ & $4\times$ data at equal power \\
 \hline
 \end{tabular}
 \end{table}
 
-The simulation highlights the decisive advantages of advanced silicon interposers. With a bump pitch of $45\,\mu\mathrm{m}$, the advanced interposer delivers $711.1\,\mathrm{Gbps/mm}$ linear shoreline bandwidth density—a $4.88\times$ improvement over standard organic laminate substrates. Crucially, its shorter trace length ($1.8\,\mathrm{mm}$ vs. $15.0\,\mathrm{mm}$) and reduced capacitive loading drive energy dissipation down to $0.33\,\mathrm{pJ/bit}$, enabling terabit-per-second die-to-die communication within strict power envelopes.
+The simulation highlights the decisive advantage of 2.5D silicon interposers: with a bump pitch of $45\,\mu\mathrm{m}$, the advanced interposer delivers $711.1\,\mathrm{Gbps/mm}$ linear shoreline bandwidth density—nearly **$5\times$ higher** than organic substrates. Crucially, its shorter trace length ($1.8\,\mathrm{mm}$ vs. $15.0\,\mathrm{mm}$) slashes energy dissipation down to $0.33\,\mathrm{pJ/bit}$, proving indispensable for modern AI accelerators.
 
-\section{Summary}
+\section{Summary: What You Learned}
 \label{sec:ch9_summary}
 
-This chapter explored the physical, architectural, and protocol foundations of multi-chiplet interconnects and 2.5D systems. By modularizing large monolithic dies into cost-effective chiplets, systems overcome optical reticle boundaries and defect density yield limitations. Advanced silicon interposers and embedded bridges provide shoreline bandwidth densities approaching $1\,\mathrm{Tbps/mm}$ at sub-$0.5\,\mathrm{pJ/bit}$ energy metrics. The UCIe specification formalizes physical, adapter, and protocol layering, ensuring robust interoperability. Finally, the In/Outbound Swap backtracking mechanism resolves inter-die routing deadlocks dynamically, circumventing expensive buffer overprovisioning.
+\begin{itemize}
+    \item \textbf{The Big Picture}: Making one giant chip is like baking a giant table-sized pizza: a single dust speck ruins the whole thing. Chiplets let us make smaller personal pizzas, lifting manufacturing yields from $25\%$ to $>80\%$.
+    \item \textbf{Packaging Matters}: Standard circuit boards are slow dirt roads ($1.2\,\mathrm{pJ/bit}$). Silicon interposers are 16-lane glass superhighways ($0.33\,\mathrm{pJ/bit}$).
+    \item \textbf{UCIe is the USB-C of Chiplets}: It provides an open standard so different companies can connect their chiplets together seamlessly.
+    \item \textbf{Little's Law Sizes Buffers}: Senders need enough buffer tokens to cover the round-trip flight time, just like having enough baseballs to play catch without stopping.
+    \item \textbf{Deadlock Can Be Solved Intelligently}: When cross-die traffic jams occur, the In/Outbound Swap acts as a traffic cop, pulling one packet aside into a temporary driveway to clear the jam without dropping data.
+\end{itemize}
 
 \section{Exercises and Review Questions}
 \label{sec:ch9_exercises}
 
 \begin{enumerate}
-    \item \textbf{Die Yield and Cost Economics}: Consider a computing system requiring $800\,\mathrm{mm^2}$ of total silicon area. Assume a wafer diameter of $300\,\mathrm{mm}$, defect density $D_0 = 0.08\,\mathrm{defects/cm^2}$, wafer cost $C_{\mathrm{wafer}} = \$12{,}000$, and packaging cost $C_{\mathrm{pkg}} = \$80$ for monolithic vs. $\$160$ for a 4-chiplet 2.5D interposer assembly.
+    \item \textbf{The Giant Pizza Yield Problem}: A computing system requires $800\,\mathrm{mm^2}$ of total silicon. Using Murphy's model $Y = ((1 - e^{-A \cdot D_0})/(A \cdot D_0))^2$ with defect density $D_0 = 0.08\,\mathrm{defects/cm^2}$:
     \begin{enumerate}
-        \item Using Murphy's model $Y = ((1 - e^{-A \cdot D_0})/(A \cdot D_0))^2$, calculate the yield of a monolithic $800\,\mathrm{mm^2}$ die ($A = 8.0\,\mathrm{cm^2}$).
+        \item Calculate the yield of a monolithic $800\,\mathrm{mm^2}$ die ($A = 8.0\,\mathrm{cm^2}$).
         \item Calculate the yield of four independent $200\,\mathrm{mm^2}$ chiplets ($A = 2.0\,\mathrm{cm^2}$).
-        \item Compute the net cost per good tested system for monolithic versus chiplet packaging.
+        \item Explain in plain English why smaller chiplets save money despite packaging costs.
     \end{enumerate}
 
-    \item \textbf{Credit Queue Sizing for D2D Interfaces}: A UCIe-Advanced die-to-die link operates at a core clock frequency of $2.5\,\mathrm{GHz}$ ($T_{\mathrm{clk}} = 0.4\,\mathrm{ns}$). The transmitter adapter has a framing delay of $1.2\,\mathrm{ns}$, the PHY driver delay is $0.8\,\mathrm{ns}$, the interposer flight time is $0.2\,\mathrm{ns}$, the receiver deskew delay is $0.6\,\mathrm{ns}$, and CDC synchronization consumes 2 receiving clock cycles. The reverse credit channel requires identical latency.
+    \item \textbf{Playing Catch (Buffer Sizing)}: A die-to-die bridge operates at a clock frequency of $2.5\,\mathrm{GHz}$ ($T_{\mathrm{clk}} = 0.4\,\mathrm{ns}$). The forward transit time is $3.2\,\mathrm{ns}$ and credit return time is $3.2\,\mathrm{ns}$.
     \begin{enumerate}
-        \item Calculate the total one-way forward latency $t_{\mathrm{forward}}$.
-        \item Calculate the total credit round-trip time $\mathrm{RTT}_{\mathrm{credit}}$.
-        \item Determine the minimum number of buffer flits ($B_{\mathrm{min}}$) required to prevent link idling.
+        \item Calculate the round-trip turnaround time $\mathrm{RTT}_{\mathrm{credit}}$.
+        \item By Little's law, determine the minimum buffer depth ($B_{\mathrm{min}}$) in flits to prevent link stalling.
+        \item What happens to link utilization if the designer only provides 8 flits of buffer?
     \end{enumerate}
 
-    \item \textbf{Deadlock Formation in Hierarchical Networks}: Prove why composing two deadlock-free 2D mesh networks using XY Dimension-Order Routing via a bidirectional inter-chiplet bridge link can produce a cyclic channel dependency if packets make turns between local and global channels.
+    \item \textbf{The Four-Way Traffic Jam}: Draw a 4-way intersection where four cars are stuck in a circular wait. Show how diverting one car into a side driveway breaks the deadlock loop.
 
-    \item \textbf{In/Outbound Swap Deadlock Recovery}: Explain how the In/Outbound Swap mechanism breaks the four Coffman deadlock conditions (mutual exclusion, hold and wait, no preemption, and circular wait). Which specific condition is violated when a blocked packet is diverted into the swap escape register?
+    \item \textbf{Energy Comparison}: Calculate the total energy in Joules needed to transmit $1\,\mathrm{Terabyte}$ ($8 \times 10^{12}\,\mathrm{bits}$) across standard organic packaging ($1.20\,\mathrm{pJ/bit}$) versus an advanced silicon interposer ($0.33\,\mathrm{pJ/bit}$).
 \end{enumerate}
