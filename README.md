@@ -32,7 +32,7 @@ For the full detailed curriculum and enhancement milestones, see the [Master Pla
   - **[Chapter 4: Direct, Indirect & High-Radix Interconnect Topologies](chapters/ch04-topologies-and-metrics/index.md)**
   - **[Chapter 5: Deadlock Theory, Turn Models & Adaptive Routing](chapters/ch05-routing-deadlock-theory/index.md)**
 - **Part III: Physical Constraints: Power, Thermal & Reliability**
-  - **Chapter 6**: Low-Power Architectures & Dark Silicon Dynamics
+  - **[Chapter 6: Low-Power Architectures & Dark Silicon Dynamics](chapters/ch06-low-power-dark-silicon/index.md)**
   - **Chapter 7**: Thermal Modeling, Hotspots & Fault-Tolerant Resilience
 - **Part IV: Advanced Packaging, 3D NoC & Chiplets**
   - **Chapter 8**: Three-Dimensional Networks-on-Chip (3D-NoC) & TSVs
