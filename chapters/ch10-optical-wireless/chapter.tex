@@ -169,12 +169,12 @@ While optical waveguides excel at high-speed point-to-point lightpaths, **Wirele
 
 As formulated by Shahmoradi et al.~\cite{Shahmoradi2026} and illustrated in Fig.~\ref{fig:shahmoradi-wnoc-arch}, an on-chip wireless link consists of three parts:
 \begin{enumerate}
-    \item \textbf{Transmitter (TX)}: Turns digital 1s and 0s into high-frequency radio pulses. Most WNoCs use **On-Off Keying (OOK)** modulation: a binary 1 turns the radio carrier wave ON, while a binary 0 turns it OFF. This is simple, robust, and consumes very little power.
+    \item \textbf{Transmitter (TX)}: Turns digital 1s and 0s into high-frequency radio pulses. Most WNoCs use \textbf{On-Off Keying (OOK)} modulation: a binary 1 turns the radio carrier wave ON, while a binary 0 turns it OFF. This is simple, robust, and consumes very little power.
     \item \textbf{On-Chip Antenna}: Microscopic metal strips (under $1\,\mathrm{mm}$ long) printed on top metal layers radiate millimeter-wave signals ($60\,\mathrm{GHz}$) through the chip's insulating layers.
     \item \textbf{Receiver (RX)}: An amplifier and an envelope detector that sense the incoming radio wave and convert it back into digital bits.
 \end{enumerate}
 
-\subsection{Finding the Sweet Spot: Why 60\,GHz?}
+\subsection{Finding the Sweet Spot: Why 60~GHz?}
 
 \begin{figure}[htbp]
 \centering
@@ -278,18 +278,18 @@ The Python model \texttt{onoc\_optical\_loss\_sim.py} simulates end-to-end optic
 \centering
 \caption{Comparative Evaluation: Crossing Switching Elements (CSE) vs. Parallel Switching Elements (PSE) in an $8 \times 8$ ONoC}
 \label{tab:onoc-results}
-\begin{tabular}{lccl}
-\hline
-\textbf{Metric} & \textbf{CSE Architecture} & \textbf{PSE Architecture (Kao et al.)} & \textbf{Why It Matters} \\
-\hline
-Waveguide Crossings & $62$ & $\mathbf{24}$ & $\mathbf{-61.3\%}$ fewer bumps in the road \\
-Active MRR Count & $192$ & $\mathbf{112}$ & $\mathbf{-41.7\%}$ fewer optical tuning forks \\
-Worst-Case Insertion Loss & $11.38\,\mathrm{dB}$ & $\mathbf{6.38\,\mathrm{dB}}$ & $\mathbf{-5.00\,\mathrm{dB}}$ brighter signal \\
+\begin{tabular}{p{3.2cm}p{2.2cm}p{2.6cm}p{3.4cm}}
+\hline\noalign{\smallskip}
+Metric & CSE Baseline & PSE (Kao et al.) & Key Architectural Impact \\
+\noalign{\smallskip}\svhline\noalign{\smallskip}
+Waveguide Crossings & $62$ & $\mathbf{24}$ & $\mathbf{-61.3\%}$ fewer optical intersections \\
+Active MRR Count & $192$ & $\mathbf{112}$ & $\mathbf{-41.7\%}$ fewer tuning resonators \\
+Worst-Case Insertion Loss & $11.38\,\mathrm{dB}$ & $\mathbf{6.38\,\mathrm{dB}}$ & $\mathbf{-5.00\,\mathrm{dB}}$ optical signal boost \\
 Required Optical Laser Power & $0.27\,\mathrm{mW}$ & $\mathbf{0.09\,\mathrm{mW}}$ & $\mathbf{3.0\times}$ lower laser power \\
-Laser Electrical Wall Power & $1.37\,\mathrm{mW}$ & $\mathbf{0.43\,\mathrm{mW}}$ & Sub-milliwatt source \\
-Thermal Tuning Power ($15^\circ\mathrm{C}$ spread) & $5184.0\,\mathrm{mW}$ & $\mathbf{3024.0\,\mathrm{mW}}$ & $\mathbf{-2.16\,\mathrm{W}}$ saved in heat \\
-Total Subsystem Power & $5185.4\,\mathrm{mW}$ & $\mathbf{3024.4\,\mathrm{mW}}$ & $\mathbf{-41.7\%}$ total energy savings \\
-\hline
+Laser Electrical Wall Power & $1.37\,\mathrm{mW}$ & $\mathbf{0.43\,\mathrm{mW}}$ & Sub-milliwatt continuous source \\
+Thermal Tuning Power ($15^\circ\mathrm{C}$) & $5184.0\,\mathrm{mW}$ & $\mathbf{3024.0\,\mathrm{mW}}$ & $\mathbf{-2.16\,\mathrm{W}}$ lower heater dissipation \\
+Total Subsystem Power & $5185.4\,\mathrm{mW}$ & $\mathbf{3024.4\,\mathrm{mW}}$ & $\mathbf{-41.7\%}$ overall energy reduction \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
 \end{tabular}
 \end{table}
 

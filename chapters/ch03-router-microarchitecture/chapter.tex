@@ -51,6 +51,23 @@ Because per-hop pipeline latency compounds linearly with network diameter ($T_{n
 \subsection{Buffer Reservation Scheduling: BuffeRS (TCAD 2026)}
 As formulated by Liu et al.~\cite{Liu2026}, \textbf{BuffeRS} introduces a coordinated time-division buffer reservation protocol that reserves destination buffer slots in advance across router groups, providing deterministic contention-free bypass paths across both monolithic dies and 2.5D multi-chiplet packaging boundaries.
 
+\begin{table}[htbp]
+\caption{Quantitative Comparison of High-Performance Router Microarchitectures and Pipeline Compression Paradigms}
+\label{tab:router_microarch_comparison}
+\begin{tabular}{p{2.6cm}p{1.8cm}p{2.2cm}p{2.6cm}p{2.4cm}}
+\hline\noalign{\smallskip}
+Architecture & Pipeline Stages & Allocation Scheme & Clocking / Timing Strategy & Key Silicon Trade-Off \\
+\noalign{\smallskip}\svhline\noalign{\smallskip}
+Canonical VC~\cite{Peh2001} & 4--5 cycles & Separable VA + SA & Fully Synchronous & Baseline area; multi-cycle hop delay \\
+Lookahead Routing & 3 cycles & Lookahead RC + SA & Fully Synchronous & Strips RC stage; slight header overhead \\
+Speculative SA~\cite{Peh2001} & 2 cycles & Parallel speculative VA/SA & Fully Synchronous & Speculation stalls under high load \\
+SMART / SHARP~\cite{Peh2001} & 1--2 cycles & Priority bypass muxes & Multi-hop async bypass & Bounded by $HPC_{max}$ wire RC budget \\
+HyPA Router~\cite{Saranya2026} & 0.8~ns / hop & Handshake pipeline & GALS Asynchronous domino & 62\% lower power; no global clock tree \\
+BuffeRS~\cite{Liu2026} & 1 cycle & Buffer reservation slots & Time-division coordinated & Zero contention bypass; token overhead \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+\end{tabular}
+\end{table}
+
 \section{Asynchronous Router Architectures: HyPA (TVLSI 2026)}
 \label{sec:ch3_asynchronous}
 
@@ -96,7 +113,7 @@ At 1.0~GHz ($T_{clk} = 1.0$~ns), $HPC_{max}$ is typically 3 to 5 hops before req
 
 Crossbar allocation resolves contention when multiple input ports simultaneously request the same output port, formalized as the Bipartite Maximum Matching Problem.
 
-\subsection{The Matrix Arbiter: Strict $O(1)$ Hardware LRU}
+\subsection{The Matrix Arbiter: Strict \texorpdfstring{$O(1)$}{O(1)} Hardware LRU}
 \label{subsec:ch3_matrix_arbiter}
 
 The \textbf{Matrix Arbiter} maintains an $N \times N$ triangular binary priority matrix $M$:
