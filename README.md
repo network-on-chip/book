@@ -25,7 +25,7 @@ This textbook bridges the gap between classical computer architecture theory and
 For the full detailed curriculum and enhancement milestones, see the [Master Plan](PLAN.md).
 
 - **Part I: Foundations & Router Microarchitecture**
-  - **Chapter 1**: The Multi-Core Communication Crisis & Interconnect Physics
+  - **[Chapter 1: The Multi-Core Communication Crisis & Interconnect Physics](chapters/ch01-interconnect-crisis/index.md)**
   - **Chapter 2**: Switching Techniques, Flow Control & Buffer Management
   - **Chapter 3**: High-Performance Router Microarchitecture & Arbitration
 - **Part II: Topologies, Routing & Deadlock Freedom**
