@@ -44,3 +44,148 @@
     \item[Question 3.3] \textbf{Answer: B}.
     Updating round-robin pointers in later iterations would cause output grant arbiters to synchronize into identical priority positions when traffic is heavy. Restricting pointer updates to the first iteration preserves pointer diversity (entropy), preventing cyclic grant lockouts and achieving 100\% throughput under uniform traffic.
 \end{description}
+
+\section*{Chapter 4: Direct, Indirect \& High-Radix Interconnect Topologies}
+
+\begin{description}
+    \item[Bisection Bandwidth Bound] Under uniform random traffic, destinations are chosen independently and uniformly with probability $1/N$. Exactly half ($N/2$) of the destinations lie across any bisection cut that partitions the $N$ nodes into two equal halves. Thus, exactly half ($50\%$) of all injected packets must cross the bisection. Each node injects at rate $\Theta$, yielding $(N/2)\Theta$ packets per half; half cross the cut: $T_{\mathrm{cut}} = \frac{N \Theta}{4}$. Because total bidirectional channel capacity across the cut is $B_C$, stability requires $\frac{N \Theta}{4} \le \frac{B_C}{2}$, which proves the fundamental upper bound $\Theta \le \frac{2 B_C}{N}$.
+
+    \item[Folded Torus Delay] In a standard $8 \times 8$ torus, neighbor links have length $L_0 = 1.2\,\mathrm{mm}$, while the wrap-around link spans $(k-1) L_0 = 7 \times 1.2\,\mathrm{mm} = 8.4\,\mathrm{mm}$. Under the Elmore quadratic delay model ($\tau \propto L^2$), the wrap-around delay is $(8.4/1.2)^2 = 7^2 = 49\times$ larger than neighbor links. In a folded torus, interleaved placement ($0, 7, 1, 6, 2, 5, 3, 4$) equalizes all link lengths to $2 L_0 = 2.4\,\mathrm{mm}$. The longest link delay is $(2.4/1.2)^2 = 4\times$, delivering a $12.25\times$ delay reduction ($49/4$) and eliminating timing violations.
+
+    \item[Clos Non-Blocking Sizing] For a 3-stage Clos network $C(n, m, r)$ with $N = 64$ and $n = 8$ (yielding $r = N/n = 8$ input switches):
+    \begin{itemize}
+        \item Strictly non-blocking: by Clos's theorem (1953), $m \ge 2n - 1 = 2(8) - 1 = 15$ middle switches.
+        \item Rearrangeably non-blocking: by the Slepian-Duguid theorem, $m \ge n = 8$ middle switches.
+    \end{itemize}
+
+    \item[High-Radix Trade-Offs] In low-radix 2D meshes ($k = 4$), the average hop count scales as $O(\sqrt{N})$. Every intermediate router hop expends dynamic energy in FIFO buffer writes/reads, crossbar traversal, and link charging. In a high-radix Dragonfly or Flattened Butterfly network ($k \ge 32$), the network diameter is compressed to $D \le 3$. Even though each individual router crossbar has higher radix, packet energy is dominated by hop count: traversing 2 high-radix routers consumes far less total silicon energy than traversing 12--16 intermediate low-radix routers.
+\end{description}
+
+\section*{Chapter 5: Deadlock Theory, Turn Models \& Adaptive Routing}
+
+\begin{description}
+    \item[CDG Construction] A $2 \times 2$ mesh contains 8 directed channels: $\{c_{01}, c_{10}, c_{02}, c_{20}, c_{13}, c_{31}, c_{23}, c_{32}\}$. Minimal fully adaptive routing permits clockwise turns ($c_{01} \to c_{13} \to c_{32} \to c_{20} \to c_{01}$) and counter-clockwise turns ($c_{02} \to c_{23} \to c_{31} \to c_{10} \to c_{02}$), generating directed cycles in the Channel Dependency Graph (CDG). West-First routing prohibits all turns ending in the West direction ($N \to W$ and $S \to W$). This breaks both circular wait cycles, transforming the CDG into a Directed Acyclic Graph (DAG) and guaranteeing deadlock freedom.
+
+    \item[Duato Theorem Dynamics] Duato's theorem mandates that the escape subnetwork $R_1$ ($VC_0$) forms an acyclic connected sub-graph. If flits could freely transition from the escape subnetwork $VC_0$ back into adaptive channels $VC_1$, an adaptive cycle could propagate back into $VC_0$, creating an indirect circular wait ($VC_0 \to VC_1 \to VC_1 \to VC_0$). Prohibiting transitions from $VC_0$ back to $VC_1$ ensures that $VC_0$ acts as a guaranteed drain sink for any congested packet.
+
+    \item[Protocol Deadlock Scenario] In a MESI directory protocol, a core injects a Read Request ($Req$). The home directory core must issue Invalidation Requests ($Inv$) to multiple sharer cores and collect Invalidation Acks ($Ack$) before injecting the Data Response ($Resp$). If $Req$ and $Resp$ share the same physical router buffers, heavy $Req$ traffic fills all input buffers. The directory cannot send $Resp$ because buffers are saturated; cores cannot accept new $Req$ because their transaction queues are awaiting $Resp$. Although XY routing prevents physical routing deadlocks, circular wait develops across message classes ($Req \to Inv \to Ack \to Resp$). Dedicating separate Virtual Networks (VNETs) to each class breaks this protocol deadlock.
+\end{description}
+
+\section*{Chapter 6: Low-Power Architectures \& Dark Silicon Management}
+
+\begin{description}
+    \item[Breakeven Time Calculation]
+    \begin{itemize}
+        \item Re-activation energy overhead: $E_{\mathrm{overhead}} = C_{\mathrm{virtual}} \cdot V_{dd}^2 = 3.2\,\mathrm{pF} \times (0.85\,\mathrm{V})^2 = 2.312\,\mathrm{pJ}$.
+        \item Static leakage power: $P_{\mathrm{leak}} = V_{dd} \cdot I_{\mathrm{leak}} = 0.85\,\mathrm{V} \times 8.5\,\mathrm{mA} = 7.225\,\mathrm{mW}$.
+        \item Breakeven time: $\tau_{\mathrm{breakeven}} = E_{\mathrm{overhead}} / P_{\mathrm{leak}} = \frac{2.312\,\mathrm{pJ}}{7.225\,\mathrm{mW}} = 0.320\,\mathrm{ns}$.
+        \item At $1.5\,\mathrm{GHz}$ ($T_{\mathrm{clk}} = 0.667\,\mathrm{ns}$), $\tau / T_{\mathrm{clk}} = 0.320 / 0.667 \approx 0.48$ cycles. Sleeping for just **1 idle clock cycle** saves net energy.
+    \end{itemize}
+
+    \item[DVFS Power Scaling] Dynamic power scales as $P_{\mathrm{dyn}} \propto V_{dd}^2 \cdot f$.
+    Baseline: $P_1 \propto 1.0^2 \times 1.5 = 1.50$.
+    Scaled: $P_2 \propto 0.75^2 \times 1.0 = 0.5625 \times 1.0 = 0.5625$.
+    Percentage reduction: $\frac{1.50 - 0.5625}{1.50} = \mathbf{62.5\%}$ dynamic power reduction.
+
+    \item[Lookahead Wakeup Hazards] If a flit enters a buffer whose virtual rail has only charged to $50\%$ ($0.425\,\mathrm{V}$), CMOS gate propagation delays surge exponentially as $(V_{gs} - V_{th}) \to 0$. Transistors enter the near-threshold regime, causing severe setup-time violations, metastable latch states, and corrupted flit payloads in SRAM cells and crossbar muxes.
+\end{description}
+
+\section*{Chapter 7: Thermal Modeling, Hotspots \& Fault Tolerance}
+
+\begin{description}
+    \item[Thermal Time Constant]
+    \begin{itemize}
+        \item $\tau_{\mathrm{th}} = R_v \cdot C_{\mathrm{th}} = 15.0\,\mathrm{K/W} \times 3.6 \times 10^{-3}\,\mathrm{J/K} = 54.0\,\mathrm{ms}$.
+        \item At $2.5\,\mathrm{GHz}$ ($T_{\mathrm{clk}} = 0.4\,\mathrm{ns}$), the number of clock cycles is $N_{\mathrm{cyc}} = \frac{54.0 \times 10^{-3}}{0.4 \times 10^{-9}} = 135 \times 10^6$ cycles.
+        \item Physical explanation: silicon and copper bulk materials possess large thermal heat capacities, making thermal diffusion 5 orders of magnitude slower than microarchitectural packet bursts ($10^2$--$10^3$ cycles). Reactive throttling only engages long after hotspot temperature limits have been exceeded.
+    \end{itemize}
+
+    \item[Electromigration \& Black's Equation]
+    \begin{itemize}
+        \item $\frac{E_a}{k_B} = \frac{0.90 \times 1.6022 \times 10^{-19}}{1.3806 \times 10^{-23}} \approx 10,443\,\mathrm{K}$.
+        \item $\frac{1}{T_2} - \frac{1}{T_1} = \frac{1}{358.15} - \frac{1}{333.15} = -0.0002097\,\mathrm{K^{-1}}$.
+        \item $\frac{MTTF(T_2)}{MTTF(T_1)} = \exp(10,443 \times -0.0002097) = e^{-2.190} = 0.1119$ ($\mathbf{11.2\%}$).
+        \item Percentage reduction: $100\% - 11.2\% = \mathbf{88.8\%}$ reduction in interconnect lifetime from a $25^\circ\mathrm{C}$ temperature rise.
+    \end{itemize}
+
+    \item[Non-Gaussian Sensor Filtering] PDN inductive switching ($L \cdot di/dt$) produces heavy-tailed, non-Gaussian impulse noise ($>5^\circ\mathrm{C}$ instant errors). Standard Kalman filters assume Gaussian white noise and over-react to outliers due to quadratic penalty functions. The Gaussian-Sum Filter (GSF) uses Huber M-estimation to threshold measurement residuals, treating impulses as outliers and preventing unnecessary thermal throttling.
+
+    \item[ZoneDefense Deadlock Freedom] Concave fault boundaries allow packets to turn into dead-end coordinates, creating circular turn cycles with regular traffic. By aggregating irregular faults into convex rectangular blocks, boundary turns around the perimeter strictly adhere to turn model rules (e.g., West-First or Negative-First), ensuring the perimeter routing graph is cycle-free.
+\end{description}
+
+\section*{Chapter 8: Three-Dimensional NoC (3D-NoC) \& TSVs}
+
+\begin{description}
+    \item[TSV Elmore Delay vs. Planar Wire]
+    \begin{itemize}
+        \item $\tau_{\mathrm{tsv}} = R_{\mathrm{driver}} C_{\mathrm{tsv}} + R_{\mathrm{tsv}} C_{\mathrm{tsv}}/2 = 400\,\Omega \times 120.1\,\mathrm{fF} + 0.0541\,\Omega \times 60.05\,\mathrm{fF} \approx \mathbf{48.04\,\mathrm{ps}}$.
+        \item $\tau_{\mathrm{planar}} = R_{\mathrm{driver}} C_{\mathrm{wire}} + R_{\mathrm{wire}} C_{\mathrm{wire}}/2 = 400 \times 270\,\mathrm{fF} + 120 \times 135\,\mathrm{fF} = \mathbf{124.2\,\mathrm{ps}}$.
+        \item Vertical communication speedup: $\frac{124.2\,\mathrm{ps}}{48.04\,\mathrm{ps}} = \mathbf{2.59\times}$ faster than planar routing.
+    \end{itemize}
+
+    \item[3D-IC Thermal Stacking Calculation]
+    \begin{itemize}
+        \item $T_0 = T_{\mathrm{amb}} + P_{\mathrm{total}} \cdot R_{\mathrm{hs}} = 40.0 + 75 \times 0.40 = \mathbf{70.0^\circ\mathrm{C}}$.
+        \item $T_1 = T_0 + (P_1 + P_2) \cdot R_{\mathrm{inter}} = 70.0 + 50 \times 0.35 = \mathbf{87.5^\circ\mathrm{C}}$.
+        \item $T_2 = T_1 + P_2 \cdot R_{\mathrm{inter}} = 87.5 + 25 \times 0.35 = \mathbf{96.25^\circ\mathrm{C}}$.
+        \item The top tier is $T_2 - T_0 = \mathbf{26.25^\circ\mathrm{C}}$ hotter because heat generated in Tier 2 must traverse multiple low-conductivity dielectric bonding interfaces in series before reaching the heat sink.
+    \end{itemize}
+
+    \item[TSV Keep-Out Zone (KOZ)] Copper has a thermal expansion coefficient ($\alpha_{\mathrm{Cu}} \approx 17 \times 10^{-6}\,\mathrm{K^{-1}}$) $6\times$ higher than silicon ($\alpha_{\mathrm{Si}} \approx 2.6 \times 10^{-6}\,\mathrm{K^{-1}}$). During post-bonding cooling, thermal contraction mismatch induces high compressive hoop stress ($>200\,\mathrm{MPa}$) in silicon. By the piezoresistive effect, this alters silicon electron and hole effective masses, shifting threshold voltage ($V_{th}$) and mobility by over $15\%$. Transistors must be placed outside the $3$--$5\,\mu\mathrm{m}$ KOZ to prevent timing failures.
+
+    \item[Vertical Crossbar Scaling] A 5-port 2D router requires $5 \times 5 = 25$ crosspoints, while a 7-port 3D router requires $7 \times 7 = 49$ crosspoints ($+96\%$ area and quadratic wire loading). Vertical arbitration-free fast-paths bypass two-stage switch allocation by assigning dedicated pipeline registers to Up/Down channels, eliminating vertical arbitration contention.
+\end{description}
+
+\section*{Chapter 9: Multi-Chiplet Interconnects \& UCIe Standard}
+
+\begin{description}
+    \item[The Giant Pizza Yield Problem]
+    \begin{itemize}
+        \item Monolithic $800\,\mathrm{mm^2}$ ($A = 8.0\,\mathrm{cm^2}$, $A \cdot D_0 = 0.64$):
+        $Y = \left(\frac{1 - e^{-0.64}}{0.64}\right)^2 = \left(\frac{1 - 0.5273}{0.64}\right)^2 = \mathbf{54.55\%}$.
+        \item Four independent $200\,\mathrm{mm^2}$ chiplets ($A = 2.0\,\mathrm{cm^2}$, $A \cdot D_0 = 0.16$):
+        $Y_{\mathrm{chiplet}} = \left(\frac{1 - e^{-0.16}}{0.16}\right)^2 = \left(\frac{1 - 0.8521}{0.16}\right)^2 = \mathbf{85.45\%}$.
+        \item Plain English: A single dust defect on a wafer destroys an entire expensive $800\,\mathrm{mm^2}$ die. With smaller $200\,\mathrm{mm^2}$ chiplets, that defect only scraps one small piece while the other three chiplets survive with $85.5\%$ yield, slashing net manufacturing cost by $40\%$--$60\%$.
+    \end{itemize}
+
+    \item[Buffer Sizing via Little's Law]
+    \begin{itemize}
+        \item $\mathrm{RTT}_{\mathrm{credit}} = 3.2\,\mathrm{ns} + 0.4\,\mathrm{ns} + 3.2\,\mathrm{ns} = 6.8\,\mathrm{ns}$. In clock cycles ($T_{\mathrm{clk}} = 0.4\,\mathrm{ns}$): $\mathrm{RTT}_{\mathrm{credit}} = 6.8 / 0.4 = \mathbf{17\,\mathrm{cycles}}$.
+        \item By Little's Law: $B_{\mathrm{min}} \ge \lambda \cdot \mathrm{RTT} = 1 \times 17 = \mathbf{17\,\mathrm{flits}}$.
+        \item With only 8 flits of buffer, the transmitter exhausts credits after 8 cycles and stalls for 9 cycles, causing link utilization to collapse to $\frac{8}{17} = \mathbf{47.1\%}$.
+    \end{itemize}
+
+    \item[The Four-Way Traffic Jam] When four packets block each other in a circular wait ($N \to E \to S \to W \to N$), diverting one packet into a temporary side register (the In/Outbound swap buffer) breaks the circular wait condition. The remaining three packets traverse the intersection unblocked; the diverted packet then rejoins the link without dropping any data flits.
+
+    \item[Energy Comparison] For $1\,\mathrm{TB}$ ($8 \times 10^{12}\,\mathrm{bits}$):
+    Organic substrate ($1.20\,\mathrm{pJ/bit}$): $E_{\mathrm{org}} = 8 \times 10^{12} \times 1.20 \times 10^{-12} = \mathbf{9.60\,\mathrm{J}}$.
+    Silicon interposer ($0.33\,\mathrm{pJ/bit}$): $E_{\mathrm{inter}} = 8 \times 10^{12} \times 0.33 \times 10^{-12} = \mathbf{2.64\,\mathrm{J}}$.
+    Net energy saved: $9.60 - 2.64 = \mathbf{6.96\,\mathrm{J}}$ ($72.5\%$ reduction).
+\end{description}
+
+\section*{Chapter 10: Optical \& Wireless Networks-on-Chip}
+
+\begin{description}
+    \item[The Optical Tuning Fork]
+    \begin{itemize}
+        \item Optical round-trip length: $L = 2 \pi R = 2 \pi \times 6.0\,\mu\mathrm{m} = \mathbf{37.699\,\mu\mathrm{m}}$.
+        \item Resonant mode order: $m = \frac{L \cdot n_{\mathrm{eff}}}{\lambda_0} = \frac{37,699 \times 2.45}{1550} = \mathbf{60}$.
+        \item Plain English: A $1540\,\mathrm{nm}$ wave does not fit an exact integer number of cycles inside the cavity; it cannot constructively interfere and bypasses the ring entirely along the through waveguide.
+    \end{itemize}
+
+    \item[The Laser Flashlight]
+    \begin{itemize}
+        \item Insertion loss: $L_{\mathrm{path}} = 3.5 \times 0.25 + 16 \times 0.005 + 30 \times 0.12 + 20 \times 0.015 + 2 \times 0.50 + 1.50 + 3.00 = \mathbf{10.355\,\mathrm{dB}}$.
+        \item Required optical power: $P_{\mathrm{laser}} = -21.0\,\mathrm{dBm} + 10.355\,\mathrm{dB} = -10.645\,\mathrm{dBm} = \mathbf{0.0862\,\mathrm{mW}}$ ($86.2\,\mu\mathrm{W}$).
+        \item Electrical wall-plug power ($\eta_{\mathrm{wpe}} = 18\%$): $P_{\mathrm{elec}} = \frac{0.0862}{0.18} = \mathbf{0.479\,\mathrm{mW}}$.
+    \end{itemize}
+
+    \item[The Hot CPU]
+    \begin{itemize}
+        \item Wavelength drift: $\Delta \lambda = 20^\circ\mathrm{C} \times 0.10\,\mathrm{nm/^\circ C} = \mathbf{2.0\,\mathrm{nm}}$.
+        \item Heating power per MRR: $2.0\,\mathrm{nm} \times 20.0\,\mathrm{mW/nm} = 40.0\,\mathrm{mW}$.
+        \item Total tuning power for 128 MRRs: $128 \times 40.0\,\mathrm{mW} = \mathbf{5.12\,\mathrm{W}}$.
+    \end{itemize}
+
+    \item[Walkie-Talkie vs. Whisper] Unicast electrical packet replication requires sending 63 sequential packets through intermediate routers, incurring dozens of pipeline stages and crossbar arbitrations ($>20$--$50$ cycles). A $60\,\mathrm{GHz}$ wireless antenna radiates electromagnetic waves across the die at the speed of light in silicon dioxide ($c / \sqrt{\epsilon_r} \approx 150\,\mu\mathrm{m/ps}$), broadcasting the invalidation message to all 63 cores simultaneously in a **single clock cycle** ($<1\,\mathrm{ns}$).
+\end{description}
