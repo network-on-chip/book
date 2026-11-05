@@ -12,7 +12,7 @@
 \label{sec:3d-scaling-paradigm}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: Sprawling Suburbs vs. City Skyscrapers} \\
+\textbf{Architectural Intuition: Sprawling Suburbs vs. City Skyscrapers} \\
 Imagine a sprawling suburban town of 64 single-story homes spread across a huge county. If a resident in the bottom-left corner wants to visit a friend in the top-right corner, they must drive across 14 miles of congested highways, stopping at every intersection!
 Now imagine stacking those 64 homes into an \textbf{8-story skyscraper}. Instead of driving across miles of flat roads, you step into a \textbf{high-speed elevator} (a Through-Silicon Via, or TSV) and arrive in just a few seconds! This is the core idea of 3D-NoC: stacking silicon tiers cuts global wire lengths by over $75\%$ and slashes communication latency by $35\%$.
 \end{svgraybox}
@@ -34,7 +34,7 @@ Three-Dimensional Integrated Circuits (3D-ICs) break this planar barrier by vert
 \section{Through-Silicon Via (TSV) Physical Characteristics \& Parasitics}
 \label{sec:tsv-physics}
 
-A Through-Silicon Via is a cylindrical copper plug etched through a thinned silicon substrate ($20\,\mu\mathrm{m}\text{ to }50\,\mu\mathrm{m}$ thick) and insulated by a thin dielectric liner ($\mathrm{SiO_2}$, $t_{\mathrm{ox}} \approx 100\text{--}200\,\mathrm{nm}$).
+A Through-Silicon Via (TSV) is a microscopic cylindrical copper or tungsten plug etched vertically through a thinned silicon substrate ($20\,\mu\mathrm{m}\text{ to }50\,\mu\mathrm{m}$ thick) and insulated from the conductive semiconductor substrate by a thin dielectric liner ($\mathrm{SiO_2}$ or $\mathrm{Si_3N_4}$, $t_{\mathrm{ox}} \approx 100\text{--}200\,\mathrm{nm}$).
 
 \begin{figure}[htbp]
 \centering
@@ -50,29 +50,71 @@ A Through-Silicon Via is a cylindrical copper plug etched through a thinned sili
 \label{fig:loi-tsv-schematic}
 \end{figure}
 
-\subsection{Lumped Electrical Equivalent Model}
-
-As modeled by Loi et al.~\cite{Loi2011} and illustrated in Figs.~\ref{fig:loi-tsv-bundle} and~\ref{fig:loi-tsv-schematic}, each TSV is characterized by:
+\subsection{TSV Fabrication Methodologies: Via-First, Via-Middle, and Hybrid Direct Bonding}
+\label{subsec:ch8_tsv_fab}
+The integration flow of vertical TSVs into modern semiconductor fabrication falls into three distinct methodologies:
 \begin{enumerate}
-    \item \textbf{Ohmic Resistance ($R_{\mathrm{tsv}}$)}:
+    \item \textbf{Via-First (Front-End-of-Line, FEOL)}: Vias are etched and filled into the bare silicon wafer prior to the fabrication of CMOS transistors. Because subsequent source/drain annealing requires temperatures exceeding $1000^\circ\mathrm{C}$, via-first processes cannot use copper; they require refractory materials such as highly doped polysilicon or tungsten ($W$). Consequently, via-first TSVs suffer from high electrical resistivity ($\approx 10\times$ higher than copper).
+    \item \textbf{Via-Middle (Middle-of-Line, MOL)}: Etched immediately following transistor fabrication (FEOL) but prior to back-end-of-line (BEOL) metal layer interconnect processing. Processing temperatures are constrained below $400^\circ\mathrm{C}$, permitting electroplated copper ($Cu$) filling. Via-middle is the dominant industrial process for high-performance 3D logic stacking due to low parasitic resistance and tight pitch scaling ($5\text{--}10\,\mu\text{m}$).
+    \item \textbf{Via-Last (Back-End-of-Line, BEOL)}: Fabricated from the wafer backside after all active circuitry and BEOL metallization layers are completed. Vias must avoid existing metal layers, requiring larger diameters ($10\text{--}25\,\mu\text{m}$) and wider pitches.
+    \item \textbf{Cu-Cu Direct Hybrid Bonding (Bumpless Stacking)}: In cutting-edge packaging technologies (such as TSMC SoIC and Intel Foveros Direct), microscopic copper pads embedded in a dielectric planar surface are bonded directly via atomic diffusion at low temperature ($< 250^\circ\mathrm{C}$). Hybrid bonding shrinks interconnect pitch to \textbf{sub-$1\,\mu\text{m}$ to $4\,\mu\text{m}$}, reducing parasitic capacitance to under $1\text{--}3\,\text{fF}$ and enabling interconnect densities exceeding $10^6\text{ interconnects/mm}^2$.
+\end{enumerate}
+
+\subsection{High-Frequency Transmission and Parasitic Substrate Modeling}
+\label{subsec:ch8_tsv_parasitics}
+
+As modeled by Loi et al.~\cite{Loi2011} and illustrated in Figs.~\ref{fig:loi-tsv-bundle} and~\ref{fig:loi-tsv-schematic}, an accurate high-frequency model of a TSV bundle accounts for conductor loss, oxide liner capacitance, and silicon substrate loss:
+\begin{enumerate}
+    \item \textbf{DC and Skin-Effect Conductor Resistance ($R_{\mathrm{tsv}}$)}:
     \begin{equation}
-        R_{\mathrm{tsv}} = \rho_{\mathrm{Cu}} \frac{h_{\mathrm{tsv}}}{\pi (d_{\mathrm{tsv}} / 2)^2}
+        R_{\mathrm{tsv}}(f) = 
+        \begin{cases}
+        \rho_{\mathrm{Cu}} \frac{h_{\mathrm{tsv}}}{\pi r_{\mathrm{tsv}}^2}, & f < f_{skin} \\
+        \rho_{\mathrm{Cu}} \frac{h_{\mathrm{tsv}}}{2\pi r_{\mathrm{tsv}} \delta(f)}, & f \ge f_{skin}
+        \end{cases}
         \label{eq:tsv-resistance}
     \end{equation}
-    For $h_{\mathrm{tsv}} = 30\,\mu\mathrm{m}$ and $d_{\mathrm{tsv}} = 4\,\mu\mathrm{m}$, $R_{\mathrm{tsv}} \approx 35\text{ to }50\,\mathrm{m\Omega}$, which is negligible compared to planar wire resistance.
+    where $\delta(f) = \sqrt{\frac{\rho_{\mathrm{Cu}}}{\pi f \mu_0}}$ represents the electromagnetic skin depth. For $h_{\mathrm{tsv}} = 30\,\mu\mathrm{m}$ and $d_{\mathrm{tsv}} = 4\,\mu\mathrm{m}$, $R_{\mathrm{tsv}} \approx 35\text{ to }50\,\mathrm{m\Omega}$, which is negligible compared to planar wire resistance.
     
-    \item \textbf{Oxide Liner Capacitance ($C_{\mathrm{ox}}$)}:
+    \item \textbf{Oxide Liner Capacitance ($C_{\mathrm{ox}}$)}: Formed by the cylindrical dielectric barrier:
     \begin{equation}
         C_{\mathrm{ox}} = \frac{2 \pi \epsilon_{\mathrm{ox}} \epsilon_0 h_{\mathrm{tsv}}}{\ln\left(\frac{r_{\mathrm{tsv}} + t_{\mathrm{ox}}}{r_{\mathrm{tsv}}}\right)} \approx 20\text{ to }50\,\mathrm{fF}
         \label{eq:tsv-capacitance}
     \end{equation}
     
-    \item \textbf{Substrate Conductance and Capacitance ($G_{\mathrm{sub}}, C_{\mathrm{sub}}$)}: Signals couple through conductive doped silicon to adjacent TSVs, requiring ground shield vias to suppress cross-talk noise.
+    \item \textbf{Substrate Conductance and Capacitance ($G_{\mathrm{sub}}, C_{\mathrm{sub}}$)}: Because the silicon substrate possesses finite bulk conductivity ($\sigma_{Si} \approx 1\text{--}10\,\text{S/m}$), high-frequency signals leak energy into adjacent TSVs through conductive displacement and ohmic paths:
+    \begin{equation}
+    C_{\mathrm{sub}} = \frac{\pi \epsilon_{Si} \epsilon_0 h_{\mathrm{tsv}}}{\cosh^{-1}\left(\frac{s_{\mathrm{tsv}}}{2 r_{\mathrm{tsv}}}\right)}, \quad G_{\mathrm{sub}} = \frac{\sigma_{Si}}{\epsilon_{Si} \epsilon_0} C_{\mathrm{sub}}
+    \label{eq:tsv_sub_coupling}
+    \end{equation}
+    where $s_{\mathrm{tsv}}$ is the center-to-center pitch between adjacent TSVs. To prevent crosstalk jitter and substrate noise coupling, high-speed 3D networks interleave ground shield TSVs within signal bundles.
 \end{enumerate}
 
-\subsection{The Keep-Out Zone (KOZ) and Thermo-Mechanical Stress}
+\subsection{The Keep-Out Zone (KOZ) and Thermo-Mechanical Lamé Formulations}
+\label{subsec:ch8_koz}
 
-Because copper has a coefficient of thermal expansion ($\alpha_{\mathrm{Cu}} \approx 17.0\,\mathrm{ppm/K}$) far exceeding that of silicon ($\alpha_{\mathrm{Si}} \approx 2.6\,\mathrm{ppm/K}$), thermal annealing during fabrication induces hundreds of megapascals of compressive radial stress. Due to the \emph{piezoresistive effect}, this mechanical stress alters silicon band structure, shifting CMOS transistor mobility by up to $\pm 30\%$. Consequently, circuit designers must enforce a radial \textbf{Keep-Out Zone (KOZ)} of $3\,\mu\mathrm{m}\text{ to }5\,\mu\mathrm{m}$ surrounding each TSV where no active transistors can be placed.
+Because copper has a coefficient of thermal expansion ($\alpha_{\mathrm{Cu}} \approx 17.0\,\mathrm{ppm/K}$) far exceeding that of bulk silicon ($\alpha_{\mathrm{Si}} \approx 2.6\,\mathrm{ppm/K}$), thermal cooling from the annealing temperature ($T_{anneal} \approx 250^\circ\mathrm{C}$ to $400^\circ\mathrm{C}$) down to room temperature induces intense compressive and tensile stress fields in the surrounding silicon.
+
+Under the \textbf{Lamé Analytical Formulation} for cylindrical inclusions in an infinite elastic matrix, the radial stress $\sigma_r$ and tangential hoop stress $\sigma_\theta$ in the silicon at distance $r \ge r_{\mathrm{tsv}}$ are:
+\begin{equation}
+\sigma_r(r) = -\frac{E_{Si} \Delta \alpha \Delta T}{1 + \nu_{Si}} \left(\frac{r_{\mathrm{tsv}}}{r}\right)^2, \quad \sigma_\theta(r) = +\frac{E_{Si} \Delta \alpha \Delta T}{1 + \nu_{Si}} \left(\frac{r_{\mathrm{tsv}}}{r}\right)^2
+\label{eq:tsv_lame_stress}
+\end{equation}
+where $E_{Si} \approx 130\text{ GPa}$ is the Young's modulus of silicon, $\nu_{Si} \approx 0.28$ is Poisson's ratio, and $\Delta \alpha = \alpha_{\mathrm{Cu}} - \alpha_{\mathrm{Si}} \approx 14.4\,\mathrm{ppm/K}$.
+
+Due to the \textbf{piezoresistive effect}, anisotropic mechanical stress perturbs the silicon conduction and valence band curvature, shifting electron and hole effective masses:
+\begin{align}
+\frac{\Delta \mu_n}{\mu_{n0}} &= \pi_{11} \sigma_{xx} + \pi_{12} \sigma_{yy} \quad (\text{NMOS Transistors}) \\
+\frac{\Delta \mu_p}{\mu_{p0}} &= \pi_{12} \sigma_{xx} + \pi_{11} \sigma_{yy} + \pi_{44} \tau_{xy} \quad (\text{PMOS Transistors})
+\end{align}
+where $\pi_{ij}$ are the piezoresistive coefficients of silicon.
+
+These stress fields shift carrier mobility by up to $\pm 30\%$, creating severe timing skew and setup/hold time violations in adjacent logic cells. Consequently, automated physical design tools must enforce a strict \textbf{Keep-Out Zone (KOZ)} surrounding each TSV:
+\begin{equation}
+r_{KOZ} = r_{\mathrm{tsv}} \sqrt{\frac{E_{Si} \Delta \alpha \Delta T}{(1 + \nu_{Si}) \sigma_{threshold}}} \approx 3\,\mu\mathrm{m}\text{ to }5\,\mu\mathrm{m}
+\label{eq:rkoz}
+\end{equation}
+within which no active standard cells can be placed, imposing an unavoidable floorplanning area overhead.
 
 \section{3D Router Microarchitectures \& Vertical Arbitration}
 \label{sec:3d-router-microarchitecture}
@@ -102,6 +144,15 @@ Expanding the router switch fabric from 5 to 7 ports (Fig.~\ref{fig:more-router-
 \end{equation}
 In addition, managing 7 sets of input Virtual Channel (VC) buffers substantially inflates router leakage power.
 
+\subsection{Dimensionally Partitioned Routers and 3D Crossbar Factorization}
+To curtail the 96\% area inflation of full 7-port crossbars, architects employ \textbf{Crossbar Factorization}. By separating planar communication ($X, Y$) from vertical transit ($Z$), the monolithic $7 \times 7$ switch is factored into:
+\begin{itemize}
+    \item A planar crossbar switch ($5 \times 5$: Local, East, West, North, South);
+    \item A dedicated vertical crossbar switch ($2 \times 2$: Up, Down);
+    \item Inter-switch bidirectional bridge channels.
+\end{itemize}
+This factorization reduces total crosspoint complexity from 49 down to $25 + 4 = 29$ crosspoints—a \textbf{41\% reduction in multiplexer silicon area}—with negligible throughput degradation for dimension-order routing flows.
+
 \subsection{Vertical Arbitration Contention vs. Arbitration-Free Fast-Paths}
 
 In systems deploying shared vertical links, multiple planar directions contend for the vertical TSV channel. More et al.~\cite{More2018} established that vertical arbitration contention adds multiple cycles of serialization delay (Fig.~\ref{fig:more-arbitration-free}a). By deploying \textbf{Vertical Arbitration-Free 3D-NoCs} (Fig.~\ref{fig:more-arbitration-free}b), dedicated unidirectional TSVs eliminate vertical allocators, achieving single-cycle vertical traversal and trimming router silicon area by $\approx 20\%$.
@@ -110,7 +161,7 @@ In systems deploying shared vertical links, multiple planar directions contend f
 \label{sec:thermal-stacking}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: The Attic Oven} \\
+\textbf{Architectural Intuition: The Attic Oven} \\
 Why is the top floor of a house always scorching hot in summer? Because heat gets trapped under the roof! In a 3D-stacked chip, the copper heat sink sits on the bottom (Tier 0). Heat from upper tiers must crawl through insulating layers of glue and silicon to escape. As our simulation demonstrates, while Tier 0 sits at $97^\circ\mathrm{C}$, Tier 2 climbs to an alarming $136.5^\circ\mathrm{C}$! Managing this thermal ladder is crucial to avoid silicon meltdown.
 \end{svgraybox}
 
@@ -233,6 +284,81 @@ Inter-Tier Thermal Gradient ($\Delta T_{\mathrm{stack}}$) & $+39.35^\circ\mathrm
 \end{table}
 
 The simulation confirms that vertical TSV traversal represents $26\%$ of total network hops, delivering rapid vertical transit. However, thermal accumulation elevates Tier 2 silicon to $136.5^\circ\mathrm{C}$, illustrating the necessity of thermal-aware 3D routing.
+
+\section{Pre-Bond and Post-Bond 3D TSV Testing and BIST}
+\label{sec:ch8_testing}
+\index{TSV Testing}
+\index{Known Good Die (KGD)}
+\index{Built-In Self-Test (BIST)}
+
+In monolithic chips, defective dies are discarded individually during wafer probe testing. In 3D-ICs, however, stacking unverified dies triggers the catastrophic \textbf{Known Good Die (KGD)} yield problem: if each of $K$ stacked dies has independent yield $Y$, the final bonded stack yield drops exponentially as $Y_{\mathrm{stack}} = Y^K \cdot Y_{\mathrm{bonding}}$. For $K = 4$ tiers with $Y = 85\%$ and bonding yield $Y_{\mathrm{bonding}} = 90\%$, total stack yield drops to:
+\begin{equation}
+Y_{\mathrm{stack}} = (0.85)^4 \times 0.90 \approx 47.0\%
+\end{equation}
+Over half of manufactured stacks are discarded, destroying profit margins unless rigorous pre-bond and post-bond testing is enforced.
+
+\subsection{Pre-Bond TSV Test Architectures}
+Prior to permanent wafer thinning and thermo-compression bonding, vertical TSVs terminate on the frontside as blind vias without backside metal pads. Standard mechanical probe needles cannot touch unthinned micro-pads without crushing delicate oxide liners.
+
+To test TSVs before stacking, architectures integrate \textbf{Built-In Self-Test (BIST)} structures:
+\begin{enumerate}
+    \item \textbf{Capacitive Discharging Sensing}: A pre-charge transistor charges the TSV liner capacitance $C_{\mathrm{ox}}$ to $V_{dd}$. A discharge path monitors the leakage current to ground: an open-circuit TSV exhibits drastically reduced capacitance ($C_{\mathrm{open}} \ll C_{\mathrm{nominal}}$), while pinhole oxide pinholes exhibit excessive conductive leakage.
+    \item \textbf{Ring Oscillator (RO) Frequency Sensing}: By embedding candidate TSVs into the feedback loop of an odd number of CMOS inverters, the oscillation frequency $f_{\mathrm{RO}}$ becomes an ultra-sensitive analog gauge of TSV resistance and capacitance:
+    \begin{equation}
+    f_{\mathrm{RO}} = \frac{1}{2 \sum \tau_{\mathrm{gate}} + 2 R_{\mathrm{tsv}} C_{\mathrm{tsv}}} \implies \frac{\Delta f_{\mathrm{RO}}}{f_{\mathrm{RO}}} \approx -\frac{\Delta R_{\mathrm{tsv}} C_{\mathrm{tsv}}}{\tau_{\mathrm{loop}}}
+    \label{eq:ch8_ro_freq}
+    \end{equation}
+    A $10\,\Omega$ micro-crack or void in the copper core shifts $f_{\mathrm{RO}}$ by several megahertz, enabling automated digital pass/fail binning before bonding.
+\end{enumerate}
+
+\subsection{Post-Bond IEEE 1500 Boundary-Scan Wrappers}
+Once tiers are permanently bonded, physical internal TSVs become completely inaccessible to external probe needles. Inter-tier test access is provided by \textbf{IEEE 1500 Standard Test Wrappers}:
+\begin{itemize}
+    \item Dedicated \textbf{Wrapper Instruction Registers (WIR)} and \textbf{Wrapper Boundary Cells (WBC)} are inserted at every vertical TSV driver and receiver.
+    \item During test mode, test vectors are serially shifted through the boundary scan chain, applying at-speed pseudo-random patterns across the vertical link array to verify signal integrity and setup/hold timing margins across all tiers.
+\end{itemize}
+
+\section{Multi-Tier Power Distribution Network (PDN) Antiresonance}
+\label{sec:ch8_pdn}
+\index{Power Distribution Network (PDN)}
+\index{PDN Antiresonance}
+\index{Decoupling Capacitors (Decaps)}
+
+While signal TSVs carry packet flits, thousands of parallel \textbf{Power and Ground TSVs} deliver amperes of electrical current to upper active tiers. In a 3D-IC, the multi-tier Power Distribution Network (PDN) forms a complex three-dimensional $RLC$ mesh.
+
+\subsection{Inter-Tier Loop Inductance and Antiresonance Peaking}
+Each vertical power TSV pair (one $V_{dd}$ via and one $V_{ss}$ via separated by pitch $s_{\mathrm{tsv}}$) contributes loop inductance $L_{\mathrm{TSV}}$:
+\begin{equation}
+L_{\mathrm{TSV}} = \frac{\mu_0 h_{\mathrm{tsv}}}{\pi} \ln\left(\frac{s_{\mathrm{tsv}}}{r_{\mathrm{tsv}}}\right) \approx 10\text{ to }30\,\mathrm{pH}
+\label{eq:ch8_tsv_inductance}
+\end{equation}
+
+When current transitions upward through the TSV array into upper-tier silicon, the vertical inductance $L_{\mathrm{TSV}}$ forms a parallel resonant tank circuit with the on-die intrinsic and intentional decoupling capacitance $C_{\mathrm{die}}$ of the upper tier. This induces severe \textbf{PDN Antiresonance}:
+\begin{equation}
+f_{\mathrm{anti}} = \frac{1}{2\pi \sqrt{L_{\mathrm{TSV}} \cdot C_{\mathrm{die}}}} \approx 100\text{ to }350\,\mathrm{MHz}
+\label{eq:ch8_antiresonance_freq}
+\end{equation}
+At the antiresonant frequency $f_{\mathrm{anti}}$, the power grid impedance surges to an alarming peak:
+\begin{equation}
+Z_{\mathrm{peak}} \approx \frac{1}{R_{\mathrm{esr}}} \sqrt{\frac{L_{\mathrm{TSV}}}{C_{\mathrm{die}}}} \gg Z_{\mathrm{target}}
+\label{eq:ch8_zpeak}
+\end{equation}
+where $R_{\mathrm{esr}}$ is the equivalent series resistance of the decoupling capacitors.
+
+\subsection{Target Impedance and Decap Budget Allocation}
+Because multi-core processor workloads generate bursty clock-gating current steps $\Delta I_{\mathrm{step}}$ that frequently coincide with the $100\text{--}300\,\mathrm{MHz}$ frequency window, antiresonant impedance peaks trigger destructive voltage drops ($IR$-drop and $L \cdot di/dt$ inductive ringing):
+\begin{equation}
+\Delta V_{\mathrm{noise}} \approx Z_{\mathrm{peak}} \cdot \Delta I_{\mathrm{step}}
+\label{eq:ch8_vnoise}
+\end{equation}
+If $\Delta V_{\mathrm{noise}}$ exceeds the noise margin ($\approx 5\%$ of $V_{dd}$), logic gates suffer setup violations or memory bit flips.
+
+To preserve power integrity, physical designers must enforce a strict \textbf{Target Impedance Constraint} across all frequencies up to the clock harmonics:
+\begin{equation}
+Z_{\mathrm{PDN}}(f) \le Z_{\mathrm{target}} = \frac{V_{dd} \cdot \Delta V_{\mathrm{tolerance}}}{\Delta I_{\mathrm{step}}} \approx 10\text{ to }30\,\mathrm{m\Omega}
+\label{eq:ch8_ztarget}
+\end{equation}
+Meeting this target impedance requires optimizing the ratio of power-ground TSV pairs and allocating dedicated on-chip \textbf{Decoupling Capacitors (Decaps)}—such as high-density deep-trench capacitors (DTC, $\approx 100\text{--}300\,\mathrm{nF/mm^2}$) or stacked ferroelectric capacitors—distributed uniformly beneath router crossbars.
 
 \section{Summary}
 \label{sec:ch8_summary}

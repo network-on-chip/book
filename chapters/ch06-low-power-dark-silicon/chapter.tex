@@ -24,6 +24,49 @@ At sub-7nm process nodes, the physical breakdown of classical Dennard scaling im
 
 While idle compute cores can be power-gated to zero power for milliseconds at a time, the \textbf{on-chip network cannot be casually turned off}. In multi-hop topologies (such as 2D Meshes), an intermediate router must remain awake to forward packets between active compute tiles. Routers sit active but idle for up to 90\% of total execution time~\cite{Matsutani2011}, dissipating substantial static leakage power.
 
+\subsection{Dennard Breakdown and the Dark Silicon Scaling Model}
+\label{subsec:ch6_dennard}
+\index{Dennard Scaling}
+
+To understand why power gating and voltage islands are mandatory in modern on-chip networks, one must examine the mathematical breakdown of classical Dennard scaling.
+
+Under ideal Dennard scaling (formulated by Robert Dennard in 1974), all spatial geometric dimensions of a MOSFET scale down by a constant scaling factor $S > 1$ (where $S \approx \sqrt{2} \approx 1.4$ per technology generation):
+\begin{equation}
+L \longrightarrow \frac{L}{S}, \quad W \longrightarrow \frac{W}{S}, \quad t_{ox} \longrightarrow \frac{t_{ox}}{S}, \quad N_A \longrightarrow S \cdot N_A
+\end{equation}
+To maintain a constant electric field ($\mathcal{E} = V / t_{ox}$), the supply voltage $V_{dd}$ and threshold voltage $V_{th}$ were scaled simultaneously by $1/S$:
+\begin{equation}
+V_{dd} \longrightarrow \frac{V_{dd}}{S}, \quad V_{th} \longrightarrow \frac{V_{th}}{S}
+\end{equation}
+Consequently, gate capacitance scaled as $C = \epsilon A / t_{ox} \to C/S$, gate delay improved as $\tau = C V / I \to \tau / S$, allowing clock frequency to increase as $f_{clk} \to S \cdot f_{clk}$. The dynamic power per transistor evolved as:
+\begin{equation}
+P_{trans} = C \cdot V_{dd}^2 \cdot f_{clk} \longrightarrow \left(\frac{C}{S}\right) \left(\frac{V_{dd}}{S}\right)^2 (S \cdot f_{clk}) = \frac{P_{trans}}{S^2}
+\label{eq:ch6_dennard_power}
+\end{equation}
+Because transistor density increased by $S^2$ per unit area, the total power density across the silicon die remained perfectly invariant:
+\begin{equation}
+\text{Power Density} = \frac{N_{trans} \cdot P_{trans}}{\text{Die Area}} \longrightarrow \frac{(S^2 \cdot N_{trans}) \cdot (P_{trans} / S^2)}{\text{Area}} = \text{Constant}
+\end{equation}
+
+Around 2005 (at the 90nm/65nm transition), Dennard scaling collapsed because \textbf{voltage scaling stalled}. The sub-threshold slope of a MOSFET is fundamentally constrained by Boltzmann thermodynamics:
+\begin{equation}
+S_S = \ln(10) \cdot \frac{k_B T}{q} \cdot \left(1 + \frac{C_d}{C_{ox}}\right) \ge 60\text{ mV/decade at } 300\text{ K}
+\label{eq:ch6_subthreshold_slope}
+\end{equation}
+where $k_B$ is the Boltzmann constant, $T$ is absolute temperature, and $q$ is elementary charge. Because $S_S$ cannot be scaled below $60\text{ mV/decade}$ at room temperature, reducing $V_{th}$ causes off-state drain current $I_{off}$ to increase exponentially:
+\begin{equation}
+I_{off} = I_0 \cdot 10^{-V_{th} / S_S}
+\label{eq:ch6_ioff}
+\end{equation}
+To prevent static leakage from overwhelming total chip power, designers had to clamp $V_{dd}$ to $\approx 0.75$--$0.95\text{ V}$.
+
+With $V_{dd}$ fixed while transistor density continues to scale at $S^2$, chip power density escalates by $S^2$ each generation. Esmaeilzadeh et al.~\cite{Esmaeilzadeh2011} formulated the \textbf{Dark Silicon Utilization Fraction $U(S)$}:
+\begin{equation}
+U(S) = \frac{P_{TDP}}{P_{active}(S)} = \frac{P_{TDP}}{N_{trans}(S) \cdot C(S) \cdot V_{dd}^2(S) \cdot f_{clk}(S)} \approx \frac{1}{S^2} \left(\frac{V_{dd, 0}}{V_{dd}(S)}\right)^2 \left(\frac{f_0}{f_{clk}(S)}\right)
+\label{eq:ch6_utilization}
+\end{equation}
+At advanced FinFET nodes (sub-5nm), $U(S) < 0.20$, proving that \textbf{over 80\% of the silicon floorplan must remain powered off or severely underclocked} at any given instant.
+
 \subsection{Physical Power Breakdown in Nanoscale Routers}
 Total interconnect power dissipation is decomposed into dynamic and static leakage components:
 \begin{equation}
@@ -50,8 +93,9 @@ Sub-threshold leakage scales exponentially with absolute temperature $T$ ($V_T =
 \index{Dynamic Voltage and Frequency Scaling (DVFS)}
 \index{Voltage-Frequency Islands (VFIs)}
 \index{LAURA-NoC}
+\index{Clock Domain Crossing (CDC)}
 
-Dividing a large manycore into **Voltage-Frequency Islands (VFIs)** enables independent, dynamic adjustment of supply voltage and clock frequency across local network domains.
+Dividing a large manycore into \textbf{Voltage-Frequency Islands (VFIs)} enables independent, dynamic adjustment of supply voltage and clock frequency across local network domains.
 
 \begin{figure}[htbp]
 \centering
@@ -60,7 +104,92 @@ Dividing a large manycore into **Voltage-Frequency Islands (VFIs)** enables inde
 \label{fig:ch6_laura}
 \end{figure}
 
-Yadav, Casu, and Zamboni~\cite{Yadav2013} developed **LAURA-NoC**, which eliminates global controller latency by measuring local switch buffer fullness to drive local voltage-frequency transitions. In 45nm CMOS, LAURA-NoC achieved **33\% average power savings** across realistic video processing workloads.
+Yadav, Casu, and Zamboni~\cite{Yadav2013} developed \textbf{LAURA-NoC}, which eliminates global controller latency by measuring local switch buffer fullness to drive local voltage-frequency transitions. In 45nm CMOS, LAURA-NoC achieved \textbf{33\% average power savings} across realistic video processing workloads.
+
+\subsection{Asynchronous Clock Domain Crossing (CDC) and Dual-Clock FIFOs}
+When neighboring routers or tiles reside in distinct VFIs, signals must cross asynchronous clock domain boundaries. Direct sampling of asynchronous signals induces catastrophic \textbf{metastability}, where flip-flop internal nodes linger at an indeterminate voltage between 0 and 1, producing non-deterministic timing violations.
+
+To guarantee robust inter-VFI communication, link interfaces employ \textbf{Dual-Clock Asynchronous FIFOs} with Gray-coded read and write pointers:
+\begin{enumerate}
+    \item \textbf{Gray-Code Pointer Synchronization}: The binary write pointer $B = (b_n, \dots, b_0)$ is converted to Gray code $G = (g_n, \dots, g_0)$ via $g_i = b_i \oplus b_{i+1}$. Gray codes ensure that \textbf{exactly one bit changes value per pointer increment}. Consequently, clock skew across the asynchronous boundary can at most cause the synchronizer to read the old pointer value or the new pointer value, but never an invalid intermediate state.
+    \item \textbf{Two-Stage Synchronizer Reliability}: Dual-stage flip-flop synchronizers achieve an astronomical \textbf{Mean Time Between Failures (MTBF)}:
+    \begin{equation}
+    MTBF = \frac{\exp(t_{settle} / \tau_s)}{T_0 \cdot f_{dest} \cdot f_{src}}
+    \label{eq:ch6_mtbf}
+    \end{equation}
+    where $\tau_s$ is the latch regeneration time constant, $T_0$ is the aperture parameter, $t_{settle}$ is the available settling time (one destination clock period minus setup time), $f_{src}$ is the transmitter clock frequency, and $f_{dest}$ is the receiver clock frequency.
+    \item \textbf{Mixed-Clock Credit Loop Latency}: Flow control credits traversing the reverse path must also cross a two-stage synchronizer, introducing an unavoidable latency overhead of $2$--$3$ destination clock cycles into the credit return path. To sustain peak throughput without stalls, the asynchronous FIFO depth must satisfy:
+    \begin{equation}
+    \text{Depth}_{CDC} \ge 2 \cdot (RTT_{credit} + \text{Sync Delay}) = 2 \cdot (t_{link} + 2 \cdot T_{src} + 2 \cdot T_{dest})
+    \label{eq:ch6_cdc_depth}
+    \end{equation}
+\end{enumerate}
+
+\subsection{Feedback Control Theory for Autonomous VFI Frequency Scaling}
+\label{subsec:ch6_pid_control}
+\index{PID Controller}
+\index{VFI Control Theory}
+
+While centralized operating system governors can modulate tile frequencies at millisecond granularity, on-chip network packet bursts occur at nanosecond timescales ($10\text{--}100$ clock cycles). Autonomous VFIs deploy hardware-synthesized \textbf{Proportional-Integral-Derivative (PID) feedback controllers} embedded directly within router input controllers.
+
+Let $q(t)$ denote the instantaneous flit occupancy of the input buffer, and let $Q_{\mathrm{target}}$ be the optimal setpoint (typically $30\%\text{--}50\%$ of maximum FIFO capacity to balance throughput against queuing latency). The error signal is:
+\begin{equation}
+e(t) = q(t) - Q_{\mathrm{target}}
+\label{eq:ch6_error}
+\end{equation}
+The continuous rate of change of buffer fullness is governed by the mass balance equation:
+\begin{equation}
+\frac{d q(t)}{dt} = \lambda_{\mathrm{in}}(t) - \mu(f_{\mathrm{clk}}(t))
+\label{eq:ch6_buffer_derivative}
+\end{equation}
+where $\mu(f_{\mathrm{clk}}) \approx \kappa_{\mu} \cdot f_{\mathrm{clk}}$ represents the crossbar flit forwarding rate.
+
+In discrete hardware, the PID controller updates the clock frequency setpoint at sampling period $T_s$:
+\begin{equation}
+f_{\mathrm{clk}}[k+1] = f_{\mathrm{clk}}[k] + K_p \cdot e[k] + K_i \sum_{m=0}^k e[m] + K_d (e[k] - e[k-1])
+\label{eq:ch6_pid_discrete}
+\end{equation}
+where $K_p, K_i, K_d$ are the proportional, integral, and derivative control gains.
+
+\begin{svgraybox}
+\textbf{Closed-Loop Stability \& Phase Margin}: By taking the $\mathcal{Z}$-transform of Eq.~(\ref{eq:ch6_pid_discrete}) combined with the buffer integrator plant $G(z) = \frac{T_s}{z - 1}$, the closed-loop characteristic equation is:
+\begin{equation}
+1 + D(z) G(z) = 0 \iff z^2 + \left( K_p T_s + K_i T_s + K_d - 2 \right) z + \left( 1 - K_p T_s - 2 K_d \right) = 0
+\end{equation}
+Applying Jury's stability criterion mandates that the loop gains satisfy $K_i T_s < 2$ and $K_d < \frac{1}{2} (1 - K_p T_s)$. To prevent destructive limit-cycle hunting under bursty traffic, controllers enforce a \textbf{Bode phase margin} of $\phi_m \ge 60^\circ$ and implement deadband hysteresis around $Q_{\mathrm{target}}$.
+\end{svgraybox}
+
+Furthermore, physical hardware actuators impose strict transient slew rate constraints:
+\begin{itemize}
+    \item \textbf{Phase-Locked Loop (PLL) Relock Delay}: Frequency changes require $t_{\mathrm{relock}} \approx 20\text{--}50\,\mathrm{ns}$ for voltage-controlled oscillators to stabilize without clock glitching.
+    \item \textbf{Integrated Voltage Regulators (IVR)}: On-chip buck converters and switched-capacitor DC-DC converters are limited by an inductive slew rate ceiling ($dV/dt \le 10\text{--}25\,\mathrm{mV/\mu s}$), dictating that frequency steps must lead voltage drops but lag voltage rises to prevent timing failure.
+\end{itemize}
+
+\subsection{Near-Threshold Computing (NTC) Interconnects \& Razor Timing Speculation}
+\label{subsec:ch6_ntc}
+\index{Near-Threshold Computing (NTC)}
+\index{Razor Flip-Flops}
+
+The most aggressive low-power regime is \textbf{Near-Threshold Computing (NTC)}, where supply voltage is scaled down to just above the transistor threshold ($V_{dd} \approx V_{th} + 100\text{--}150\,\mathrm{mV} \approx 0.40\text{--}0.50\,\mathrm{V}$). Because dynamic energy scales quadratically ($E \propto C V_{dd}^2$), NTC slashes interconnect energy by \textbf{$5\times$ to $10\times$}.
+
+However, NTC faces the \textbf{Variability Wall}. Under the alpha-power law model, CMOS gate delay $t_d$ is:
+\begin{equation}
+t_d = \frac{C_{\mathrm{load}} \cdot V_{dd}}{\mu C_{ox} \frac{W}{L} (V_{dd} - V_{th})^\alpha}
+\label{eq:ch6_alpha_power}
+\end{equation}
+with velocity saturation index $\alpha \approx 1.3\text{--}1.5$. Differentiating Eq.~(\ref{eq:ch6_alpha_power}) with respect to $V_{dd}$ reveals the normalized delay sensitivity:
+\begin{equation}
+\mathcal{S}_{V_{dd}}^{t_d} = \frac{\partial t_d / t_d}{\partial V_{dd} / V_{dd}} = 1 - \frac{\alpha V_{dd}}{V_{dd} - V_{th}}
+\label{eq:ch6_ntc_sensitivity}
+\end{equation}
+At nominal $V_{dd} = 0.90\,\mathrm{V}$ ($V_{th} = 0.35\,\mathrm{V}$), $|\mathcal{S}| \approx 1.1$. But in NTC ($V_{dd} = 0.45\,\mathrm{V}$), $V_{dd} - V_{th} = 0.10\,\mathrm{V}$, causing sensitivity to escalate to $|\mathcal{S}| \approx 5.8$! A mere $5\%$ power grid IR-drop ($22\,\mathrm{mV}$) triggers a catastrophic \textbf{$30\%$ gate delay surge}, causing widespread setup-time violations.
+
+To operate safely in NTC without exorbitant worst-case guardbands, routers employ \textbf{Razor Timing Speculation}:
+\begin{enumerate}
+    \item Each critical flip-flop is paired with a delayed \textbf{Shadow Latch} clocked by a delayed clock phase ($\Delta t_{\mathrm{margin}}$).
+    \item If a slow path violates setup time at the main flip-flop, the shadow latch captures the correct late-arriving data.
+    \item An XOR comparator flags the timing error, asserts a pipeline squash pulse, replays the cycle from the shadow latch, and dynamically nudges the local VFI voltage regulator higher.
+\end{enumerate}
 
 \section{Ultrafine-Grained Run-Time Power Gating}
 \label{sec:ch6_power_gating}
@@ -84,7 +213,28 @@ Power gating completely disconnects inactive logic blocks from the power rails u
 \label{fig:ch6_matsutani_router}
 \end{figure}
 
-Matsutani et al.~\cite{Matsutani2011} proved that ultrafine-grained partitioning of router buffers and crossbar multiplexer slices eliminates **over 70\% of static leakage**.
+Matsutani et al.~\cite{Matsutani2011} proved that ultrafine-grained partitioning of router buffers and crossbar multiplexer slices eliminates \textbf{over 70\% of static leakage}.
+
+\subsection{Sleep Transistor Sizing and In-Rush Damping}
+\label{subsec:ch6_sleep_sizing}
+Sleep transistors are deployed either as \textbf{Header switches} (PMOS transistors inserted between true $V_{dd}$ and virtual $V_{ddv}$) or \textbf{Footer switches} (NMOS transistors inserted between virtual ground $V_{ssv}$ and true ground). While NMOS footers provide higher electron mobility ($\mu_n \approx 2\text{--}3 \times \mu_p$) and smaller silicon area, PMOS headers are vastly preferred in NoCs because modulating ground potential disrupts substrate body bias and induces substrate noise coupling across adjacent analog/memory IPs.
+
+The width of the sleep transistor $W_{sleep}$ is strictly governed by the peak active current $I_{peak}$ and the maximum allowable virtual rail IR-drop budget $\Delta V_{drop}$ (typically $\le 1.5\%$ of $V_{dd}$):
+\begin{equation}
+W_{sleep} = \frac{I_{peak}}{\mu_p C_{ox} \left(\frac{W}{L}\right)_{min} (V_{dd} - |V_{th, p}|) \cdot \Delta V_{drop}}
+\label{eq:ch6_sleep_width}
+\end{equation}
+
+When awakening a sleeping router partition, abrupt gating causes a massive surge of \textbf{in-rush current} to charge the virtual rail capacitance $C_{virtual}$. This sudden current transient induces severe inductive supply bounce across package bond wires:
+\begin{equation}
+\Delta V_{bounce} = L_{pkg} \frac{d i_{rush}}{dt} + R_{pkg} \cdot i_{rush}
+\label{eq:ch6_ground_bounce}
+\end{equation}
+Excessive $\Delta V_{bounce}$ can inadvertently flip state bits in adjacent active SRAM buffers. To mitigate this hazard, routers deploy \textbf{Two-Stage Sleep Switches}:
+\begin{itemize}
+    \item \textbf{Stage 1 (Weak Pre-Charge)}: A small, high-resistance sleep transistor turns on first, limiting $d i / dt$ while charging $V_{ddv}$ smoothly to $\approx 80\%$ of nominal voltage.
+    \item \textbf{Stage 2 (Full Rail Clamping)}: The massive low-resistance main sleep transistor closes, clamping $V_{ddv}$ to full supply with minimal inductive ringing.
+\end{itemize}
 
 \subsection{Breakeven Idle Time Formulation}
 Transitioning into and out of sleep mode consumes energy charging the virtual rail capacitance ($C_{virtual}$):
@@ -92,7 +242,7 @@ Transitioning into and out of sleep mode consumes energy charging the virtual ra
 E_{overhead} \approx C_{virtual} \cdot V_{dd}^2
 \label{eq:ch6_eoverhead}
 \end{equation}
-The minimum inactive duration required to achieve net energy savings is the **Breakeven Idle Time ($\tau_{breakeven}$)**:
+The minimum inactive duration required to achieve net energy savings is the \textbf{Breakeven Idle Time ($\tau_{breakeven}$)}:
 \begin{equation}
 \tau_{breakeven} = \frac{E_{overhead}}{P_{leak\_active}} = \frac{C_{virtual} \cdot V_{dd}}{I_{leak\_active}}
 \label{eq:ch6_breakeven}
@@ -116,18 +266,37 @@ Long inter-router metal links exhibit severe inter-wire coupling capacitance ($C
 \label{fig:ch6_lpcr}
 \end{figure}
 
-Adelkhani et al.~\cite{Adelkhani2025} developed **LPCR**, mapping high-frequency data symbols onto minimum-transition binary codewords and slashing link dynamic power by up to 35\% without throughput degradation.
+Adelkhani et al.~\cite{Adelkhani2025} developed \textbf{LPCR}, mapping high-frequency data symbols onto minimum-transition binary codewords and slashing link dynamic power by up to 35\% without throughput degradation.
 
 \section{Bufferless Deflection Routing}
 \label{sec:ch6_bufferless}
 \index{Bufferless Routing}
 \index{Deflection Routing}
+\index{BLESS}
+\index{CHIPPER}
 
-Moscibroda and Mutlu~\cite{Moscibroda2009} proposed eliminating input buffers entirely (BLESS/CHIPPER):
+Moscibroda and Mutlu~\cite{Moscibroda2009} proposed an extreme low-power alternative: \textbf{eliminating router input FIFO buffers entirely} via bufferless deflection routing (such as BLESS and CHIPPER).
+
+\subsection{Microarchitectural Mechanics and Flit Arbitration}
+In a bufferless router, flits never stall in place awaiting available downstream buffers. Instead, every flit arriving at an input port in cycle $t$ \textbf{must exit through an output port in cycle $t+1$}:
+\begin{enumerate}
+    \item \textbf{Port Contention and Deflection}: When multiple incoming flits request the same output port, the arbiter grants the port to the highest-priority flit. The losing flit is not stalled; rather, it is \textbf{deflected} onto an alternative, non-optimal output port (hot-potato routing).
+    \item \textbf{Livelock Freedom Proof}: To prevent deflected flits from wandering endlessly across the network without arriving at their destination, BLESS enforces an \textbf{Oldest-First Priority Policy}:
+    \begin{equation}
+    \text{Priority}(F_i) > \text{Priority}(F_j) \iff \text{Age}(F_i) > \text{Age}(F_j)
+    \label{eq:ch6_bless_priority}
+    \end{equation}
+    Because every flit's age increments monotonically every clock cycle, the globally oldest flit in the fabric is guaranteed to win every port arbitration. It routes strictly along minimal paths without deflection until reaching its destination. Once it exits, the next oldest flit acquires peak priority. By mathematical induction, \textbf{livelock is provably impossible}.
+\end{enumerate}
+
+\subsection{The Energy Crossover Threshold}
+While bufferless deflection routing completely eliminates 60\% to 75\% of router silicon area and removes all buffer static leakage power, it incurs significant trade-offs:
 \begin{itemize}
-    \item Eliminates 60\% to 75\% of router silicon area and static leakage.
-    \item Contending flits are deflected to open ports (hot-potato routing).
-    \item Under low loads ($\le 0.15$ flits/node/cycle), energy drops by 40\%. Under high loads, excessive deflections cause throughput collapse and livelock hazards.
+    \item \textbf{Reassembly Buffer Overhead}: Due to deflections, flits belonging to the same packet arrive out of order at the destination Network Interface (NI). The NI must maintain dedicated reassembly buffers sized proportional to the maximum latency skew:
+    \begin{equation}
+    \text{Buffer}_{reassembly} \ge B_W \times \Delta t_{skew}
+    \end{equation}
+    \item \textbf{Dynamic Link Energy Crossover}: Every deflected hop causes an extra physical wire traversal, consuming dynamic link power $\alpha C_{link} V_{dd}^2$. At low injection loads ($\lambda < 0.15\text{ flits/node/cycle}$), deflections are rare, and bufferless networks achieve up to 40\% total energy savings. However, when injection exceeds the \textbf{crossover rate ($\lambda \ge 0.20$)}, deflection cascading causes dynamic link power to exceed the static buffer leakage savings, rendering bufferless architectures inefficient under high load.
 \end{itemize}
 
 \section{Quantitative Evaluation Matrix}

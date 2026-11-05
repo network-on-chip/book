@@ -106,6 +106,119 @@ Packet Length & Hop Count & SAF Latency & VCT / WH Latency & Speedup of VCT/WH &
 \end{tabular}
 \end{table}
 
+\section{Queuing Theory Foundations of On-Chip Buffering}
+\label{sec:ch2_queuing_theory}
+
+To model buffer sizing, queue delays, and throughput saturation under stochastic traffic, we apply classical Markovian and deterministic queuing theory to on-chip router input channels.
+
+\subsection{The $M/M/1/B$ and $M/D/1/B$ Finite Queue Models}
+\label{subsec:ch2_finite_queue}
+
+Consider an input virtual channel buffer of finite capacity $B$ flits. Packets arrive according to a Poisson process with average injection rate $\lambda$ (flits/cycle), and the crossbar switch services flits at service rate $\mu$ (flits/cycle). The traffic intensity (channel utilization factor) is defined as:
+\begin{equation}
+\rho = \frac{\lambda}{\mu}
+\label{eq:ch2_rho}
+\end{equation}
+
+For an $M/M/1/B$ finite birth-death queuing process, the steady-state probability $p_k$ that exactly $k$ flits occupy the buffer ($0 \le k \le B$) satisfies the geometric progression:
+\begin{equation}
+p_k = \frac{(1 - \rho) \cdot \rho^k}{1 - \rho^{B+1}} \quad (\text{for } \rho \ne 1), \qquad p_k = \frac{1}{B + 1} \quad (\text{for } \rho = 1)
+\label{eq:ch2_steady_state_pk}
+\end{equation}
+
+In a lossless on-chip network with backpressure, when the buffer is completely full ($k = B$), the upstream transmitter is blocked from injecting new flits. The probability of backpressure assertion (upstream stall) is:
+\begin{equation}
+P_{stall} = p_B = \frac{(1 - \rho) \cdot \rho^B}{1 - \rho^{B+1}}
+\label{eq:ch2_p_stall}
+\end{equation}
+
+The average number of flits residing in the input queue, $N_{avg}$, is:
+\begin{equation}
+N_{avg} = \sum_{k=0}^{B} k \cdot p_k = \frac{\rho}{1 - \rho} - \frac{(B + 1) \cdot \rho^{B+1}}{1 - \rho^{B+1}}
+\label{eq:ch2_navg}
+\end{equation}
+
+By Little's Law ($N_{avg} = \lambda_{eff} \cdot W_{queue}$), the average waiting time spent in the router buffer before crossbar traversal is:
+\begin{equation}
+W_{queue} = \frac{N_{avg}}{\lambda \cdot (1 - P_{stall})} = \frac{1}{\mu(1 - \rho)} - \frac{B \cdot \rho^B}{\mu (1 - \rho^B)}
+\label{eq:ch2_wqueue}
+\end{equation}
+
+Under deterministic service ($\mu = 1.0$ flit/cycle when granted, modeled as an $M/D/1/B$ queue), queueing delay remains minimal for $\rho \le 0.60\text{--}0.70$. However, as injected load approaches saturation ($\rho \to 1.0$), $W_{queue}$ diverges asymptotically, and backpressure cascades upstream through the network.
+
+\subsection{The Pollaczek-Khinchine Formula for General Service Distributions ($M/G/1$)}
+\label{subsec:ch2_mg1}
+\index{M/G/1 Queue}
+\index{Pollaczek-Khinchine Formula}
+
+In real shared-memory multi-cores, packets exhibit heterogeneous lengths:
+\begin{itemize}
+    \item \textbf{Control Packets}: Cache invalidations, coherence requests, and read acknowledgments consist of a single header flit ($L = 1$).
+    \item \textbf{Data Packets}: Cache block write-backs and memory responses carry full 64-byte payloads (e.g., $L = 5$ flits with 128-bit phits).
+\end{itemize}
+
+Because packet lengths follow a discrete bimodal distribution rather than an exponential or deterministic profile, input buffer queuing delay is governed by the \textbf{Pollaczek-Khinchine (P-K) Formula} for an $M/G/1$ queue:
+\begin{equation}
+W_{queue} = \frac{\lambda \cdot \overline{S^2}}{2(1 - \rho)} = \frac{\rho \cdot \overline{S}}{2(1 - \rho)} \left(1 + C_s^2\right)
+\label{eq:ch2_pk_formula}
+\end{equation}
+where $\overline{S}$ is the mean packet service time, $\overline{S^2} = \text{Var}(S) + (\overline{S})^2$ is the second moment of service time, and $C_s^2 = \frac{\sigma_S^2}{(\overline{S})^2}$ is the squared coefficient of variation.
+
+\begin{svgraybox}
+\textbf{The Variance Penalty}: Notice the factor $(1 + C_s^2)$ in Eq.~(\ref{eq:ch2_pk_formula}). For deterministic single-flit traffic, $C_s^2 = 0$, giving minimum delay $W_{MD1} = \frac{\rho \overline{S}}{2(1 - \rho)}$. However, for bimodal coherence traffic (50\% 1-flit and 50\% 5-flit packets), $\overline{S} = 3.0$ and $\overline{S^2} = 13.0$, yielding $C_s^2 = \frac{4}{9} \approx 0.44$. The bimodal variance \textbf{inflates average queuing latency by 44\%} at identical utilization, explaining why multi-core routers suffer sudden saturation under mixed traffic.
+\end{svgraybox}
+
+\subsection{Open Jackson Networks and Multi-Hop End-to-End Latency}
+\label{subsec:ch2_jackson}
+\index{Jackson Networks}
+\index{Product-Form Distribution}
+
+An on-chip interconnect consists of $M$ interconnected router input queues. Let $\gamma_i$ denote the external packet injection rate from local core $i$ into queue $i$, and let $P_{ij}$ denote the routing probability that a packet leaving queue $i$ transitions to downstream queue $j$.
+
+The aggregate arrival rate $\lambda_i$ at every intermediate router queue satisfies the \textbf{Traffic Conservation Equations}:
+\begin{equation}
+\lambda_i = \gamma_i + \sum_{j=1}^M \lambda_j \cdot P_{ji}, \quad \forall i \in \{1, 2, \dots, M\}
+\label{eq:ch2_traffic_conservation}
+\end{equation}
+In vector notation: $\boldsymbol{\lambda} = \boldsymbol{\gamma} (\mathbf{I} - \mathbf{P})^{-1}$, where $(\mathbf{I} - \mathbf{P})^{-1}$ is the Leontief routing inverse.
+
+\begin{theorem}[Jackson's Theorem for On-Chip Networks]
+If each router queue $i$ operates under capacity ($\rho_i = \frac{\lambda_i}{\mu_i} < 1$), the equilibrium joint probability distribution of finding $k_1$ flits in queue $1$, $k_2$ flits in queue $2$, \dots, and $k_M$ flits in queue $M$ factors into a \textbf{Product-Form State Distribution}:
+\begin{equation}
+P(k_1, k_2, \dots, k_M) = \prod_{i=1}^M p_i(k_i) = \prod_{i=1}^M (1 - \rho_i) \cdot \rho_i^{k_i}
+\label{eq:ch2_jackson_product}
+\end{equation}
+\end{theorem}
+Remarkably, Jackson's theorem proves that even though queues feed packets into one another in complex multi-hop meshes, \textbf{each individual queue behaves in steady state as if it were an independent $M/M/1$ queue receiving an independent Poisson arrival stream of rate $\lambda_i$}.
+
+Applying Little's Law across all $M$ queues yields the closed-form formulation for \textbf{Average End-to-End Network Latency}:
+\begin{equation}
+T_{network} = \frac{1}{\sum_{i=1}^M \gamma_i} \sum_{i=1}^M \frac{\rho_i}{\mu_i (1 - \rho_i)} + \bar{h} \cdot t_{hop}
+\label{eq:ch2_jackson_total_lat}
+\end{equation}
+where $\bar{h}$ is the average hop count and $t_{hop}$ is the zero-load router pipeline traversal latency.
+
+\subsection{Bursty Traffic Modeling: The Markov-Modulated Poisson Process (MMPP)}
+\label{subsec:ch2_mmpp}
+\index{MMPP}
+\index{Traffic Burstiness}
+
+In distributed machine learning workloads (e.g., transformer AllReduce synchronization), communication is highly non-Poisson, alternating between long quiet phases and intense bursty floods.
+
+A standard mathematical model for on-chip burstiness is the \textbf{2-State Markov-Modulated Poisson Process (MMPP-2)}:
+\begin{itemize}
+    \item \textbf{State 1 (Idle / Low-Rate)}: Packets arrive at Poisson rate $\lambda_1 \approx 0$.
+    \item \textbf{State 2 (Burst / Active)}: Packets arrive at peak wire rate $\lambda_2 \approx 1.0$ flit/cycle.
+    \item The transition rate matrix between states is $\mathbf{Q} = \begin{bmatrix} -\sigma_1 & \sigma_1 \\ \sigma_2 & -\sigma_2 \end{bmatrix}$.
+\end{itemize}
+
+The burstiness of the traffic is quantified by the \textbf{Index of Dispersion for Counts (IDC)}:
+\begin{equation}
+IDC(t) = \frac{\text{Var}(N(t))}{\mathbb{E}[N(t)]} = 1 + \frac{2 (\lambda_2 - \lambda_1)^2 \sigma_1 \sigma_2}{(\sigma_1 + \sigma_2)^2 (\lambda_1 \sigma_2 + \lambda_2 \sigma_1)} \left(1 - \frac{1 - e^{-(\sigma_1 + \sigma_2)t}}{(\sigma_1 + \sigma_2)t}\right)
+\label{eq:ch2_idc}
+\end{equation}
+For Poisson traffic, $IDC(t) = 1$ for all $t$. For bursty workloads ($IDC(t) \gg 1$), transient packet clusters overwhelm input FIFOs, causing buffer saturation to occur at average injection rates \textbf{30\% to 50\% lower} than predicted by Poisson models.
+
 \section{Lossless Flow Control Mechanisms}
 \label{sec:ch2_flow_control}
 
@@ -150,6 +263,44 @@ $B = 8$ flits & 4 cycles & 100.0\% & 100 flits & 100\% Wire-Rate (Safe Margin) \
 \noalign{\smallskip}\hline\noalign{\smallskip}
 \end{tabular}
 \end{table}
+
+\subsection{Flow Control Taxonomy and Hardware Trade-Offs}
+\label{subsec:ch2_taxonomy}
+
+Modern networks deploy four principal lossless flow-control schemes, summarized in Table~\ref{tab:ch2_flow_control_taxonomy}:
+\begin{enumerate}
+    \item \textbf{Credit-Based Flow Control}: The upstream sender tracks exact downstream queue occupancy. Upstream never transmits unless a credit is available, guaranteeing that downstream buffers never overflow.
+    \item \textbf{On/Off Flow Control}: Instead of sending individual credits per flit, the downstream receiver asserts a single binary `OFF` line when buffer occupancy crosses a high-water mark $T_{high} = B - t_{RTT}$, and de-asserts (`ON`) when occupancy drops below $T_{low}$. This saves reverse wiring tracks at the cost of larger buffer thresholds.
+    \item \textbf{Ack/Nack Flow Control}: The sender optimistically transmits flits without pre-allocating buffer space. If the downstream buffer is full, the flit is dropped and a `NACK` signal requests re-transmission from an upstream replay buffer. This avoids credit counters but incurs heavy re-transmission latency and energy.
+    \item \textbf{Token Flow Control (SWIFT)}: Fast lightweight reservation tokens traverse the network ahead of data flits, reserving crossbar multiplexers and link timeslots in advance.
+\end{enumerate}
+
+\begin{table}[t]
+\caption{Comprehensive Comparison of On-Chip Flow Control Architectures}
+\label{tab:ch2_flow_control_taxonomy}
+\begin{tabular}{p{2.6cm}p{2.2cm}p{2.2cm}p{2.2cm}p{2.4cm}}
+\hline\noalign{\smallskip}
+Scheme & Upstream State & Downstream Logic & Reverse Wire Cost & Latency Penalty \\
+\noalign{\smallskip}\svhline\noalign{\smallskip}
+Credit-Based & $\lceil\log_2 B\rceil$-bit Counter & Credit Generator & 1 bit per VC & 0 cycles (if $B \ge RTT$) \\
+On/Off & 1-bit FSM & Threshold Detect & 1 bit per Port & 1--2 cycles (Hysteresis) \\
+Ack/Nack & Full Replay Buffer & Drop/Detect & 1 bit per Packet & $2 \times RTT$ on drop \\
+Token (SWIFT) & Token Queues & Early Arbiter & Token Wire Bus & Sub-cycle bypass \\
+\noalign{\smallskip}\hline\noalign{\smallskip}
+\end{tabular}
+\end{table}
+
+\section{Buffer Microarchitecture: Input vs. Output vs. Shared DAMQ}
+\label{sec:ch2_buffer_org}
+
+Where buffers are physically situated within the router profoundly influences achievable crossbar throughput and silicon area:
+
+\begin{enumerate}
+    \item \textbf{Input Queuing (IQ)}: Buffers reside exclusively at input ports. While IQ simplifies crossbar timing (crossbar runs at link clock rate $S=1$), it suffers from \textbf{Head-of-Line (HoL) Blocking}: if the head flit of a FIFO is blocked waiting for an occupied output port, all trailing flits in that FIFO are immobilized, even if their destination ports are completely idle. Under uniform random traffic, HoL blocking limits IQ throughput to \textbf{58.6\%} of theoretical capacity.
+    \item \textbf{Output Queuing (OQ)}: Buffers reside exclusively at output ports. OQ completely eliminates HoL blocking, achieving 100\% throughput under arbitrary traffic. However, because all $P$ input ports could simultaneously deliver flits to the same output port in the same clock cycle, an OQ router requires an internal crossbar speedup of $S = P$, requiring $P \times$ higher crossbar clock frequency or $P$-wide multi-write port SRAMs, which is silicon-prohibitive for $P \ge 5$.
+    \item \textbf{Virtual Output Queuing (VOQ)}: Each input port maintains $P$ separate queues—one dedicated to each output port. VOQ eliminates HoL blocking while maintaining a crossbar speedup of $S=1$, but expands queue management logic $P$-fold.
+    \item \textbf{Dynamically Allocated Multi-Queue (DAMQ)}: A single shared pool of SRAM storage is partitioned dynamically among multiple Virtual Channels using linked-list pointer registers. Flits are allocated storage on-demand, achieving optimal buffer utilization under bursty, non-uniform traffic.
+\end{enumerate}
 
 \section{Alternative Flow Control: Token Flow Control in the SWIFT NoC}
 \label{sec:ch2_swift_token}

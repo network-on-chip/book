@@ -133,6 +133,127 @@ In bulk copper at room temperature, the electron mean free path is $\lambda_0 \a
 
 At the 3~nm node ($w \approx 10$~nm), the effective copper resistivity exceeds $15\times$ bulk copper, turning long global wires into unbearable thermal, resistance, and latency bottlenecks.
 
+\subsection{Sub-3nm Transistor Architectures: GAAFET, RibbonFET, and CFET}
+\label{subsec:ch1_gaafet}
+\index{GAAFET}
+\index{RibbonFET}
+\index{CFET}
+
+As silicon dimensions scale into the sub-3nm regime, conventional FinFETs encounter severe short-channel degradation and sub-threshold leakage due to quantum confinement limits and corner parasitic leakage. Semiconductor foundries have transitioned to \textbf{Gate-All-Around Field-Effect Transistors (GAAFETs)} (termed \emph{RibbonFET} by Intel and \emph{MBCFET} by Samsung):
+\begin{enumerate}
+    \item \textbf{Nanosheet Architecture}: Rather than a vertical 3D silicon fin gated on three sides, a GAAFET comprises multiple horizontally stacked silicon nanosheet ribbons (typically 3 to 4 sheets of thickness $t_{sheet} \approx 5\text{--}6\,\mathrm{nm}$ and width $w_{sheet} \approx 15\text{--}40\,\mathrm{nm}$) completely wrapped by the high-$\kappa$ metal gate dielectric ($HfO_2/TiN$).
+    \item \textbf{Sub-Threshold Swing and Electrostatic Control}: Enclosing the channel on all four sides maximizes gate capacitive coupling, driving the sub-threshold swing $S_S$ down to $\approx 64\text{--}67\,\mathrm{mV/decade}$ (near the theoretical thermodynamic limit of $60\,\mathrm{mV/decade}$ at $300\,\mathrm{K}$) and suppressing Drain-Induced Barrier Lowering (DIBL $\le 30\,\mathrm{mV/V}$).
+    \item \textbf{Complementary FET (CFET)}: The ultimate scaling evolution of GAAFETs is the \textbf{CFET}, in which an NMOS nanosheet stack is monolithically fabricated \emph{vertically on top} of a PMOS nanosheet stack. By stacking opposite-polarity transistors vertically, standard cell track height shrinks from 5.0T down to 3.0T or 4.0T, doubling transistor density without requiring physical gate pitch reduction.
+\end{enumerate}
+
+\subsection{Backside Power Delivery Networks (BSPDN / PowerVia)}
+\label{subsec:ch1_bspdn}
+\index{Backside Power Delivery (BSPDN)}
+\index{PowerVia}
+
+In classical Front-End-of-Line / Back-End-of-Line (FEOL/BEOL) manufacturing, both low-voltage logic signal wires and high-current power distribution rails ($V_{dd}, V_{ss}$) compete for the same frontside metal tracks (M0 through M15). Power routing consumes up to 30\% of intermediate metal tracks, exacerbating routing congestion and inducing severe resistive voltage drop ($IR$-drop).
+
+To overcome this interconnect bottleneck, modern sub-2nm nodes introduce the \textbf{Backside Power Delivery Network (BSPDN)} (such as Intel PowerVia and TSMC A16):
+\begin{itemize}
+    \item The wafer is thinned from the backside down to a thickness of $\le 500\,\mathrm{nm}$.
+    \item Power delivery networks ($V_{dd}$ and ground grids) are fabricated entirely on the wafer \textbf{backside} using thick, ultra-low-resistance copper layers.
+    \item Sub-micron \textbf{Nano-Through-Silicon Vias (nTSVs)} connect backside power rails directly to transistor source/drain terminals.
+    \item Frontside metal layers (M0--M14) are freed exclusively for high-density signal interconnects, slashing $IR$-drop by over $30\%$ and increasing signal routing density by up to $20\%$.
+\end{itemize}
+
+\subsection{Alternative Interconnect Metallization: Ruthenium, Cobalt, and Molybdenum}
+\label{subsec:ch1_alt_metals}
+\index{Ruthenium Interconnects}
+\index{Cobalt Metallization}
+\index{Molybdenum}
+
+Because copper requires high-resistivity diffusion barrier liners (Ta/TaN) that do not scale below $1.0\text{--}1.5\,\mathrm{nm}$, the effective copper conductor area in sub-12nm trenches collapses, triggering catastrophic resistivity surges (Eq.~\ref{eq:barrier_liner}).
+
+To solve this physical scaling wall, semiconductor manufacturers are transitioning the lowest metal levels (M0, M1, M2) from copper to \textbf{linerless refractory and platinum-group metals}:
+\begin{itemize}
+    \item \textbf{Ruthenium ($Ru$)}: Ruthenium is a semi-noble metal with high cohesive energy that resists electromigration without requiring any diffusion barrier liner. Crucially, the bulk electron mean free path of ruthenium is only $\lambda_0(Ru) \approx 4.9\,\mathrm{nm}$—nearly \textbf{$8\times$ shorter than copper} ($\lambda_0(Cu) \approx 39.0\,\mathrm{nm}$). Consequently, size-effect grain boundary scattering in ruthenium is drastically attenuated at sub-10nm line widths.
+    \item \textbf{Molybdenum ($Mo$) and Cobalt ($Co$)}: Molybdenum exhibits an electron mean free path of $\lambda_0(Mo) \approx 10.0\,\mathrm{nm}$ and low bulk resistivity ($5.3\,\mu\Omega\cdot\mathrm{cm}$), providing superior aspect-ratio fill characteristics without voiding.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\begin{svgraybox}
+\textbf{The Metal Crossover Threshold}: At wire trench widths $w > 15\,\mathrm{nm}$, copper remains superior due to its low bulk resistivity ($1.68\,\mu\Omega\cdot\mathrm{cm}$ vs. $7.1\,\mu\Omega\cdot\mathrm{cm}$ for $Ru$). However, when wire width shrinks below the \textbf{crossover width ($w \le 12\,\mathrm{nm}$)}, the linerless nature and short mean free path of Ruthenium cause its total line resistance to become \textbf{lower than linered copper}, establishing Ruthenium as the future metallization standard for sub-2nm NoC link routers.
+\end{svgraybox}
+\end{figure}
+
+\subsection{Historical Technology Scaling Across Semiconductor Generations}
+\label{subsec:ch1_scaling_table}
+
+Table~\ref{tab:ch1_history} chronicles the physical parameters of interconnect and transistor scaling from the 180nm planar CMOS node to the 2nm GAAFET generation.
+
+\begin{table}[htbp]
+\centering
+\caption{Comprehensive Interconnect and Transistor Metrics Across Semiconductor Technology Generations}
+\label{tab:ch1_history}
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{Node} & \textbf{Year} & \textbf{Device Type} & \textbf{$V_{dd}$ (V)} & \textbf{Min Pitch} & \textbf{Gate Delay} & \textbf{Wire Delay ($1\text{ mm}$)} \\
+\midrule
+$180\,\mathrm{nm}$ & 1999 & Planar Bulk & 1.80 & $500\,\mathrm{nm}$ & $35.0\,\mathrm{ps}$ & $2.5\,\mathrm{ps}$ \\
+$90\,\mathrm{nm}$  & 2003 & Strained Si & 1.20 & $220\,\mathrm{nm}$ & $15.0\,\mathrm{ps}$ & $8.0\,\mathrm{ps}$ \\
+$45\,\mathrm{nm}$  & 2007 & High-$\kappa$ Metal & 1.00 & $160\,\mathrm{nm}$ & $7.0\,\mathrm{ps}$  & $25.0\,\mathrm{ps}$ \\
+$22\,\mathrm{nm}$  & 2012 & 3D FinFET   & 0.85 & $80\,\mathrm{nm}$  & $3.5\,\mathrm{ps}$  & $90.0\,\mathrm{ps}$ \\
+$7\,\mathrm{nm}$   & 2018 & EUV FinFET  & 0.75 & $40\,\mathrm{nm}$  & $1.8\,\mathrm{ps}$  & $350.0\,\mathrm{ps}$ \\
+$3\,\mathrm{nm}$   & 2023 & GAAFET      & 0.70 & $24\,\mathrm{nm}$  & $1.1\,\mathrm{ps}$  & $1{,}200.0\,\mathrm{ps}$ \\
+$2\,\mathrm{nm}$   & 2025 & RibbonFET/BSPDN & 0.65 & $18\,\mathrm{nm}$ & $0.8\,\mathrm{ps}$  & $2{,}800.0\,\mathrm{ps}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+As documented in Table~\ref{tab:ch1_history}, while gate delay dropped by over \textbf{$43\times$} from 180nm to 2nm, unrepeated wire delay across a 1\,mm global span escalated by more than \textbf{$1{,}100\times$}. This catastrophic divergence provides the definitive physical justification for packet-switched Networks-on-Chip.
+
+\section{High-Frequency Transmission Line Effects and Inductive Peaking}
+\label{sec:ch1_transmission_lines}
+
+As clock frequencies exceed $2\text{--}4\,\mathrm{GHz}$ and signal rise times $t_r$ compress below $30\text{--}50\,\mathrm{ps}$, on-chip global wires cease to behave as purely diffusive distributed $RC$ circuits and transition into distributed $RLC$ transmission lines. When the signal transition time $t_r$ is comparable to the electromagnetic time of flight $t_f = L \sqrt{\mathcal{L} \cdot \mathcal{C}}$, inductive reactance $\omega \mathcal{L}$ rivals series resistance $\mathcal{R}$, inducing reflection ringing, inductive crosstalk, and signal overshoot.
+
+\subsection{The Telegrapher's Equations and the Wave Equation}
+\label{subsec:ch1_telegraphers}
+
+A transmission line is governed by the classical Telegrapher's equations:
+\begin{align}
+-\frac{\partial v(x, t)}{\partial x} &= \mathcal{R} \cdot i(x, t) + \mathcal{L} \cdot \frac{\partial i(x, t)}{\partial t} \label{eq:ch1_telegrapher_v} \\
+-\frac{\partial i(x, t)}{\partial x} &= \mathcal{G} \cdot v(x, t) + \mathcal{C} \cdot \frac{\partial v(x, t)}{\partial t} \label{eq:ch1_telegrapher_i}
+\end{align}
+where $\mathcal{R}$ ($\Omega/\mathrm{m}$), $\mathcal{L}$ ($\mathrm{H/m}$), $\mathcal{G}$ ($\mathrm{S/m}$), and $\mathcal{C}$ ($\mathrm{F/m}$) denote per-unit-length series resistance, loop inductance, dielectric conductance, and shunt capacitance, respectively. Differentiating with respect to spatial coordinate $x$ yields the lossy wave equation:
+\begin{equation}
+\frac{\partial^2 v(x, t)}{\partial x^2} = \mathcal{L}\mathcal{C} \frac{\partial^2 v(x, t)}{\partial t^2} + (\mathcal{R}\mathcal{C} + \mathcal{L}\mathcal{G}) \frac{\partial v(x, t)}{\partial t} + \mathcal{R}\mathcal{G} v(x, t)
+\label{eq:ch1_wave_equation}
+\end{equation}
+
+The transition criterion from the diffusive $RC$ regime to the wave-propagation $RLC$ regime is established by comparing the wire length $L$ to the attenuation attenuation length and signal rise time:
+\begin{equation}
+\text{RLC Effects Significant} \iff t_r \le 2.5 \cdot t_f = 2.5 \cdot L \sqrt{\mathcal{L}\mathcal{C}} \quad \text{and} \quad \mathcal{R} \cdot L \le 2 Z_0
+\label{eq:ch1_rlc_condition}
+\end{equation}
+where $Z_0 = \sqrt{\mathcal{L}/\mathcal{C}}$ is the characteristic impedance of the lossless transmission line. In intermediate metal layers ($M_4\text{--}M_7$), high series resistance ($\mathcal{R} \gg \omega \mathcal{L}$) damps inductive waves, keeping lines in the $RC$ regime. However, in top-level global redistribution layers (thick metal $M_{top}$, $h \ge 1.5\,\mu\mathrm{m}$, $w \ge 1.0\,\mu\mathrm{m}$), series resistance drops to $\mathcal{R} \le 20\,\Omega/\mathrm{mm}$ while loop inductance reaches $\mathcal{L} \approx 0.5\text{--}1.0\,\mathrm{nH/mm}$. Under these conditions, wire propagation speed approaches the speed of light in silicon dioxide ($v = c / \sqrt{\epsilon_r} \approx 150\,\mu\mathrm{m/ps}$), but un-terminated lines suffer severe reflections with reflection coefficient $\Gamma_L = \frac{R_L - Z_0}{R_L + Z_0}$.
+
+\subsection{High-Frequency Skin Effect and Dielectric Loss}
+\label{subsec:ch1_skin_effect}
+
+At multi-gigahertz frequencies, alternating magnetic fields force current toward the outer conductor perimeter, confining conduction to a characteristic skin depth $\delta$:
+\begin{equation}
+\delta = \sqrt{\frac{\rho}{\pi \cdot f \cdot \mu_0 \cdot \mu_r}}
+\label{eq:ch1_skin_depth}
+\end{equation}
+For copper ($\rho = 1.68 \times 10^{-8}\,\Omega\cdot\mathrm{m}$, $\mu_r = 1$), the skin depth is $\delta \approx 0.95\,\mu\mathrm{m}$ at $5\,\mathrm{GHz}$ and shrinks to $\delta \approx 0.67\,\mu\mathrm{m}$ at $10\,\mathrm{GHz}$. When conductor thickness exceeds $2\delta$, current crowding raises the effective AC resistance:
+\begin{equation}
+\mathcal{R}_{AC}(f) \approx \mathcal{R}_{DC} \cdot \left[ 1 + \left(\frac{f}{f_{skin}}\right)^2 \right]^{1/4} \propto \sqrt{f}
+\label{eq:ch1_ac_resistance}
+\end{equation}
+Concurrently, dielectric polarization lag in the low-$k$ inter-layer dielectric introduces a loss tangent $\tan \delta_{diel}$:
+\begin{equation}
+\mathcal{G}(f) = 2 \pi f \cdot \mathcal{C} \cdot \tan \delta_{diel}
+\label{eq:ch1_dielectric_loss}
+\end{equation}
+Together, skin-effect attenuation and dielectric absorption severely attenuate the high-frequency harmonics of digital clock and data edges, causing eye-diagram closure on long unbuffered buses.
+
 \section{The Monolithic Crossbar and Its Quadratic Area Explosion}
 \label{sec:ch1_crossbar}
 
@@ -142,6 +263,37 @@ To avoid the serialized contention of a single shared bus, architects initially 
 \label{eq:crossbar_complexity}
 \end{equation}
 For an MPSoC with $N = 64$ cores, a full crossbar requires $64 \times 64 = 4,096$ crosspoint multiplexer switches and $128 \times 128 = 16,384$ wires crossing a central silicon layout area, causing severe layout congestion, routing track starvation, and parasitic capacitive coupling crosstalk. A full crossbar switch is physically viable only for small clusters ($N \le 4$--$8$ cores).
+
+\section{Optimal Repeater Insertion Theory (Bakoglu's Formulation)}
+\label{sec:ch1_repeaters}
+
+To counteract the quadratic delay growth of long $RC$ lines ($\tau \propto L^2$), designers segment wires by inserting CMOS inverters or non-inverting buffers (repeaters) at regular intervals. By partitioning a line of length $L$ into $k$ equal segments of length $l = L/k$, each driven by a buffer sized $h$ times the minimum-sized inverter, the delay transforms from quadratic to linear in total length:
+\begin{equation}
+\tau_{total} = k \cdot \tau_{segment} = \frac{L}{l} \cdot \left[ R_0 \cdot \left( \frac{\mathcal{C} \cdot l}{h} + C_0 \right) + \frac{\mathcal{R} \cdot l}{h} \cdot C_0 + \frac{1}{2} \mathcal{R}\mathcal{C} \cdot l^2 \right]
+\label{eq:ch1_repeater_delay}
+\end{equation}
+where $R_0$ and $C_0$ are the output drive resistance and input gate capacitance of a minimum-sized inverter ($h=1$), and $\mathcal{R}, \mathcal{C}$ are the per-unit-length wire resistance and capacitance.
+
+By setting the partial derivatives $\frac{\partial \tau_{total}}{\partial l} = 0$ and $\frac{\partial \tau_{total}}{\partial h} = 0$, Bakoglu derived the closed-form optimal repeater spacing $l_{opt}$ and buffer sizing factor $h_{opt}$:
+\begin{align}
+l_{opt} &= \sqrt{\frac{2 R_0 C_0}{\mathcal{R} \cdot \mathcal{C}}} \label{eq:ch1_l_opt} \\
+h_{opt} &= \sqrt{\frac{R_0 \cdot \mathcal{C}}{\mathcal{R} \cdot C_0}} \label{eq:ch1_h_opt}
+\end{align}
+
+Substituting Eq.~(\ref{eq:ch1_l_opt}) and Eq.~(\ref{eq:ch1_h_opt}) into Eq.~(\ref{eq:ch1_repeater_delay}) yields the minimum achievable interconnect propagation delay per unit length:
+\begin{equation}
+\left( \frac{\tau}{L} \right)_{min} = 2 \sqrt{R_0 C_0 \cdot \mathcal{R}\mathcal{C}} \cdot \left( 1 + \sqrt{\frac{1}{2}} \right) \approx 2.41 \cdot \sqrt{R_0 C_0 \cdot \mathcal{R}\mathcal{C}}
+\label{eq:ch1_min_delay_per_mm}
+\end{equation}
+
+\begin{svgraybox}
+\textbf{The Repeater Insertion Dilemma}: While optimal repeater insertion linearizes wire delay, it imposes severe silicon area and power penalties:
+\begin{itemize}
+    \item \textbf{Active Silicon Tax}: For a 1024-bit bus traversing a $20\,\mathrm{mm}$ die, optimal repeaters consume over $12\%$ of active silicon area in intermediate tiers.
+    \item \textbf{Dynamic Switching Power}: $P_{dyn} = k \cdot (h \cdot C_0 + \mathcal{C} \cdot l_{opt}) \cdot V_{dd}^2 \cdot f$, dissipating gigawatts of unrecoverable charging energy across global links.
+    \item \textbf{Bidirectional Routing Obstacles}: Repeaters are unidirectional CMOS amplifiers; bidirectional buses require complex tri-state transceivers and direction-control routing.
+\end{itemize}
+\end{svgraybox}
 
 \section{The Network-on-Chip Paradigm: Packet-Switched Modular Interconnects}
 \label{sec:ch1_noc_paradigm}
@@ -163,8 +315,39 @@ Key advantages of the NoC architecture include:
     \item \textbf{Modularity \& Silicon Reuse}: Adding processing tiles does not require redesigning the global wiring tree.
 \end{enumerate}
 
-\section{Industrial Case Studies: From 48 Cores to 2,048 Cores}
+\section{Industrial Case Studies: From 48 Cores to Wafer-Scale Engines}
 \label{sec:ch1_case_studies}
+
+To examine the real-world execution of NoC architecture in modern silicon, we analyze landmark implementations across academic and industrial milestones:
+
+\subsection{The Intel TeraFLOPS 80-Core Processor (65nm CMOS)}
+\label{subsec:ch1_intel_80core}
+
+Fabricated by Intel in 2007 (Vangal et al., ISSCC), the TeraFLOPS processor represented the world's first microprocessor to achieve $1.0\,\mathrm{TFLOPS}$ double-precision floating-point performance on a single chip. It featured an $8 \times 10$ 2D mesh of compute tiles running at $4.0\,\mathrm{GHz}$ at $1.2\,\mathrm{V}$ ($62\,\mathrm{W}$). Each tile contained a 5-port 5-stage pipelined packet-switched router with crossbar switch bandwidth of $80\,\mathrm{GB/s}$ per node, providing an unprecedented $1.6\,\mathrm{Tb/s}$ of bisection bandwidth across short, regular $1.2\,\mathrm{mm}$ point-to-point links.
+
+\subsection{The Tilera TILE64 Manycore Processor (90nm CMOS)}
+\label{subsec:ch1_tilera64}
+
+The Tilera TILE64 architecture departed from traditional single-mesh NoCs by implementing \textbf{five independent, concurrent physical 2D mesh networks} on the same silicon die:
+\begin{enumerate}
+    \item \textbf{UDI (User Dynamic Interconnect)}: Zero-overhead streaming user-level message passing between processor cores.
+    \item \textbf{IDN (I/O Dynamic Interconnect)}: Dedicated DMA transfers from PCIe and 10GbE network interfaces to on-chip tile SRAM caches.
+    \item \textbf{MDN (Memory Dynamic Interconnect)}: Cache-to-DDR memory controller request and response channels.
+    \item \textbf{TDN (Tile Dynamic Interconnect)}: Coherent L2 cache-to-cache intervention and invalidation traffic.
+    \item \textbf{STN (Static Interconnect)}: Circuit-switched deterministic real-time communication.
+\end{enumerate}
+By separating traffic into independent physical networks, the TILE64 completely prevented cache coherence transactions from being delayed by bulk I/O streaming, delivering over $30\,\mathrm{Tb/s}$ of aggregate bisection throughput.
+
+\subsection{The Cerebras Wafer-Scale Engine (WSE-2 \& WSE-3)}
+\label{subsec:ch1_cerebras}
+
+The Cerebras Wafer-Scale Engine represents the extreme physical limit of monolithic Network-on-Chip scaling. Rather than cutting wafers into individual dies, Cerebras fabricates an entire $300\,\mathrm{mm}$ silicon wafer as a single contiguous compute system:
+\begin{itemize}
+    \item \textbf{Core Count}: $850,000$ AI-optimized tensor processing cores (WSE-2) and $900,000$ cores in 5nm (WSE-3).
+    \item \textbf{Wafer-Scale Interconnect}: The chip-cutting boundary (scribe lines) is bridged using dedicated high-density lithographic cross-reticle metal lines, creating a seamless 2D mesh fabric spanning $46,225\,\mathrm{mm^2}$.
+    \item \textbf{On-Chip Fabric Bandwidth}: The contiguous 2D mesh fabric delivers over $\mathbf{220\,\mathrm{Pb/s}}$ (petabits per second) of internal fabric bandwidth with single-cycle router latency per hop.
+    \item \textbf{Hardware Redundancy}: A built-in fault-tolerant bypass fabric automatically detects and routes around defective fabrication sites, ensuring $100\%$ operational yield on a wafer with thousands of native silicon defect points.
+\end{itemize}
 
 To examine the real-world execution of NoC architecture in modern silicon, we analyze landmark implementations from our literature corpus:
 

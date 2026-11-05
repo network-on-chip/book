@@ -12,7 +12,7 @@
 \label{sec:optical-wireless-intro}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: Garden Hoses vs. Laser Pointers} \\
+\textbf{Architectural Intuition: Garden Hoses vs. Laser Pointers} \\
 Why replace copper wires with light beams and wireless radio waves?
 \begin{itemize}
     \item \textbf{The Copper Wire (The Garden Hose)}: To get water out of a long empty garden hose, you first have to fill up the entire volume of the hose under pressure. In microchips, every copper wire has electrical capacitance ($C$); before a signal arrives, the transmitter must spend electrical energy charging the entire wire, generating latency and heat.
@@ -35,11 +35,11 @@ To escape the limitations of metallic copper, computer architects have turned to
 \label{sec:nanophotonics-foundations}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: The Optical Tuning Fork} \\
+\textbf{Architectural Intuition: The Optical Tuning Fork} \\
 A musical tuning fork vibrates only when a sound matches its exact pitch. A \textbf{Micro-Ring Resonator (MRR)} is an optical tuning fork: it captures only one specific color (wavelength $\lambda_{\mathrm{res}}$) of light while letting all other colors pass straight through. This allows \textbf{Wavelength Division Multiplexing (WDM)}: sending 16 to 64 independent colors of light down a single microscopic silicon tube simultaneously!
 \end{svgraybox}
 
-How can a silicon microchip guide light? Silicon nanophotonics takes advantage of a basic principle of high school physics: **Total Internal Reflection (TIR)**. 
+How can a silicon microchip guide light? Silicon nanophotonics takes advantage of a basic principle of fundamental optics: **Total Internal Reflection (TIR)**. 
 - Silicon has a high refractive index ($n_{\mathrm{Si}} \approx 3.48$).
 - Silicon dioxide glass ($\mathrm{SiO_2}$) has a lower refractive index ($n_{\mathrm{ox}} \approx 1.45$).
 
@@ -49,19 +49,50 @@ When a beam of light travels inside a silicon strip surrounded by glass, it hits
 
 The fundamental building block for routing light inside a chip is the \textbf{Micro-Ring Resonator (MRR)}. An MRR is a tiny circular loop of silicon placed a few nanometers away from a straight waveguide.
 
-As light travels down the straight waveguide, constructive interference occurs inside the ring when the round-trip distance of the ring ($2 \pi R$) matches an exact integer multiple of the optical wavelength:
+\subsubsection{Electromagnetic Waveguide Propagation and Resonance Condition}
+Light propagation in a silicon wire waveguide is governed by Maxwell's vector Helmholtz wave equation. To guarantee that optical signals travel without multi-mode dispersion, the waveguide core dimensions ($w \times h$, typically $450\,\mathrm{nm} \times 220\,\mathrm{nm}$) satisfy the single-mode cutoff condition for the fundamental Transverse Electric ($\mathrm{TE}_0$) mode:
+\begin{equation}
+w \le \frac{\lambda_0}{2 \sqrt{n_{\mathrm{core}}^2 - n_{\mathrm{clad}}^2}}
+\label{eq:waveguide_cutoff}
+\end{equation}
+The evanescent optical field exponentially decays into the lower-index $\mathrm{SiO_2}$ cladding with characteristic penetration depth:
+\begin{equation}
+x_d = \frac{1}{\sqrt{\beta^2 - k_0^2 n_{\mathrm{clad}}^2}}
+\end{equation}
+where $\beta = \frac{2\pi n_{\mathrm{eff}}}{\lambda_0}$ is the propagation constant and $k_0 = \frac{2\pi}{\lambda_0}$ is the free-space wavenumber.
+
+When an optical bus waveguide is placed within distance $g_{\mathrm{gap}} \approx 100\text{--}200\,\mathrm{nm}$ of a circular ring cavity of radius $R$, evanescent wave overlap facilitates power coupling between the waveguide and the ring. Constructive interference occurs inside the ring when the round-trip phase accumulation $\phi$ is an integral multiple of $2\pi$:
+\begin{equation}
+\phi = \beta \cdot L_{\mathrm{cavity}} = \left(\frac{2\pi n_{\mathrm{eff}}}{\lambda_{\mathrm{res}}}\right) \cdot (2\pi R) = 2\pi m
+\end{equation}
+yielding the classic resonance relation:
 \begin{equation}
     m \lambda_{\mathrm{res}} = 2 \pi R \cdot n_{\mathrm{eff}}
     \label{eq:mrr-resonance}
 \end{equation}
-In plain English:
+where $m \in \mathbb{N}^+$ is the azimuthal mode order, $R$ is the ring radius ($5\text{--}10\,\mu\mathrm{m}$), and $n_{\mathrm{eff}}$ is the effective modal index ($2.4\text{--}2.5$).
+
+\subsubsection{Transfer Matrix Method and Spectral Metrics}
+Under the Transfer Matrix Method (TMM), let $t_1, t_2$ denote the through-coupling amplitude transmission coefficients at the bus and drop couplers, and let $a = \exp(-\alpha_{\mathrm{loss}} \pi R)$ represent the internal cavity round-trip amplitude attenuation. The optical power transfer functions at the \textbf{Through Port} and \textbf{Drop Port} are:
+\begin{align}
+T_{\mathrm{thru}}(\lambda) &= \frac{t_1^2 + a^2 t_2^2 - 2 a t_1 t_2 \cos(\phi)}{1 + a^2 t_1^2 t_2^2 - 2 a t_1 t_2 \cos(\phi)} \label{eq:tmm_thru} \\
+T_{\mathrm{drop}}(\lambda) &= \frac{(1 - t_1^2)(1 - t_2^2) a}{1 + a^2 t_1^2 t_2^2 - 2 a t_1 t_2 \cos(\phi)} \label{eq:tmm_drop}
+\end{align}
+
+Key spectral characteristics governing WDM multiplexing density include:
 \begin{itemize}
-    \item $R$ is the radius of the ring (typically $5\text{ to }10\,\mu\mathrm{m}$).
-    \item $n_{\mathrm{eff}}$ is the effective refractive index of the silicon cavity ($2.4\text{--}2.5$).
-    \item $m$ is an integer (the mode number, e.g., $m = 50$).
-    \item $\lambda_{\mathrm{res}}$ is the resonant color of light (e.g., $1550\,\mathrm{nm}$ infrared).
+    \item \textbf{Free Spectral Range (FSR)}: The spectral spacing between adjacent resonant modes:
+    \begin{equation}
+    \mathrm{FSR} = \frac{\lambda_{\mathrm{res}}^2}{n_g \cdot (2\pi R)}
+    \label{eq:fsr_formula}
+    \end{equation}
+    where $n_g = n_{\mathrm{eff}} - \lambda \frac{d n_{\mathrm{eff}}}{d\lambda} \approx 4.0\text{--}4.4$ is the optical group index.
+    \item \textbf{Quality Factor ($Q$)}: Quantifies spectral selectivity and photon cavity lifetime $\tau_{\mathrm{cavity}}$:
+    \begin{equation}
+    Q = \frac{\lambda_{\mathrm{res}}}{\Delta \lambda_{3\mathrm{dB}}} = \omega_{\mathrm{res}} \tau_{\mathrm{cavity}} \approx 10{,}000\text{ to }30{,}000
+    \label{eq:q_factor}
+    \end{equation}
 \end{itemize}
-If the incoming light matches the resonant wavelength $\lambda_{\mathrm{res}}$, it couples into the ring and turns into the **drop port**. All other wavelengths ignore the ring and continue straight through to the **through port**.
 
 \subsection{Switching Element Architectures: CSE vs. PSE}
 
@@ -87,7 +118,7 @@ As analyzed by Kao et al.~\cite{Kao2026} and illustrated in Fig.~\ref{fig:kao-mr
 \label{fig:kao-adf-structures}
 \end{figure}
 
-By assembling PSEs into **Add-Drop Filters (ADFs)** (Fig.~\ref{fig:kao-adf-structures}), Kao et al.~\cite{Kao2026} demonstrated that routing topologies can eliminate internal crossings entirely, preserving signal strength.
+By assembling PSEs into \textbf{Add-Drop Filters (ADFs)} (Fig.~\ref{fig:kao-adf-structures}), Kao et al.~\cite{Kao2026} demonstrated that routing topologies can eliminate internal crossings entirely, preserving signal strength.
 
 \section{Optical Loss Modeling \& Laser Power Sizing}
 \label{sec:optical-loss-budget}
@@ -126,7 +157,7 @@ Because decibels are logarithmic ($3\,\mathrm{dB} = 2\times$), **every $3\,\math
 \label{sec:optical-thermal-effects}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: The Out-of-Tune Guitar} \\
+\textbf{Architectural Intuition: The Out-of-Tune Guitar} \\
 If you leave a guitar in the hot sun, the wooden neck and metal strings expand, throwing the instrument completely out of tune! Silicon does the exact same thing: when a multi-core processor runs hot, silicon's refractive index rises ($dn_{\mathrm{Si}}/dT$), expanding the optical cavity and drifting resonant wavelengths by $\approx 0.10\,\mathrm{nm/^\circ C}$. To prevent data channels from detuning, tiny integrated electric microheaters warm cooler resonators to a steady baseline temperature.
 \end{svgraybox}
 
@@ -152,7 +183,7 @@ To keep rings tuned, engineers place tiny electric microheaters around each ring
 \label{sec:wnoc-foundations}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: Walkie-Talkies in a Crowded Classroom} \\
+\textbf{Architectural Intuition: Walkie-Talkies in a Crowded Classroom} \\
 Passing messages through a 64-core grid of routers is like whispering a message down 14 rows of desks in a classroom. A wireless link is like speaking into a \textbf{walkie-talkie}: every core in the room hears the broadcast in a single clock cycle! On-chip antennas under $1\,\mathrm{mm}$ radiate $60\,\mathrm{GHz}$ millimeter waves, providing lightning-fast broadcast shortcuts for cache coherence and AI reduction collectives.
 \end{svgraybox}
 
@@ -174,6 +205,31 @@ As formulated by Shahmoradi et al.~\cite{Shahmoradi2026} and illustrated in Fig.
     \item \textbf{Receiver (RX)}: An amplifier and an envelope detector that sense the incoming radio wave and convert it back into digital bits.
 \end{enumerate}
 
+\subsection{Electromagnetic Wave Propagation in Lossy Silicon Substrates}
+\label{subsec:ch10_propagation}
+Unlike free-space radio propagation, on-chip wireless channels transmit electromagnetic radiation within a multi-layer sandwich of lossy bulk silicon ($\epsilon_{Si} \approx 11.9$, $\sigma_{Si} \approx 1\text{--}10\,\mathrm{S/m}$), dielectric passivation ($\mathrm{SiO_2}$, $\epsilon_{ox} \approx 3.9$), and heat-sink metal packaging.
+
+The power received by an on-chip antenna at distance $d$ from the transmitter is governed by the \textbf{Modified Friis Transmission Equation}:
+\begin{equation}
+P_{rx}(d) = P_{tx} \cdot G_{tx} G_{rx} \left(\frac{c}{4\pi f \cdot d \sqrt{\epsilon_{\mathrm{eff}}}}\right)^2 \exp(-2 \alpha_{\mathrm{sub}} d)
+\label{eq:modified_friis}
+\end{equation}
+where $G_{tx}, G_{rx}$ are the antenna gains, $\epsilon_{\mathrm{eff}} \approx \frac{\epsilon_{Si} + \epsilon_{ox}}{2} \approx 7.9$ is the effective dielectric permittivity of the substrate stack, and $\alpha_{\mathrm{sub}}$ is the substrate attenuation constant:
+\begin{equation}
+\alpha_{\mathrm{sub}} \approx \frac{\sigma_{Si}}{2} \sqrt{\frac{\mu_0}{\epsilon_0 \epsilon_{Si}}} \quad (\mathrm{Np/m})
+\label{eq:substrate_alpha}
+\end{equation}
+
+In standard CMOS bulk silicon ($\rho \approx 10\,\Omega\cdot\mathrm{cm}$), conductive displacement currents in the substrate dissipate up to $15\text{--}25\,\mathrm{dB/mm}$ of RF power into heat, severely throttling link reach. To overcome this attenuation, advanced WNoC fabrics deploy \textbf{High-Resistivity Silicon (HRS, $\rho > 1\text{ k}\Omega\cdot\mathrm{cm}$)} or patterned ground shield planes under the antenna, slashing substrate attenuation to under $2\,\mathrm{dB/mm}$.
+
+\subsection{Energy-per-Bit and Transceiver Optimization}
+The total energy dissipated per transmitted bit across the wireless link is governed by the aggregate transceiver power dissipation and data rate:
+\begin{equation}
+E_{\mathrm{bit}} = \frac{P_{\mathrm{TRX}}}{R_{\mathrm{data}}} = \frac{P_{\mathrm{PA}} + P_{\mathrm{LNA}} + P_{\mathrm{env\_det}} + P_{\mathrm{baseband}}}{R_{\mathrm{data}}}
+\label{eq:wnoc_ebit}
+\end{equation}
+In modern 28\,nm CMOS implementations, ultra-wideband OOK transceivers achieve data rates of $16\text{--}32\,\mathrm{Gbps}$ per channel at an energy efficiency of \textbf{$0.8\text{ to }1.5\,\mathrm{pJ/bit}$}~\cite{Shahmoradi2026}, delivering sub-nanosecond broadcast latency across centimeters of silicon.
+
 \subsection{Finding the Sweet Spot: Why 60~GHz?}
 
 \begin{figure}[htbp]
@@ -187,6 +243,57 @@ What frequency should on-chip radios use? Fig.~\ref{fig:shahmoradi-power-optima}
 - At lower frequencies ($28\,\mathrm{GHz}$), antennas are too large ($>3\,\mathrm{mm}$), taking up too much silicon space.
 - At extremely high sub-THz frequencies ($140\text{--}245\,\mathrm{GHz}$), antennas are tiny ($<0.5\,\mathrm{mm}$), but power amplifiers become inefficient, burning too much battery power.
 - **The Sweet Spot**: Around **$60\,\mathrm{GHz}$**, antennas are compact enough to fit inside a compute tile ($\approx 1\,\mathrm{mm}$), and CMOS transceivers operate efficiently, consuming only $15\text{--}25\,\mathrm{mW}$ for multi-gigabit line rates.
+
+\section{All-to-All Optical Crossbar Architectures: Corona and ATAC}
+\label{sec:ch10_optical_crossbars}
+\index{Optical Crossbars}
+\index{Corona Architecture}
+\index{SWMR}
+\index{MWSR}
+
+To exploit the vast transmission bandwidth of silicon nanophotonics, researchers have developed monolithic optical crossbar fabrics that interconnect hundreds of cores with single-cycle time-of-flight latency.
+
+\subsection{SWMR vs. MWSR Waveguide Topologies}
+Optical crossbars utilize two primary waveguide connectivity topologies:
+\begin{enumerate}
+    \item \textbf{Single-Writer Multiple-Reader (SWMR)}:
+    Each node owns a dedicated optical waveguide and modulates optical power onto it exclusively (no write contention). The waveguide snakes past all other nodes in the network. Every potential receiving node contains an active Micro-Ring Resonator tuned to that waveguide's wavelength. While SWMR eliminates write arbitration, it requires broadcasting or multi-reader address filtering at receivers.
+    \item \textbf{Multiple-Writer Single-Reader (MWSR)}:
+    Each destination node owns a dedicated waveguide, and any source node can write to it by actuating an MRR. Because multiple senders may attempt to inject light into the same waveguide simultaneously, MWSR mandates \textbf{Optical Arbitration}:
+    \begin{itemize}
+        \item \textbf{Electro-Optic Token Rings}: An optical or electrical token circulates continuously among nodes. A node must capture the token before modulating data onto the shared optical channel.
+        \item \textbf{Optical Reservation Channels}: A designated reservation wavelength precedes the data payload, asserting priority and suppressing conflicting transmissions.
+    \end{itemize}
+\end{enumerate}
+
+\subsection{The Corona and ATAC Architectures}
+In the landmark \textbf{Corona} architecture (Vantrease et al., ISCA 2008), 256 compute cores are organized into 64 four-core clusters interconnected by a circular optical crossbar. Using dense WDM with 64 wavelengths per waveguide, Corona provides full all-to-all crossbar communication with over $10\,\mathrm{TB/s}$ of sustained bisection bandwidth. The \textbf{ATAC} architecture (Kurian et al., PACT 2010) couples optical broadcasting for directory invalidations with electrical mesh routing for unicast data flits, slashing cache coherence transaction latency by $65\%$.
+
+\section{Wireless Medium Access Control and Broadcast Acceleration}
+\label{sec:ch10_wireless_mac}
+\index{Wireless MAC Protocols}
+\index{Broadcast Acceleration}
+\index{W-MESI}
+
+Because on-chip wireless channels operate in a shared electromagnetic medium, multiple antennas radiating simultaneously on the same carrier frequency cause destructive RF interference. To coordinate access, Wireless NoCs deploy lightweight hardware \textbf{Medium Access Control (MAC)} protocols.
+
+\subsection{Hardware MAC Protocols for On-Chip RF Channels}
+\begin{itemize}
+    \item \textbf{Time-Division Multiple Access (TDMA)}: The RF carrier is partitioned into static time slots assigned to individual tiles. While TDMA is contention-free and simple to implement in hardware, it suffers from severe channel underutilization under non-uniform traffic.
+    \item \textbf{Token-Passing Distributed MAC}: A lightweight digital token circulates around a dedicated 1-bit wired ring. Only the tile holding the token is permitted to activate its RF power amplifier, eliminating collisions while providing dynamic bandwidth allocation.
+    \item \textbf{Code-Division Multiple Access (CDMA)}: Nodes modulate data using mutually orthogonal pseudorandom spreading codes (such as Walsh-Hadamard or Orthogonal Variable Spreading Factor, OVSF). Multiple cores transmit simultaneously on the same RF frequency band; receivers apply correlation despreading to extract the intended signal, achieving multi-access concurrency.
+\end{itemize}
+
+\subsection{Broadcast Acceleration in Cache Coherence Protocols (W-MESI)}
+In directory-based cache coherence, an invalidate transaction from the directory must be unicast individually to dozens of sharer cores across multi-hop electrical channels, incurring long serialized queue delays ($30\text{--}60$ cycles).
+
+Under the \textbf{Wireless-Accelerated MESI Protocol (W-MESI)}:
+\begin{enumerate}
+    \item The directory node broadcasts the \texttt{Invalidate} address across the $60\,\mathrm{GHz}$ on-chip wireless channel.
+    \item Because millimeter-wave signals propagate across the $20\,\mathrm{mm}$ die in less than $130\,\mathrm{ps}$, \textbf{all cores receive the invalidation probe in a single clock cycle}.
+    \item Sharers invalidate local L1 cache lines concurrently, aggregating acknowledgments through a wired wired-OR reduction line.
+\end{enumerate}
+By eliminating multi-hop invalidation serialization, W-MESI cuts read-miss and write-invalidation latencies by \textbf{up to $75\%$}, dramatically accelerating thread synchronization and parallel barrier primitives in manycore processors.
 
 \section{Hardware Implementation: Synthesizable Photonic MRR Switch}
 \label{sec:photonic-verilog}

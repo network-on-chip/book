@@ -73,15 +73,79 @@ In a 2D Mesh, deterministic XY routing requires packets to exhaust all displacem
     \item \textbf{Allowed Turns}: $(X \to X), (X \to Y), (Y \to Y)$.
     \item \textbf{Prohibited Turns}: $(Y \to X)$ (no turns from $Y$-channels onto $X$-channels).
 \end{itemize}
-Because $X$-channels never depend on $Y$-channels, all edges in the CDG flow strictly from $X$ to $Y$. The CDG is strictly acyclic, proving that **XY routing is provably deadlock-free on any 2D mesh without requiring virtual channels**.
+Because $X$-channels never depend on $Y$-channels, all edges in the CDG flow strictly from $X$ to $Y$. The CDG is strictly acyclic, proving that \textbf{XY routing is provably deadlock-free on any 2D mesh without requiring virtual channels}.
+
+\subsection{Dateline Routing in $k$-ary $n$-cube Torus Networks}
+\label{subsec:ch5_dateline}
+\index{Dateline Routing}
+\index{Torus Deadlock Freedom}
+
+While dimension-order routing guarantees cycle freedom in a mesh, it fails catastrophically in a \textbf{Torus} ($k$-ary $n$-cube). In a 1D ring of $k$ nodes, packets moving in the positive $X$ direction form a circular dependency loop of length $k$:
+\begin{equation}
+c_0 \longrightarrow c_1 \longrightarrow c_2 \longrightarrow \dots \longrightarrow c_{k-1} \longrightarrow c_0
+\label{eq:ch5_ring_cycle}
+\end{equation}
+Because the physical topology contains cycles, no purely topological turn prohibition can break the circular dependency without partitioning the network into a line (sacrificing the wrap-around link).
+
+To solve this without sacrificing wrap-around bandwidth, Dally and Seitz~\cite{Dally1987} introduced \textbf{Virtual Channel Dateline Routing}:
+\begin{enumerate}
+    \item Each physical channel along dimension $X$ is split into at least two Virtual Channels: $VC_0$ (low channel) and $VC_1$ (high channel).
+    \item An arbitrary physical link is designated as the \textbf{Dateline} (typically the wrap-around link connecting router $k-1$ to router $0$).
+    \item \textbf{Virtual Channel Transition Invariant}:
+    \begin{itemize}
+        \item Packets inject into the network on $VC_0$.
+        \item As long as a packet traverses links prior to the dateline, it remains in $VC_0$.
+        \item Upon crossing the dateline, the packet is forced to transition into $VC_1$.
+        \item A packet in $VC_1$ is strictly forbidden from ever returning to $VC_0$.
+    \end{itemize}
+\end{enumerate}
+
+\begin{theorem}[Torus Deadlock Freedom via Dateline Routing]
+Dateline routing on a $k$-ary 1-cube (ring) using 2 virtual channels per physical link yields a strictly acyclic Channel Dependency Graph.
+\end{theorem}
+
+\begin{proof}
+Let the channels be ordered lexicographically by pair $(VC, x)$, where $VC \in \{0, 1\}$ and $x \in \{0, 1, \dots, k-1\}$ represents the channel originating at node $x$:
+\begin{equation}
+(0, 0) < (0, 1) < \dots < (0, k-2) < (1, 0) < (1, 1) < \dots < (1, k-1)
+\end{equation}
+Traversals within $VC_0$ step from $(0, x)$ to $(0, x+1)$, strictly increasing channel rank. Crossing the dateline transitions from $(0, k-1)$ to $(1, 0)$, strictly increasing channel rank. Traversals within $VC_1$ step from $(1, x)$ to $(1, x+1)$, strictly increasing channel rank. Because every routing step strictly increases channel rank, the CDG is a directed acyclic graph (DAG), guaranteeing deadlock freedom.
+\end{proof}
+
+For a $d$-dimensional torus ($k$-ary $d$-cube), applying dimension-order routing (e.g., $X \to Y \to Z$) combined with independent datelines per dimension guarantees deadlock freedom with $2^d$ (or $2 \times d$) virtual channels.
+
+\subsection{Matrix Formulation and Algorithmic Cycle Detection in CDGs}
+\label{subsec:ch5_cdg_matrix}
+\index{CDG Matrix}
+\index{Cycle Detection}
+
+For complex, irregular, or dynamically reconfigurable NoCs, manual cycle analysis is infeasible. The CDG can be formalized algebraically via an \textbf{Adjacency Dependency Matrix} $M_{CDG} \in \{0, 1\}^{|C| \times |C|}$, where:
+\begin{equation}
+M_{CDG}[i, j] = 
+\begin{cases}
+1, & \text{if } (c_i, c_j) \in E_{CDG} \\
+0, & \text{otherwise}
+\end{cases}
+\label{eq:ch5_matrix_def}
+\end{equation}
+
+The $(i, j)$-th entry of the $m$-th matrix power, $(M_{CDG}^m)[i, j]$, represents the number of directed dependency paths of exact length $m$ from channel $c_i$ to channel $c_j$. Consequently:
+\begin{equation}
+\text{CDG is Acyclic} \iff \text{Tr}(M_{CDG}^m) = 0 \quad \forall m \in \{1, 2, \dots, |C|\}
+\label{eq:ch5_trace_nilpotent}
+\end{equation}
+which is equivalent to stating that $M_{CDG}$ is a nilpotent matrix whose eigenvalues are all identically zero ($\lambda_i(M_{CDG}) = 0 \;\forall i$).
+
+In automated CAD routing synthesizers, deadlock verification is executed in $O(|C| + |E_{CDG}|)$ time using \textbf{Tarjan's Strongly Connected Components (SCC) algorithm}. If every strongly connected component of the CDG consists of a single channel with no self-loop, the routing algorithm is provably deadlock-free.
 
 \section{Glass \& Ni Turn Models for Adaptive Routing}
 \label{sec:ch5_turn_models}
 \index{Turn Model}
 \index{West-First Routing}
 \index{North-Last Routing}
+\index{Negative-First Routing}
 
-While XY routing is deadlock-free, it is strictly non-adaptive: packets cannot route around congested or faulty routers. Christopher J. Glass and Lionel M. Ni~\cite{Glass1994} introduced the **Turn Model**, enabling partially adaptive deadlock-free routing without adding virtual channels.
+While XY routing is deadlock-free, it is strictly non-adaptive: packets cannot route around congested or faulty routers. Christopher J. Glass and Lionel M. Ni~\cite{Glass1994} introduced the \textbf{Turn Model}, enabling partially adaptive deadlock-free routing without adding virtual channels.
 
 \subsection{Turn Analysis in a 2D Mesh}
 In a 2D Mesh, flits travel in 4 directions: East, West, North, South. There are exactly $4 \times 2 = 8$ possible 90-degree turns:
@@ -97,61 +161,123 @@ These 8 turns form two simple directed cycles:
 To prevent deadlock in a mesh network, it is necessary and sufficient to prohibit at least one turn from every simple cycle. To maximize routing adaptiveness, exactly one turn from each directed cycle should be prohibited.
 \end{theorem}
 
-By prohibiting exactly **2 out of the 8 turns** (one clockwise, one counter-clockwise), the network achieves **75\% (6/8) turn freedom** while completely breaking all dependency cycles!
+By prohibiting exactly \textbf{2 out of the 8 turns} (one clockwise, one counter-clockwise), the network achieves \textbf{75\% (6/8) turn freedom} while completely breaking all dependency cycles!
 
 \subsection{The Canonical 2D Turn Models}
 \begin{enumerate}
     \item \textbf{West-First}:
     \begin{itemize}
         \item Prohibited turns: $N \to W$ and $S \to W$.
-        \item Rule: If a packet must travel West ($\Delta X < 0$), it must execute all Westward hops first.
-        \item Adaptiveness: East-bound packets ($\Delta X > 0$) enjoy 100\% full adaptiveness.
+        \item Rule: If a packet must travel West ($\Delta X < 0$), it must execute all Westward hops first before making any North or South turns.
+        \item Adaptiveness: East-bound packets ($\Delta X > 0$) enjoy 100\% full adaptiveness between East, North, and South channels.
     \end{itemize}
     \item \textbf{North-Last}:
     \begin{itemize}
         \item Prohibited turns: $N \to E$ and $N \to W$.
-        \item Rule: Northward hops must be postponed until all East, West, and South hops are complete.
+        \item Rule: Northward hops must be postponed until all East, West, and South hops are complete. Once a packet turns North, it can never turn again.
     \end{itemize}
     \item \textbf{Negative-First}:
     \begin{itemize}
-        \item Prohibited turns: Transitions from positive directions ($+X, +Y$: East, North) to negative directions ($-X, -Y$: West, South).
-        \item Rule: Flits must complete all negative dimension hops before acquiring positive channels.
+        \item Prohibited turns: Transitions from positive directions ($+X, +Y$: East, North) to negative directions ($-X, -Y$: West, South). Specifically, $E \to W$ (180$^\circ$, illegal anyway), $E \to S$, $N \to W$, and $N \to S$.
+        \item Rule: Flits must complete all negative dimension hops before acquiring any positive channels.
     \end{itemize}
 \end{enumerate}
+
+\subsection{3D Turn Models and Combinatorial Complexity}
+\label{subsec:ch5_3d_turn}
+\index{3D Turn Models}
+
+As semiconductor packaging transitions to true 3D integration with Through-Silicon Vias (TSVs), routing must extend to 3D meshes ($X, Y, Z$). In a 3D mesh, there are 6 cardinal directions ($\pm X, \pm Y, \pm Z$).
+
+At each router, a flit arriving from any of the 6 directions can turn onto any of the 4 orthogonal directions, resulting in:
+\begin{equation}
+N_{turns, 3D} = 6 \times 4 = 24 \text{ possible 90-degree turns}
+\label{eq:ch5_3d_turns}
+\end{equation}
+
+These 24 turns project onto the three orthogonal coordinate planes:
+\begin{itemize}
+    \item The $XY$ plane: 8 turns, forming 2 planar cycles (Clockwise and Counter-Clockwise).
+    \item The $XZ$ plane: 8 turns, forming 2 planar cycles.
+    \item The $YZ$ plane: 8 turns, forming 2 planar cycles.
+\end{itemize}
+In total, there are $2 \times 3 = 6$ simple planar cycles, in addition to non-planar 3D cycles (e.g., $+X \to +Y \to +Z \to -X \to -Y \to -Z$).
+
+To guarantee cycle freedom across all 3 dimensions without virtual channels:
+\begin{itemize}
+    \item Under \textbf{3D Negative-First Routing}, all turns from $\{+X, +Y, +Z\}$ to $\{-X, -Y, -Z\}$ are prohibited (a total of $3 \times 3 = 9$ prohibited turns out of 24, leaving 15 permitted turns or 62.5\% adaptiveness).
+    \item Packets must route all $-X, -Y, -Z$ displacements first, and only then route along $+X, +Y, +Z$. This completely prevents both planar and non-planar circular dependencies.
+\end{itemize}
 
 \section{The Odd-Even Turn Model}
 \label{sec:ch5_odd_even}
 \index{Odd-Even Routing}
 
-To eliminate the directional asymmetry of the Glass-Ni turn models, Ge-Ming Chiu~\cite{Chiu2000} introduced the \textbf{Odd-Even Turn Model}, where turn restrictions depend on the column coordinate parity ($x \bmod 2$):
+To eliminate the directional asymmetry inherent in Glass-Ni turn models (where West-bound packets suffer 0\% adaptiveness while East-bound enjoy 100\%), Ge-Ming Chiu~\cite{Chiu2000} introduced the \textbf{Odd-Even Turn Model}. Rather than enforcing uniform turn rules globally, Odd-Even routing modulates turn restrictions according to the \textbf{column parity} ($x \bmod 2$) of the current router:
+
+\begin{definition}[Odd-Even Turn Rules]
+\hfill
 \begin{itemize}
-    \item \textbf{At Even Columns ($x \bmod 2 == 0$)}: Prohibit $N \to W, S \to W$ and $E \to N, E \to S$.
-    \item \textbf{At Odd Columns ($x \bmod 2 == 1$)}: Prohibit $N \to E, S \to E$ and $W \to N, W \to S$.
+    \item \textbf{Rule 1 (Even Columns, $x$ is Even)}: A packet is not permitted to take an $E \to N$ or $E \to S$ turn at any node located in an even column. Furthermore, $N \to W$ and $S \to W$ turns are prohibited at even columns.
+    \item \textbf{Rule 2 (Odd Columns, $x$ is Odd)}: A packet is not permitted to take an $N \to E$ or $S \to E$ turn at any node located in an odd column. Furthermore, $W \to N$ and $W \to S$ turns are prohibited at odd columns.
 \end{itemize}
-By alternating restrictions between adjacent columns, Odd-Even routing distributes adaptiveness uniformly across East-bound and West-bound flows without requiring virtual channels.
+\end{definition}
+
+\begin{theorem}[Deadlock Freedom of Odd-Even Routing]
+The Odd-Even turn model prevents all circular dependencies in a 2D mesh without requiring virtual channels.
+\end{theorem}
+
+\begin{proof}
+A routing cycle in a 2D mesh requires at least one right-to-left (Westward) path segment and at least one left-to-right (Eastward) path segment connected by vertical (North/South) transitions.
+\begin{enumerate}
+    \item In any potential Clockwise cycle ($E \to S \to W \to N \to E$), the turn from $E$ to vertical must occur at an odd column (since $E \to S$ is banned at even columns). The subsequent turn from $W$ to $N$ must occur at an even column (since $W \to N$ is banned at odd columns).
+    \item However, for a packet to transition from an odd column to an even column while traveling West, it must step from $x_{odd}$ to $x_{odd} - 1 = x_{even}$. To return Eastward, it must step from $x_{even}$ to $x_{even} + 1 = x_{odd}$.
+    \item Chiu proved that the alternating sequence of permitted turns forces any hypothetical closed path to violate the column parity constraints, making the formation of a directed cycle topologically impossible.
+\end{enumerate}
+\end{proof}
+
+Odd-Even routing distributes adaptiveness evenly across the fabric: both East-bound and West-bound traffic retain substantial routing flexibility, avoiding the severe thermal and congestion hotspots produced by West-First routing on the western die periphery.
 
 \section{Duato's Theorem for Fully Adaptive Routing}
 \label{sec:ch5_duato}
 \index{Duato's Theorem}
 \index{Escape Virtual Channels}
 
-In 1993, Jos{\'e} Duato~\cite{Duato1993} established a breakthrough result proving that **an adaptive routing function does NOT require an acyclic Channel Dependency Graph to guarantee deadlock freedom**.
+In 1993, Jos{\'e} Duato~\cite{Duato1993} established a foundational breakthrough: \textbf{An adaptive routing function does NOT require an acyclic Channel Dependency Graph to guarantee deadlock freedom}.
+
+\subsection{Formal Mathematical Statement}
+Let $I = (V, C)$ be an interconnection network and $R: C \times V \to \mathcal{P}(C)$ be an adaptive routing function.
 
 \begin{theorem}[Duato, 1993]
-An adaptive routing function $R$ for an interconnection network $I$ is deadlock-free if the channel set $C$ can be partitioned into an adaptive channel subset $C_A$ and an escape channel subset $C_E$ ($C = C_A \cup C_E$) such that:
+An adaptive routing function $R$ is deadlock-free if the channel set $C$ can be partitioned into an adaptive channel subset $C_A$ and an escape channel subset $C_E$ ($C = C_A \cup C_E$, $C_A \cap C_E = \emptyset$) satisfying three conditions:
 \begin{enumerate}
-    \item The escape subnetwork $C_E$ is strictly acyclic under escape routing function $R_E$.
-    \item Flits occupying any adaptive channel in $C_A$ are always permitted to transition into $C_E$.
-    \item The escape subnetwork provides a connected path between every source and destination pair.
+    \item \textbf{Escape Subnetwork Connectedness}: The subnetwork $I_E = (V, C_E)$ provides at least one connected path between every source $s \in V$ and destination $d \in V$ under an escape routing function $R_E \subseteq R$.
+    \item \textbf{Escape Acyclicity}: The Channel Dependency Graph of the escape subnetwork, $D_E = (C_E, E_{CDG, E})$, contains no directed cycles.
+    \item \textbf{Unconditional Escape Transition}: A packet occupying any channel in $C_A$ is always permitted to transition into an eligible channel in $C_E$.
 \end{enumerate}
 \end{theorem}
 
-Under Duato's paradigm, routers deploy at least 2 Virtual Channels per physical link:
+\subsection{Proof of Duato's Theorem}
+\begin{proof}
+Suppose, for contradiction, that a deadlock configuration exists. A deadlocked configuration consists of a non-empty set of packets $\mathcal{S}_{dead}$ where every packet $P \in \mathcal{S}_{dead}$ is permanently blocked awaiting buffer space on channels held by other packets in $\mathcal{S}_{dead}$.
+
+\begin{enumerate}
+    \item No packet in $\mathcal{S}_{dead}$ can be occupying solely channels in $C_E$ with its requested channels residing in $C_E$, because by Condition 2, $D_E$ is strictly acyclic (a finite DAG). The packet occupying the topologically highest channel in $C_E$ has an unobstructed path to its destination and must advance, contradicting the deadlock assumption.
+    \item Therefore, any circular wait must involve packets occupying channels in $C_A$.
+    \item However, by Condition 3, every packet in $C_A$ can request escape channels in $C_E$. By Condition 1, $C_E$ connects all nodes.
+    \item Since $C_E$ is acyclic and possesses finite buffer capacity, packets entering $C_E$ are guaranteed to drain in finite time. Once an escape channel buffer becomes vacant, a stalled packet in $C_A$ acquires it, breaking the stall.
+    \item Hence, an unrecoverable cyclic dependency cannot persist, and the system is provably deadlock-free.
+\end{enumerate}
+\end{proof}
+
+\subsection{Microarchitectural Realization: Adaptive and Escape VCs}
+In modern industrial routers, Duato's theorem is realized using Virtual Channels:
 \begin{itemize}
-    \item $VC_1 \dots VC_{V-1}$: **Adaptive Subnetwork ($C_A$)**, where packets can take any minimal uncongested channel (cycles permitted in CDG).
-    \item $VC_0$: **Escape Subnetwork ($C_E$)**, restricted to strict Dimension-Order (XY) routing (strictly acyclic CDG).
+    \item \textbf{Virtual Channel 0 ($VC_0$)}: Dedicated exclusively as the \textbf{Escape Subnetwork ($C_E$)}. Routing on $VC_0$ is restricted to deterministic Dimension-Order (XY) routing.
+    \item \textbf{Virtual Channels 1 through $V-1$ ($VC_1 \dots VC_{V-1}$)}: Constitute the \textbf{Adaptive Subnetwork ($C_A$)}. Routing in $C_A$ is fully adaptive (minimal or non-minimal), permitting arbitrary turns and cycles in the CDG.
 \end{itemize}
-If contention builds in $C_A$, flits escape into $VC_0$, where the acyclic escape paths guarantee drain to the destination.
+
+During switch allocation, incoming packets prioritize available buffers in $C_A$ to route around congested links. If all downstream $C_A$ virtual channels are congested or stalled, the packet requests allocation on the escape channel $VC_0$. Once on $VC_0$, the flit advances deterministically, guaranteeing drainage and completely preventing deadlock collapse.
 
 \section{Protocol-Level Deadlock and the PCMT Architecture}
 \label{sec:ch5_pcmt}
@@ -159,7 +285,7 @@ If contention builds in $C_A$, flits escape into $VC_0$, where the acyclic escap
 \index{Virtual Networks}
 \index{PCMT}
 
-In shared-memory multi-core processors, routing-level deadlock freedom is insufficient to guarantee system forward progress. Cache coherence protocols introduce high-level message dependencies that can cause **Protocol-Level Deadlock**.
+In shared-memory multi-core processors, routing-level deadlock freedom is insufficient to guarantee system forward progress. Cache coherence protocols introduce high-level message dependencies that can cause \textbf{Protocol-Level Deadlock}.
 
 \begin{figure}[htbp]
 \centering
@@ -170,9 +296,26 @@ In shared-memory multi-core processors, routing-level deadlock freedom is insuff
 \label{fig:ch5_pcmt_deadlock}
 \end{figure}
 
-In directory-based protocols, requests generate forwarded invalidations, which generate responses. If all message types share a common buffer pool, a Request packet cannot be accepted by a core whose output queue is blocked by an outgoing Response packet that cannot enter the congested network.
+\subsection{Coherence Dependency Chains and Classical Virtual Networks}
+In directory-based protocols (such as MESI or MOESI), cache transactions generate a multi-tier dependency chain:
+\begin{equation}
+\text{Request } (M_{req}) \longrightarrow \text{Forwarded Invalidation } (M_{fwd}) \longrightarrow \text{Response / Data } (M_{resp})
+\label{eq:ch5_coherence_chain}
+\end{equation}
 
-The traditional mitigation—**Virtual Networks (VNs)**—rigidly isolates Requests, Invalidation, and Responses into dedicated physical VCs. However, Jia et al.~\cite{Jia2026} proved that VNs suffer from severe Head-of-Line blocking and underutilization:
+If all three message classes share a common buffer pool in the router, a catastrophic protocol deadlock occurs:
+\begin{enumerate}
+    \item Core $A$ issues a memory read request ($M_{req}$) toward Directory $D$.
+    \item Directory $D$ accepts the request and attempts to inject an invalidation probe ($M_{fwd}$) to Core $B$, but the network is full.
+    \item Core $B$ cannot accept incoming messages because its local input buffer is occupied by an unserviced request waiting for an outgoing response buffer to clear.
+    \item A circular wait is established across the memory controllers and network buffers, freezing the entire multi-core chip even though all network routers use deadlock-free XY routing.
+\end{enumerate}
+
+To break this protocol-level dependency, classical systems mandate \textbf{Virtual Networks (VNs)}:
+\begin{equation}
+VN_{req} \cap VN_{fwd} = \emptyset, \quad VN_{fwd} \cap VN_{resp} = \emptyset
+\end{equation}
+Each Virtual Network is assigned dedicated, physically isolated virtual channels. However, Jia et al.~\cite{Jia2026} proved that static VN partitioning incurs severe \textbf{Head-of-Line (HoL) blocking and buffer fragmentation}:
 
 \begin{figure}[htbp]
 \centering
@@ -181,7 +324,95 @@ The traditional mitigation—**Virtual Networks (VNs)**—rigidly isolates Reque
 \label{fig:ch5_pcmt_hol}
 \end{figure}
 
-Jia et al. introduced **PCMT (Prioritizing Coherence Message Types)**, which eliminates rigid VN partitions in favor of a shared unified buffer pool. By prioritizing Response flits during switch allocation, PCMT drains downstream dependence chains and resolves protocol-level deadlocks while **slashing router input buffer area by up to 63\%**.
+Under write-intensive benchmarks, $VN_{req}$ buffers overflow and throttle injection, while adjacent $VN_{resp}$ buffers sit completely idle, wasting up to 65\% of on-chip SRAM capacity.
+
+\subsection{PCMT: Prioritizing Coherence Message Types}
+To eliminate rigid VN partition walls, Jia et al.~\cite{Jia2026} introduced \textbf{PCMT (Prioritizing Coherence Message Types)}, uniting all virtual channels into a \textbf{single shared buffer pool}:
+\begin{enumerate}
+    \item \textbf{Dynamic Priority Schedulers}: Every flit header is stamped with its protocol message category. The switch allocator enforces strict non-preemptive priority:
+    \begin{equation}
+    \text{Priority}(M_{resp}) > \text{Priority}(M_{fwd}) > \text{Priority}(M_{req})
+    \label{eq:ch5_pcmt_priority}
+    \end{equation}
+    Because Responses sit at the sink end of the coherence dependency chain and require no further outbound network messages to be consumed by a core, granting them absolute arbitration priority ensures they drain immediately.
+    \item \textbf{Preemptive Buffer Eviction and Anti-Starvation Counters}: To prevent lower-priority Requests from starving during prolonged Response bursts, PCMT implements an age threshold counter $\tau_{starve}$. Flits waiting longer than $\tau_{starve}$ cycles temporarily promote to highest priority, guaranteeing bounded latency.
+\end{enumerate}
+In 7~nm FinFET standard-cell synthesis, PCMT achieves protocol-level deadlock freedom while \textbf{slashing router input buffer silicon area by 63\%} and improving saturated throughput by 34\% over rigid virtual networks.
+
+\subsection{Detailed Coherence Transaction Sequences and Race Deadlocks in MOESI}
+\label{subsec:ch5_moesi_races}
+\index{MOESI Protocol}
+\index{Protocol Race Hazards}
+
+To visualize how protocol deadlock emerges in real silicon, consider a directory-based MOESI cache coherence protocol with distributed memory controllers across an $8 \times 8$ mesh. When Core $C_0$ attempts to write to memory address $A$ currently cached in Shared ($S$) state by Core $C_1$ and Owned ($O$) state by Core $C_2$:
+\begin{enumerate}
+    \item \textbf{Phase 1 (Request)}: Core $C_0$ injects a \texttt{GetM} (Get Modified) packet on Virtual Network $VN_{req}$ addressed to the Home Directory $D(A)$.
+    \item \textbf{Phase 2 (Forward \& Invalidate)}: Directory $D(A)$ receives \texttt{GetM}, transitions its directory state for line $A$ to the transient state $M^D$ (Modified-Pending), and injects:
+    \begin{itemize}
+        \item A forwarded request \texttt{FwdGetM} on $VN_{fwd}$ to Owner Core $C_2$;
+        \item An invalidation probe \texttt{Inv} on $VN_{fwd}$ to Sharer Core $C_1$.
+    \end{itemize}
+    \item \textbf{Phase 3 (Response \& Invalidation Ack)}:
+    \begin{itemize}
+        \item Owner Core $C_2$ receives \texttt{FwdGetM}, downgrades its local cache line from $O$ to $I$ (Invalid), and transmits the 64-byte data payload \texttt{Data} on $VN_{resp}$ directly to requestor $C_0$.
+        \item Sharer Core $C_1$ receives \texttt{Inv}, invalidates its local copy, and transmits an \texttt{InvAck} acknowledgment on $VN_{resp}$ to requestor $C_0$.
+    \end{itemize}
+    \item \textbf{Phase 4 (Completion)}: Once Core $C_0$ collects both the \texttt{Data} payload and all pending \texttt{InvAck} tokens, it transitions its cache line to Modified ($M$), completes the processor store instruction, and transmits a final \texttt{CompAck} on $VN_{resp}$ to Directory $D(A)$ to clear the transient lock.
+\end{enumerate}
+
+\begin{svgraybox}
+\textbf{The Unbuffered Circular Wait Disaster}: Suppose an architect mistakenly pools all message types into a shared physical buffer without priority preemption. If multiple cores concurrently launch store instructions, $VN_{req}$ flits saturate all input buffers. When Directory $D(A)$ attempts to forward \texttt{FwdGetM}, its egress buffer is blocked by incoming \texttt{GetM} flits. Owner $C_2$ cannot consume incoming requests because its internal outbound queue is blocked waiting to inject \texttt{Data}. Because $C_0$ cannot receive \texttt{Data}, it cannot retire its store, establishing an unbreakable \textbf{circular wait across the memory hierarchy}.
+\end{svgraybox}
+
+\section{Topology-Agnostic Deadlock-Free Routing: Up*/Down* and Segment-Based}
+\label{sec:ch5_updown}
+\index{Up*/Down* Routing}
+\index{Segment-Based Routing}
+
+While dimension-order and turn model routing operate effectively on regular orthogonal topologies (meshes and tori), modern SoCs frequently contain irregular geometries caused by heterogeneous block sizes, memory controller placement, and permanent silicon defects.
+
+\subsection{The Up*/Down* Routing Algorithm}
+Schroeder et al.~\cite{Schroeder1991} established \textbf{Up*/Down* Routing}, a provably deadlock-free algorithm applicable to \textbf{any arbitrary connected graph topology} $G = (V, E)$.
+
+The algorithm proceeds in three phases:
+\begin{enumerate}
+    \item \textbf{Spanning Tree Construction}: A single node is selected as the root node $r \in V$. A breadth-first search (BFS) constructs a spanning tree $T_{BFS}$, assigning each node $u \in V$ an integer depth $d(u)$ representing its shortest hop distance from root $r$.
+    \item \textbf{Edge Direction Assignment}: Every bidirectional physical channel $(u, v) \in E$ is partitioned into two directed channels categorized as \textbf{Up} or \textbf{Down}:
+    \begin{equation}
+    \text{Channel } (u \to v) \text{ is } 
+    \begin{cases}
+    \textbf{Up}, & \text{if } d(u) > d(v) \text{ or } (d(u) = d(v) \text{ and } \text{ID}(u) > \text{ID}(v)) \\
+    \textbf{Down}, & \text{if } d(u) < d(v) \text{ or } (d(u) = d(v) \text{ and } \text{ID}(u) < \text{ID}(v))
+    \end{cases}
+    \label{eq:ch5_updown_rule}
+    \end{equation}
+    \item \textbf{The Up*/Down* Routing Rule}: A packet path is legal if and only if it consists of zero or more \textbf{Up} transitions followed by zero or more \textbf{Down} transitions:
+    \begin{equation}
+    \text{Legal Path Pattern}: \quad [\textbf{Up}]^* \cdot [\textbf{Down}]^*
+    \label{eq:ch5_updown_pattern}
+    \end{equation}
+    Once a packet traverses a \textbf{Down} link, it is strictly forbidden from ever traversing another \textbf{Up} link!
+\end{enumerate}
+
+\begin{theorem}[Deadlock Freedom of Up*/Down* Routing]
+Under the Up*/Down* routing rule, the Channel Dependency Graph contains no directed cycles on any connected graph.
+\end{theorem}
+
+\begin{proof}
+Suppose, for contradiction, that a directed cycle exists in the CDG: $c_0 \to c_1 \to \dots \to c_{k-1} \to c_0$.
+\begin{enumerate}
+    \item A cycle must contain at least one transition from an incoming channel $c_i$ to an outgoing channel $c_{i+1}$ where the node depth increases and subsequently decreases, or vice-versa.
+    \item However, because Down-to-Up transitions ($[\textbf{Down}] \to [\textbf{Up}]$) are strictly prohibited, no path can transition from a higher depth back to a lower depth after descending.
+    \item Channels can only transition $[\textbf{Up}] \to [\textbf{Up}]$, $[\textbf{Up}] \to [\textbf{Down}]$, or $[\textbf{Down}] \to [\textbf{Down}]$.
+    \item Assigning channel rank $\text{rank}(c_{u \to v}) = -d(v)$ for Up channels and $\text{rank}(c_{u \to v}) = +d(v)$ for Down channels guarantees that every legal transition strictly increases topological rank.
+    \item Because channel rank is strictly monotonic, circular wait is topologically impossible.
+\end{enumerate}
+\end{proof}
+
+\subsection{The Root Bottleneck and Segment-Based Routing (SR)}
+While Up*/Down* routing guarantees deadlock freedom on irregular fabrics, it exhibits a severe performance limitation: \textbf{The Root Bottleneck}. Because packets between distant nodes must climb the spanning tree before descending, links near the root node $r$ experience severe congestion, saturating long before periphery channels.
+
+To eliminate the root bottleneck without adding virtual channels, Mejia et al.~\cite{Mejia2006} introduced \textbf{Segment-Based Routing (SR)}. SR partitions the irregular graph into small, locally independent sub-graphs called \emph{segments}. By prohibiting turns locally within each segment rather than enforcing a single global root hierarchy, SR distributes traffic uniformly across all links, achieving up to \textbf{2.5$\times$ higher saturation throughput} than standard Up*/Down* routing.
 
 \section{3D Multi-Chiplet Deadlock Freedom: ScaDA-Rou}
 \label{sec:ch5_scada}

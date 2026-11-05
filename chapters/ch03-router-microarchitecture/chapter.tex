@@ -30,6 +30,64 @@ At the heart of every packet-switched on-chip network is the \textbf{Virtual-Cha
     \item \textbf{Link Traversal (LT)}: Flits traverse the inter-router physical metal link wires to the downstream router.
 \end{enumerate}
 
+\subsection{Critical Path Timing and Logical Effort Analysis}
+\label{subsec:ch3_timing_analysis}
+
+In deep-submicron CMOS, the minimum achievable clock cycle period $T_{clk}$ is constrained by the slowest pipeline stage:
+\begin{equation}
+T_{clk} \ge \max(t_{BW}, t_{RC}, t_{VA}, t_{SA}, t_{ST}) + t_{setup} + t_{clk\_q} + t_{skew}
+\label{eq:ch3_clk_period}
+\end{equation}
+In a canonical uncompressed design, the \textbf{Switch Allocation (SA)} and \textbf{Virtual Channel Allocation (VA)} stages represent the dominant critical paths. A separable input-first switch allocator requires:
+\begin{equation}
+t_{SA} = t_{arb\_in}(V) + t_{wire\_int} + t_{arb\_out}(P)
+\label{eq:ch3_t_sa}
+\end{equation}
+where $t_{arb\_in}(V)$ is the delay of a $V$-input arbiter selecting one VC per input port, and $t_{arb\_out}(P)$ is the delay of a $P$-input arbiter resolving conflicts across input ports for each physical output port ($P = 5$ for 2D mesh: North, South, East, West, Local).
+
+Applying Sutherland's method of \textbf{Logical Effort}, the propagation delay of an $N$-input static CMOS multiplexer tree implemented using transmission gates scales as:
+\begin{equation}
+t_{mux}(N) \approx \tau_0 \cdot \left[ g_{mux} \cdot \left(\frac{C_{out}}{C_{in}}\right)^{1/2} \cdot \log_2 N + p_{mux} \cdot \log_2 N \right]
+\label{eq:ch3_logical_effort}
+\end{equation}
+where $\tau_0 \approx 3\text{--}5\,\mathrm{ps}$ in FinFET nodes, $g_{mux} \approx 2$ is the logical effort of a 2:1 multiplexer, and $p_{mux} \approx 2$ is the parasitic delay. For a $5 \times 5$ 64-bit crossbar, the crossbar traversal delay $t_{ST}$ is dominated by the long RC wire loading of the internal crossbar tracks:
+\begin{equation}
+t_{ST} = t_{driver} + \frac{1}{2} \mathcal{R}_{xbar} \mathcal{C}_{xbar} L_{xbar}^2 + t_{mux\_tree}(5) + t_{latch}
+\label{eq:ch3_t_st}
+\end{equation}
+In modern 7nm and 5nm nodes, $t_{ST} \approx 180\text{--}250\,\mathrm{ps}$, allowing uncompressed routers to clock at $1.5\text{--}2.5\,\mathrm{GHz}$.
+
+\section{Wavefront and Wrapped Wavefront Allocators (WFA \& WWFA)}
+\label{sec:ch3_wavefront}
+
+To escape the scalability limits of separable arbiters without paying the full area cost of iterative matching algorithms, high-throughput architectures employ \textbf{Wavefront Allocation (WFA)}. Pioneered for high-radix switches and deployed in the Intel Single-Chip Cloud Computer (SCC) 48-core processor~\cite{Howard2011}, WFA resolves an $N \times N$ bipartite matching problem simultaneously across a two-dimensional systolic array of arbitration cells.
+
+\subsection{Systolic Token Ripple Allocation}
+\label{subsec:ch3_wfa_array}
+
+A Wavefront Allocator arranges $N \times N$ arbitration cells into a grid where cell $(i, j)$ corresponds to input port $i$ requesting output port $j$. In each cell:
+\begin{align}
+\text{Grant Output: } G_{i, j} &= R_{i, j} \cdot \text{RowIn}_{i, j} \cdot \text{ColIn}_{i, j} \label{eq:ch3_wfa_grant} \\
+\text{Row Ripple: } \text{RowOut}_{i, j} &= \text{RowIn}_{i, j} \cdot \overline{G_{i, j}} \label{eq:ch3_wfa_row} \\
+\text{Col Ripple: } \text{ColOut}_{i, j} &= \text{ColIn}_{i, j} \cdot \overline{G_{i, j}} \label{eq:ch3_wfa_col}
+\end{align}
+Tokens enter from the top-left diagonal ($i = j$) and propagate concurrently along anti-diagonals (wavefronts). A cell wins a grant ($G_{i, j} = 1$) if and only if:
+\begin{enumerate}
+    \item Input $i$ has an active request for output $j$ ($R_{i, j} = 1$).
+    \item No earlier cell in row $i$ has won a grant ($\text{RowIn}_{i, j} = 1$).
+    \item No earlier cell in column $j$ has won a grant ($\text{ColIn}_{i, j} = 1$).
+\end{enumerate}
+
+\subsection{Wrapped Wavefront Allocation (WWFA)}
+\label{subsec:ch3_wwfa}
+
+In a standard WFA, cell $(0, 0)$ always possesses the highest priority, leading to severe starvation of bottom-right cells $(N-1, N-1)$. To enforce round-robin fairness, \textbf{Wrapped Wavefront Allocation (WWFA)} rotates the starting diagonal each cycle using a priority offset $k \in \{0, \dots, N-1\}$:
+\begin{equation}
+\text{Active Start Diagonal: } (i - j) \equiv k \pmod N
+\label{eq:ch3_wwfa_rotation}
+\end{equation}
+When the wavefront reaches the edge of the array, the token signals wrap around cyclically to the opposite boundary. WWFA achieves \textbf{maximal matching} in exactly $2N - 1$ cell delays, guaranteeing 100\% non-interfering bipartite switch allocation with rigorous fairness across all router input ports.
+
 \section{Advanced Pipeline Compression \& Router Bypassing}
 \label{sec:ch3_pipeline_compression}
 
@@ -43,10 +101,31 @@ Because per-hop pipeline latency compounds linearly with network diameter ($T_{n
 \end{figure}
 
 \subsection{Lookahead Routing \& Speculative Switch Allocation}
-\begin{itemize}
-    \item \textbf{Lookahead Routing}: Router $N$ computes the output port for Router $N+1$ and encodes it into the flit header, stripping the RC stage from intermediate hops and saving 1 cycle per hop.
-    \item \textbf{Speculative Switch Allocation}~\cite{Peh2001}: Flits request switch allocation in parallel with virtual channel allocation. Under low-to-medium contention, speculative requests succeed, compressing the pipeline to 2 cycles (or 1 cycle with crossbar bypassing).
-\end{itemize}
+\label{subsec:ch3_speculative}
+
+In a standard router, Virtual Channel Allocation (VA) must precede Switch Allocation (SA) because a flit cannot request crossbar traversal until it has successfully secured a downstream virtual channel. This strict dependency forces a multi-cycle allocation latency:
+\begin{equation}
+t_{alloc} = t_{VA} + t_{SA}
+\end{equation}
+
+Peh \& Dally~\cite{Peh2001} broke this dependency by introducing \textbf{Speculative Switch Allocation}:
+\begin{enumerate}
+    \item \textbf{Parallel Speculative Requests}: A flit simultaneously bids for a downstream VC in the VA stage and speculatively bids for a crossbar output port in the SA stage during the \emph{very same clock cycle}.
+    \item \textbf{Dual Arbiter Priority Hierarchy}: Switch allocation arbiters divide incoming bids into two strict priority tiers:
+    \begin{itemize}
+        \item \textbf{Non-Speculative Requests}: Bids from flits that already secured a downstream VC in an earlier cycle. These always receive absolute priority.
+        \item \textbf{Speculative Requests}: Bids from flits attempting simultaneous VA and SA. These are granted only if no non-speculative flit requests that output port.
+    \end{itemize}
+    \item \textbf{Miss-Prediction Resolution}: If a speculative flit wins its crossbar switch allocation but fails its virtual channel allocation in the concurrent VA stage, its switch grant is squashed (the crossbar slot goes unused for that cycle), and the flit remains in its input buffer to re-arbitrate non-speculatively in the subsequent cycle.
+\end{enumerate}
+
+Under uncongested and moderate traffic loads ($\rho \le 0.50$), speculative requests succeed with $>85\%$ probability, effectively collapsing the 2-cycle allocation phase into a single cycle:
+\begin{equation}
+T_{speculative} = t_{BW} + \max(t_{VA}, t_{SA}) + t_{ST} = 2\text{ cycles}
+\label{eq:ch3_spec_latency}
+\end{equation}
+
+Coupling Speculative Switch Allocation with \textbf{Lookahead Routing} (where each router pre-computes the output port for the \emph{subsequent} downstream hop during link traversal) eliminates the separate Route Computation (RC) cycle entirely, achieving a production 2-stage router (or 1-stage with cut-through crossbar bypassing).
 
 \subsection{Buffer Reservation Scheduling: BuffeRS (TCAD 2026)}
 As formulated by Liu et al.~\cite{Liu2026}, \textbf{BuffeRS} introduces a coordinated time-division buffer reservation protocol that reserves destination buffer slots in advance across router groups, providing deterministic contention-free bypass paths across both monolithic dies and 2.5D multi-chiplet packaging boundaries.
@@ -136,19 +215,95 @@ M[k][j] = 0 \quad (\forall j \ne k), \qquad M[i][k] = 1 \quad (\forall i \ne k)
 
 \subsection{McKeown's iSLIP Iterative Matching Algorithm}
 \label{subsec:ch3_islip}
+\index{iSLIP Algorithm}
+\index{Iterative Matching}
+\index{Bipartite Matching}
 
-For an $N \times N$ crossbar switch, separable allocators can suffer from up to 50\% port under-utilization under heavy traffic. McKeown's \textbf{iSLIP} algorithm~\cite{McKeown1999} achieves 100\% throughput using iterative matching:
+For an $N \times N$ crossbar switch, separable allocators can suffer from up to 50\% port under-utilization under heavy traffic. Nick McKeown's \textbf{iSLIP} algorithm~\cite{McKeown1999} achieves 100\% throughput using iterative matching:
 \begin{enumerate}
-    \item \textbf{Phase 1 (Request)}: Unmatched inputs request all outputs with queued flits.
-    \item \textbf{Phase 2 (Grant)}: Unmatched outputs arbitrate using round-robin pointers $g_j$.
-    \item \textbf{Phase 3 (Accept)}: Inputs arbitrate among received grants using accept pointers $a_i$.
+    \item \textbf{Phase 1 (Request)}: Every unmatched input $i$ sends a request $R_{ij} = 1$ to every output $j$ for which it has queued flits in its Virtual Output Queue (VOQ).
+    \item \textbf{Phase 2 (Grant)}: Every unmatched output $j$ arbitrates among incoming requests using a round-robin pointer $g_j$. It grants the request closest to $g_j$ in cyclic order:
+    \begin{equation}
+    G_{ij} = 1 \iff i = \arg\min_{k: R_{kj}=1} (k - g_j) \pmod N
+    \end{equation}
+    \item \textbf{Phase 3 (Accept)}: Every input $i$ that received one or more grants arbitrates among them using an accept pointer $a_i$. It accepts the grant closest to $a_i$ in cyclic order:
+    \begin{equation}
+    A_{ij} = 1 \iff j = \arg\min_{k: G_{ik}=1} (k - a_i) \pmod N
+    \end{equation}
     \item \textbf{Pointer Update Rule}: Pointers $g_j$ and $a_i$ update \emph{if and only if} the match is accepted in the \textbf{first iteration}:
     \begin{equation}
     g_j = (i + 1) \pmod N, \qquad a_i = (j + 1) \pmod N
     \label{eq:islip_pointers}
     \end{equation}
 \end{enumerate}
-By restricting updates to iteration 1, iSLIP de-synchronizes the grant arbiters, achieving 100\% throughput and maximal matching in $\le \min(N, \log_2 N)$ iterations.
+
+\subsubsection{Formal Convergence and De-Synchronization Proof}
+The foundational theoretical properties of iSLIP are established by the following theorems~\cite{McKeown1999}:
+
+\begin{theorem}[Maximal Matching in Logarithmic Iterations]
+An $N \times N$ iSLIP allocator completes a maximal bipartite matching in at most $\min(N, \lceil \log_2 N \rceil + 1)$ iterations.
+\end{theorem}
+
+\begin{proof}
+Let $U_k$ denote the set of unmatched inputs at the start of iteration $k$.
+\begin{enumerate}
+    \item In iteration 1, every unmatched input requests all outputs with queued traffic. By the properties of round-robin grant and accept arbitration, at least half of the potential matches are resolved, matching at least $1 - 1/e \approx 63.2\%$ of ports under uniform traffic.
+    \item In each subsequent iteration $k \ge 2$, unmatched inputs request only the remaining unmatched outputs.
+    \item Because the graph is finite and bipartite, every iteration that finds an augmenting alternating path adds at least one new match until no augmenting path remains. The matching is therefore guaranteed to be \textbf{maximal} (no further edges can be added without modifying existing pairs) within $\le \lceil \log_2 N \rceil + 1$ iterations.
+\end{enumerate}
+\end{proof}
+
+\begin{lemma}[The Pointer De-Synchronization Lemma]
+Under continuous heavy uniform traffic, updating round-robin pointers strictly in iteration 1 forces the output grant pointers $g_0, g_1, \dots, g_{N-1}$ to de-synchronize into a permutation of $\{0, 1, \dots, N-1\}$.
+\end{lemma}
+
+\begin{proof}
+Suppose, for contradiction, that multiple outputs share identical pointer values: $g_{j_1} = g_{j_2} = i$.
+\begin{enumerate}
+    \item In iteration 1, both outputs $j_1$ and $j_2$ grant input $i$.
+    \item However, input $i$ can accept at most one grant (say, $j_1$).
+    \item By the iSLIP update rule, because grant $j_1$ was accepted, output $j_1$ advances its pointer: $g_{j_1} \leftarrow (i + 1) \bmod N$.
+    \item In contrast, because output $j_2$'s grant was rejected, $g_{j_2}$ remains unchanged at $i$.
+    \item Consequently, identical pointers are forced out of phase. Within at most $N$ cycles, all $N$ grant pointers de-synchronize into distinct values:
+    \begin{equation}
+    g_j \ne g_k \quad \forall j \ne k
+    \end{equation}
+    Once de-synchronized, the grant pointers rotate synchronously in lockstep, forming a time-division multiplexed round-robin schedule where every input is paired with a distinct output with zero contention, delivering \textbf{100\% throughput under uniform traffic without speedup}.
+\end{enumerate}
+\end{proof}
+
+\subsection{Maximum Weight Matching (MWM) and the Tassiulas-Ephremides Bound}
+\label{subsec:ch3_mwm}
+\index{Maximum Weight Matching (MWM)}
+\index{Tassiulas-Ephremides Theorem}
+
+While iSLIP provides near-ideal performance under uniform traffic, non-uniform or adversarial traffic can induce pointer re-synchronization. The theoretical gold standard for crossbar scheduling is \textbf{Maximum Weight Matching (MWM)}, established by Leandros Tassiulas and Anthony Ephremides (1992):
+
+\begin{theorem}[Tassiulas \& Ephremides, 1992]
+Let traffic matrix $\boldsymbol{\Lambda} = [\lambda_{ij}]$ be admissible ($\sum_i \lambda_{ij} < 1$ and $\sum_j \lambda_{ij} < 1$). An allocator executing Maximum Weight Matching with queue length weights $W_{ij} = Q_{ij}(t)$ (Longest Queue First, LQF) or cell age weights $W_{ij} = \text{Age}_{ij}(t)$ (Oldest Cell First, OCF):
+\begin{equation}
+M^* = \arg\max_{M \in \mathcal{M}} \sum_{(i,j) \in M} W_{ij}
+\label{eq:ch3_mwm_formula}
+\end{equation}
+is \textbf{100\% throughput-stable for all admissible traffic matrices}, guaranteeing bounded queue lengths without speedup.
+\end{theorem}
+
+Because solving Eq.~(\ref{eq:ch3_mwm_formula}) exactly requires $O(N^3)$ computational complexity (via the Hungarian or Edmonds-Karp algorithms), monolithic MWM is unviable in sub-nanosecond hardware. High-performance on-chip routers deploy iterative algorithms (such as iSLIP, WFA, and WWFA) as $O(1)$ hardware approximations to approach the theoretical MWM stability bound.
+
+\subsection{Ping-Pong and Dual-Priority Arbiters}
+\label{subsec:ch3_pingpong}
+\index{Ping-Pong Arbiter}
+
+For 2-input contention points (such as virtual channel multiplexers and bidirectional link arbiters), matrix arbiters incur unnecessary gate overhead. A \textbf{Ping-Pong Arbiter} implements exact round-robin alternation using a single toggle flip-flop:
+\begin{equation}
+G_0 = R_0 \cdot (\overline{R_1} + \overline{P}), \qquad G_1 = R_1 \cdot (\overline{R_0} + P)
+\label{eq:ch3_pingpong_logic}
+\end{equation}
+where state bit $P \in \{0, 1\}$ stores the most recently granted requester:
+\begin{equation}
+P(t+1) = \begin{cases} 0, & \text{if } G_0 = 1 \\ 1, & \text{if } G_1 = 1 \\ P(t), & \text{otherwise} \end{cases}
+\end{equation}
+By cascading 2-input ping-pong cells in a binary tree hierarchy, an $N$-input arbiter achieves logarithmic latency ($O(\log N)$ gate levels) with minimal standard-cell silicon area.
 
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch3_interactive}

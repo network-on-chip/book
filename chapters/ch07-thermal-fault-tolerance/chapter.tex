@@ -13,7 +13,7 @@
 
 In modern sub-5\,nm multi-core architectures, power density frequently exceeds $100\,\mathrm{W/cm^2}$---a thermal flux comparable to the surface of the sun. Networks-on-Chip (NoC) routers and high-speed serial links contribute between $20\%$ to $40\%$ of overall chip power dissipation. Because network traffic is intrinsically bursty and spatially non-uniform, switching activity concentrates at topological bottlenecks (such as memory controller interfaces and bisection crossbars), forming extreme localized temperature spikes termed \emph{thermal hotspots}.
 
-The physical consequences of unmitigated thermal hotspots are severe across three fundamental dimensions:
+The physical consequences of unmitigated thermal hotspots are severe across four fundamental failure mechanisms:
 \begin{enumerate}
     \item \textbf{Sub-Threshold Leakage Runaway}: Sub-threshold leakage current exhibits an exponential dependence on absolute operating temperature governed by the Arrhenius formulation:
     \begin{equation}
@@ -29,12 +29,34 @@ The physical consequences of unmitigated thermal hotspots are severe across thre
     \end{equation}
     Reduced mobility diminishes transistor drive current ($I_{\mathrm{on}}$), expanding router pipeline gate delays and causing timing closure violations.
     
-    \item \textbf{Accelerated Electromigration}: Spatial thermal gradients across adjacent router tiles induce intense thermo-mechanical shear stress due to mismatched coefficients of thermal expansion (CTE). Furthermore, according to \emph{Black's Equation}, the Mean Time to Failure ($MTTF$) of copper interconnects drops exponentially with temperature:
+    \item \textbf{Accelerated Electromigration (EM)}: Spatial thermal gradients across adjacent router tiles induce intense thermo-mechanical shear stress due to mismatched coefficients of thermal expansion (CTE). Furthermore, according to \emph{Black's Equation}, the Mean Time to Failure ($MTTF$) of copper interconnects drops exponentially with temperature:
     \begin{equation}
-        MTTF = \frac{A}{J^n} \exp\left(\frac{E_a}{k_B T}\right)
+        MTTF_{EM} = \frac{A}{J^n} \exp\left(\frac{E_a}{k_B T}\right)
         \label{eq:blacks-equation}
     \end{equation}
-    where $J$ is the current density and $E_a \approx 0.9\,\mathrm{eV}$ is the activation energy for copper grain-boundary diffusion. A temperature increase of only $15^\circ\mathrm{C}$ cuts interconnect lifetime by more than $50\%$.
+    where $J$ is the current density, $n \approx 1.5\text{--}2.0$ is the current density exponent, and $E_a \approx 0.9\,\mathrm{eV}$ is the activation energy for copper grain-boundary diffusion. A temperature increase of only $15^\circ\mathrm{C}$ cuts interconnect lifetime by more than $50\%$.
+
+    \item \textbf{Dielectric Breakdown and Device Aging (TDDB and NBTI)}: 
+    \begin{itemize}
+        \item \textbf{Time-Dependent Dielectric Breakdown (TDDB)}: High gate oxide electric fields coupled with elevated temperatures accelerate gate insulator breakdown:
+        \begin{equation}
+        MTTF_{TDDB} \propto \left(\frac{1}{V_{dd}}\right)^{\gamma} \exp\left(\frac{E_{a, TDDB}}{k_B T}\right)
+        \label{eq:tddb}
+        \end{equation}
+        where $E_{a, TDDB} \approx 0.6\text{--}0.8\text{ eV}$.
+        \item \textbf{Negative Bias Temperature Instability (NBTI)}: In PMOS transistors, prolonged negative gate bias at high temperatures breaks $Si\text{--}H$ bonds at the oxide interface, creating interface traps that permanently shift the threshold voltage over time:
+        \begin{equation}
+        \Delta V_{th}(t) \propto \exp\left(-\frac{E_{a, NBTI}}{k_B T}\right) \cdot t^{n_{nbti}}
+        \label{eq:nbti}
+        \end{equation}
+        where $n_{nbti} \approx 0.25$, degrading router setup time margins over several years of continuous operation.
+        \item \textbf{Thermo-Mechanical Fatigue}: Repetitive thermal cycling between idle and burst states induces thermal expansion mismatch fatigue governed by the \textbf{Coffin-Manson Relationship}:
+        \begin{equation}
+        N_f = C_0 \cdot (\Delta T - \Delta T_0)^{-q_{fatigue}}
+        \label{eq:coffin_manson}
+        \end{equation}
+        where $N_f$ is the number of cycles to failure, and $q_{fatigue} \approx 2\text{--}3$ for micro-bumps and TSV joints.
+    \end{itemize}
 \end{enumerate}
 
 \section{Compact Thermal Physics: The Electro-Thermal RC Duality}
@@ -64,14 +86,21 @@ Kirchhoff's Current Law & $\sum I_k = C \frac{dV}{dt}$ & Energy Conservation Law
 \end{tabular}
 \end{table}
 
+\subsection{Multi-Layer Physical Heat Conduction Formulation}
+In modern high-performance packaging, heat generated in the active device layer traverses a vertical hierarchy:
+\begin{equation}
+\text{Active Silicon Layer} \longrightarrow \text{Bulk Silicon Substrate} \longrightarrow \text{Thermal Interface Material (TIM)} \longrightarrow \text{Heat Spreader} \longrightarrow \text{Heat Sink} \longrightarrow \text{Ambient Air}
+\end{equation}
+For any volumetric block $i$ with dimensions $L_x \times L_y \times t_{layer}$, mass density $\rho$, specific heat capacity $c_p$, and directional thermal conductivities $(k_x, k_y, k_z)$, the physical lumped thermal elements are formulated from first principles as:
+\begin{align}
+R_{v, i} &= \frac{t_{layer}}{k_z \cdot (L_x \cdot L_y)} \quad (\text{Vertical Resistance to Layer Below}) \label{eq:rv_formulation} \\
+R_{L, x, ij} &= \frac{L_x}{k_x \cdot (L_y \cdot t_{layer})} \quad (\text{Lateral Conduction in } X \text{ Dimension}) \label{eq:rl_formulation} \\
+C_{\mathrm{th}, i} &= \rho \cdot c_p \cdot (L_x \cdot L_y \cdot t_{layer}) \quad (\text{Thermal Capacitance}) \label{eq:cth_formulation}
+\end{align}
+
 \subsection{State-Space Governing Differential Equations}
 
-Consider an $N \times N$ mesh of router tiles. Each tile $i$ represents a lumped thermal node characterized by:
-\begin{itemize}
-    \item A vertical thermal resistance $R_{v,i}$ conducting heat through the bulk silicon, thermal interface material (TIM), and heat spreader to ambient air ($T_{\mathrm{amb}}$);
-    \item Lateral thermal resistances $R_{L,ij}$ conducting heat to adjacent tiles $j \in \mathcal{N}(i)$;
-    \item A lumped thermal capacitance $C_{\mathrm{th},i}$ representing thermal inertia.
-\end{itemize}
+Consider an $N \times N$ mesh of router tiles. Each tile $i$ represents a lumped thermal node characterized by vertical resistance $R_{v,i}$, lateral resistances $R_{L,ij}$ to adjacent tiles $j \in \mathcal{N}(i)$, and thermal capacitance $C_{\mathrm{th},i}$.
 
 Applying energy conservation yields the continuous nodal differential equation:
 \begin{equation}
@@ -110,12 +139,46 @@ As discovered by Fu et al.~\cite{Fu2019}, on-chip thermal sensors suffer simulta
 \label{fig:fu-gaussian-sum-filter}
 \end{figure}
 
-To prevent filter divergence under non-Gaussian impulse noise, Fu et al.~\cite{Fu2019} deployed an on-chip \textbf{Gaussian-Sum Filter (GSF)}, illustrated in Fig.~\ref{fig:fu-gaussian-sum-filter}. The sensor noise distribution is modeled as a Gaussian Mixture Model (GMM):
+\subsection{Gaussian-Sum Filter (GSF) Algorithmic Formulation}
+To prevent filter divergence under non-Gaussian impulse noise, Fu et al.~\cite{Fu2019} deployed an on-chip \textbf{Gaussian-Sum Filter (GSF)}, illustrated in Fig.~\ref{fig:fu-gaussian-sum-filter}. The sensor noise distribution is modeled as a Gaussian Mixture Model (GMM) with $M$ components:
 \begin{equation}
     p(\mathbf{v}_k) = \sum_{m=1}^M \alpha_{k,m} \mathcal{N}(\mathbf{v}_k; \boldsymbol{\mu}_{k,m}, \mathbf{R}_{k,m}), \qquad \sum_{m=1}^M \alpha_{k,m} = 1
     \label{eq:gmm-noise}
 \end{equation}
-The GSF datapath dynamically tracks $M$ conditional Gaussian estimates in parallel, updating posterior probabilities $\alpha_{k,m}$ based on innovation residuals. Extreme outlier measurements ($|\mathbf{z}_k - \mathbf{H} \hat{\mathbf{x}}_k| > \delta_{\mathrm{Huber}}$) are filtered using Huber thresholding, reducing thermal prediction error standard deviations by $46\%$ to $53\%$ compared to standard Kalman filtering~\cite{Fu2017}.
+
+The GSF datapath dynamically tracks $M$ conditional Gaussian state estimates $\hat{\mathbf{x}}_k^{(m)}$ and error covariance matrices $\mathbf{P}_k^{(m)}$ in parallel:
+\begin{enumerate}
+    \item \textbf{Time Prediction Step}:
+    \begin{align}
+    \hat{\mathbf{x}}_{k|k-1}^{(m)} &= \mathbf{A}_d \hat{\mathbf{x}}_{k-1|k-1}^{(m)} + \mathbf{B}_d \mathbf{u}_{k-1} \\
+    \mathbf{P}_{k|k-1}^{(m)} &= \mathbf{A}_d \mathbf{P}_{k-1|k-1}^{(m)} \mathbf{A}_d^T + \mathbf{Q}
+    \end{align}
+    \item \textbf{Measurement Correction Step}:
+    \begin{align}
+    \mathbf{K}_k^{(m)} &= \mathbf{P}_{k|k-1}^{(m)} \mathbf{H}^T \left(\mathbf{H} \mathbf{P}_{k|k-1}^{(m)} \mathbf{H}^T + \mathbf{R}_{k,m}\right)^{-1} \\
+    \hat{\mathbf{x}}_{k|k}^{(m)} &= \hat{\mathbf{x}}_{k|k-1}^{(m)} + \mathbf{K}_k^{(m)} \left(\mathbf{z}_k - \mathbf{H} \hat{\mathbf{x}}_{k|k-1}^{(m)} - \boldsymbol{\mu}_{k,m}\right) \\
+    \mathbf{P}_{k|k}^{(m)} &= \left(\mathbf{I} - \mathbf{K}_k^{(m)} \mathbf{H}\right) \mathbf{P}_{k|k-1}^{(m)}
+    \end{align}
+    \item \textbf{Bayesian Weight Update}:
+    \begin{equation}
+    \alpha_{k,m} = \frac{\alpha_{k-1,m} \cdot \beta_k^{(m)}}{\sum_{j=1}^M \alpha_{k-1,j} \cdot \beta_k^{(j)}}
+    \label{eq:bayesian_weight}
+    \end{equation}
+    where the innovation likelihood $\beta_k^{(m)}$ is evaluated as:
+    \begin{equation}
+    \beta_k^{(m)} = \mathcal{N}\left(\mathbf{z}_k; \mathbf{H}\hat{\mathbf{x}}_{k|k-1}^{(m)} + \boldsymbol{\mu}_{k,m}, \mathbf{H} \mathbf{P}_{k|k-1}^{(m)} \mathbf{H}^T + \mathbf{R}_{k,m}\right)
+    \end{equation}
+    \item \textbf{Huber Thresholding for Extreme Outliers}: To bound non-linear impulse spikes, measurement innovations exceeding the Huber cutoff $\delta_{Huber}$ are clamped:
+    \begin{equation}
+    \psi_{Huber}(\tilde{\mathbf{z}}_k) = 
+    \begin{cases}
+    \tilde{\mathbf{z}}_k, & \|\tilde{\mathbf{z}}_k\|_2 \le \delta_{Huber} \\
+    \delta_{Huber} \cdot \frac{\tilde{\mathbf{z}}_k}{\|\tilde{\mathbf{z}}_k\|_2}, & \|\tilde{\mathbf{z}}_k\|_2 > \delta_{Huber}
+    \end{cases}
+    \label{eq:huber_clamping}
+    \end{equation}
+\end{enumerate}
+This hybrid architecture isolates extreme outliers, reducing thermal reconstruction error standard deviations by \textbf{46\% to 53\%} compared to classical linear Kalman filters~\cite{Fu2017}.
 
 \section{Intelligent Hotspot Prediction \& Proactive Throttling}
 \label{sec:hotspot-prediction}
@@ -129,7 +192,23 @@ Classical Dynamic Thermal Management (DTM) employs reactive throttling: when a t
 \label{fig:kakoulli-ann-arch}
 \end{figure}
 
-To overcome this fundamental limitation, Kakoulli et al.~\cite{Kakoulli2012} introduced proactive hotspot prediction using on-chip \textbf{Artificial Neural Networks (ANNs)}, depicted in Fig.~\ref{fig:kakoulli-ann-arch}. By partitioning an $8 \times 8$ mesh into four non-overlapping $4 \times 4$ quadrants, each monitored by an independent ANN processing engine, the system processes online traffic counters (buffer occupancies and flit departure rates). The ANN predicts hotspot emergence $\Delta t = 50\text{ to }200$ clock cycles in advance with $65\%$ to $92\%$ accuracy, enabling source quenching before saturation trees form.
+\subsection{Proactive ANN Hardware Pipeline}
+To overcome this fundamental limitation, Kakoulli et al.~\cite{Kakoulli2012} introduced proactive hotspot prediction using on-chip \textbf{Artificial Neural Networks (ANNs)}, depicted in Fig.~\ref{fig:kakoulli-ann-arch}. By partitioning an $8 \times 8$ mesh into four non-overlapping $4 \times 4$ quadrants, each monitored by an independent ANN processing engine, the system processes online traffic counters (buffer occupancies and flit departure rates).
+
+The neural predictor maps the router traffic vector $\mathbf{u}_{net} = [q_{E}, q_{W}, q_{N}, q_{S}, \lambda_{inj}, T_{sensor}]^T$ through a fixed-point multi-layer perceptron datapath:
+\begin{equation}
+\hat{T}_{pred}(t + \Delta t) = \mathbf{W}_2 \cdot \sigma\left(\mathbf{W}_1 \mathbf{u}_{net}(t) + \mathbf{b}_1\right) + \mathbf{b}_2
+\label{eq:ann_predict}
+\end{equation}
+where $\sigma(\cdot)$ is implemented as a piecewise-linear (PWL) approximation of the hyperbolic tangent function in synthesizable RTL.
+
+\subsection{Closed-Loop Proportional-Integral (PI) Thermal Throttling}
+When the predicted future temperature $\hat{T}_{pred}(t + \Delta t)$ exceeds the safe thermal budget $T_{safe}$, a \textbf{Proportional-Integral (PI) controller} modulates the packet injection rate $\lambda_{inj}$ and tile clock frequency $f_{clk}$:
+\begin{equation}
+\Delta f_{clk}(t) = K_p \cdot e_{therm}(t) + K_i \int_0^t e_{therm}(\tau) d\tau
+\label{eq:pi_throttling}
+\end{equation}
+where $e_{therm}(t) = \max(0, \hat{T}_{pred}(t + \Delta t) - T_{safe})$. By proactively attenuating traffic injection $50\text{ to }200$ cycles before thermal thresholds are breached, the network prevents buffer saturation trees from establishing, quenching hotspots without incurring the catastrophic throughput collapse of reactive clock gating.
 
 \section{Silicon Fault Tolerance: The ZoneDefense Framework}
 \label{sec:fault-tolerance-zonedefense}
@@ -242,6 +321,85 @@ Sensor Error (Impulse Noise) & $6.21^\circ\mathrm{C}$ (Raw) & $0.48^\circ\mathrm
 \end{table}
 
 As documented in Table~\ref{tab:thermal-results}, proactive thermal management quenches the hotspot peak by $24.34^\circ\mathrm{C}$ and eliminates lateral spatial thermal gradients across the silicon substrate.
+
+\section{Microchannel Liquid Cooling and Conjugate Heat Transfer}
+\label{sec:ch7_liquid_cooling}
+\index{Microchannel Liquid Cooling}
+\index{Conjugate Heat Transfer}
+
+When heat dissipation density exceeds $200\text{--}400\,\mathrm{W/cm^2}$ in high-performance computing accelerators, passive copper heat spreaders reach their thermodynamic limits due to thermal spreading resistance. To prevent silicon destruction, advanced packaging integrates \textbf{Direct Microchannel Liquid Cooling}, etching microscopic fluidic channels directly into the backside of the silicon substrate.
+
+\subsection{Fluid Dynamics and Convective Heat Transfer in Microchannels}
+Consider a parallel array of microchannels of channel width $w_{ch}$, fin width $w_{fin}$, channel height $H_{ch}$, and length $L_{ch}$. The hydraulic diameter $D_h$ of each channel is:
+\begin{equation}
+D_h = \frac{4 A_{cross}}{P_{wetted}} = \frac{4 (w_{ch} \cdot H_{ch})}{2 (w_{ch} + H_{ch})} = \frac{2 w_{ch} H_{ch}}{w_{ch} + H_{ch}}
+\label{eq:ch7_dh}
+\end{equation}
+
+For laminar coolant flow (Reynolds number $Re = \frac{\rho_f v D_h}{\mu_f} < 2300$, where $\rho_f$ is fluid density, $v$ is mean flow velocity, and $\mu_f$ is dynamic viscosity), the convective heat transfer coefficient $h_{conv}$ is governed by the \textbf{Nusselt Number ($Nu$)}:
+\begin{equation}
+h_{conv} = \frac{Nu \cdot k_f}{D_h}
+\label{eq:ch7_hconv}
+\end{equation}
+where $k_f$ is the thermal conductivity of the coolant (e.g., $k_f \approx 0.6\,\mathrm{W/(m\cdot K)}$ for deionized water). For fully developed laminar flow in rectangular channels of aspect ratio $\alpha_{ch} = H_{ch} / w_{ch}$, the Nusselt number satisfies the analytical polynomial:
+\begin{equation}
+Nu \approx 8.235 \left( 1 - \frac{1.883}{\alpha_{ch}} + \frac{3.76}{\alpha_{ch}^2} - \frac{5.814}{\alpha_{ch}^3} + \frac{5.361}{\alpha_{ch}^4} - \frac{2.0}{\alpha_{ch}^5} \right)
+\label{eq:ch7_nusselt}
+\end{equation}
+
+\subsection{Pressure Drop and Pumping Power Overhead}
+Circulating fluid through micro-scale passages incurs viscous shear losses, producing a longitudinal pressure drop $\Delta P$:
+\begin{equation}
+\Delta P = f_{\mathrm{Darcy}} \cdot \frac{L_{ch}}{D_h} \cdot \frac{\rho_f v^2}{2} = \frac{64}{Re} \cdot \frac{L_{ch}}{D_h} \cdot \frac{\rho_f v^2}{2} = \frac{32 \mu_f v L_{ch}}{D_h^2}
+\label{eq:ch7_pressure_drop}
+\end{equation}
+The electrical power required to drive the micropump is:
+\begin{equation}
+P_{\mathrm{pump}} = \frac{\Delta P \cdot \dot{V}}{\eta_{\mathrm{pump}}} = \frac{\Delta P \cdot (N_{ch} \cdot w_{ch} H_{ch} \cdot v)}{\eta_{\mathrm{pump}}}
+\label{eq:ch7_pump_power}
+\end{equation}
+where $\dot{V}$ is the volumetric flow rate and $\eta_{\mathrm{pump}} \approx 30\%\text{--}45\%$ is pump efficiency. Microchannel liquid cooling achieves effective thermal resistances below $R_{\mathrm{th}} < 0.10\,\mathrm{K/W}$, removing heat fluxes exceeding \textbf{$500\,\mathrm{W/cm^2}$} with less than 2\% electrical pumping power overhead.
+
+\section{Thermal-Aware Multi-Core Floorplanning Optimization}
+\label{sec:ch7_floorplanning}
+\index{Thermal Floorplanning}
+\index{Simulated Annealing}
+
+While Dynamic Thermal Management (DTM) quenches hotspots at run time, physical floorplanning during chip design can prevent hotspots from emerging altogether.
+
+\subsection{Mathematical Problem Formulation}
+Let $\mathcal{B} = \{B_1, B_2, \dots, B_N\}$ denote the set of $N$ functional blocks (compute cores, cache memories, router switches), each characterized by dimensions $(w_i, h_i)$ and nominal power dissipation $P_i$. The objective of \textbf{Thermal-Aware Floorplanning} is to determine coordinate positions $(x_i, y_i)$ that minimize a multi-objective cost function $\Phi$:
+\begin{equation}
+\Phi = w_T \cdot T_{\mathrm{max}} + w_{\Delta T} \cdot \Delta T_{\mathrm{die}} + w_L \cdot L_{\mathrm{wire}} + w_A \cdot \text{Area}_{\mathrm{die}}
+\label{eq:ch7_floorplan_cost}
+\end{equation}
+where $T_{\mathrm{max}} = \max_i T_i$ is peak die temperature, $\Delta T_{\mathrm{die}} = \max_i T_i - \min_j T_j$ is the spatial thermal gradient across the substrate, and $L_{\mathrm{wire}}$ is the total Half-Perimeter Wire Length (HPWL) of inter-router links:
+\begin{equation}
+L_{\mathrm{wire}} = \sum_{e \in E} \left( |x_{u} - x_{v}| + |y_{u} - y_{v}| \right)
+\label{eq:ch7_hpwl}
+\end{equation}
+subject to the non-overlapping constraint:
+\begin{equation}
+|x_i - x_j| \ge \frac{w_i + w_j}{2} \quad \text{or} \quad |y_i - y_j| \ge \frac{h_i + h_j}{2}, \quad \forall i \ne j
+\end{equation}
+
+\subsection{Simulated Annealing Optimization Framework}
+Because floorplanning is an NP-hard combinatorial optimization problem, CAD tools deploy \textbf{Simulated Annealing (SA)}:
+\begin{enumerate}
+    \item \textbf{Perturbation Moves}: At each iteration, the floorplan is perturbed via one of three atomic moves: (a) swapping two tile positions, (b) rotating a tile by $90^\circ$, or (c) shifting a block within the slicing tree or sequence pair representation.
+    \item \textbf{Metropolis Acceptance Criterion}: A candidate move with cost difference $\Delta \Phi = \Phi_{\mathrm{new}} - \Phi_{\mathrm{old}}$ is accepted with probability:
+    \begin{equation}
+    P_{\mathrm{accept}} = 
+    \begin{cases}
+    1, & \Delta \Phi \le 0 \\
+    \exp\left(-\frac{\Delta \Phi}{T_{SA}}\right), & \Delta \Phi > 0
+    \end{cases}
+    \label{eq:ch7_metropolis}
+    \end{equation}
+    where $T_{SA}$ is the simulated annealing temperature.
+    \item \textbf{Cooling Schedule}: The temperature decreases geometrically according to $T_{SA}[k+1] = \alpha_{cool} \cdot T_{SA}[k]$ (with $\alpha_{cool} \approx 0.95\text{--}0.99$).
+\end{enumerate}
+By separating high-power compute cores with low-power L3 cache banks, thermal-aware floorplanning \textbf{reduces peak die temperature by $12^\circ\mathrm{C}$ to $18^\circ\mathrm{C}$} and slashes spatial thermal gradients by over $60\%$ without expanding total die area.
 
 \section{Summary}
 \label{sec:ch7_summary}

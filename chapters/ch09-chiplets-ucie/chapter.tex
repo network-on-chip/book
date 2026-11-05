@@ -12,7 +12,7 @@
 \label{sec:chiplet-revolution}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: The Giant Pizza Problem} \\
+\textbf{Architectural Intuition: The Giant Pizza Problem} \\
 Imagine you are baking a giant pizza the size of a dining table ($800\,\mathrm{mm^2}$). If a single microscopic dust particle or fly lands on it during baking, the health inspector forces you to throw the \emph{entire giant pizza} into the dumpster! This is the monolithic yield crisis: making giant chips results in throwing away over $75\%$ of expensive silicon wafers.
 
 Now imagine instead baking four personal-sized pizzas ($200\,\mathrm{mm^2}$ each) and placing them side by side on a serving board. If a dust speck lands on one, you toss only that single small pizza and keep the other three! Your success rate jumps from $25\%$ to over $82\%$. This is why the semiconductor industry switched from giant monolithic chips to modular \textbf{chiplets}.
@@ -23,18 +23,32 @@ The word \emph{monolithic} comes from the Greek words \emph{mono} (single) and \
 \begin{enumerate}
     \item \textbf{The Optical Reticle Limit (The Camera Viewfinder)}: Chips are manufactured using photolithography machines, which shine ultraviolet light through a glass mask to project circuit patterns onto silicon. Just like a smartphone camera has a fixed rectangular viewfinder, the lithography machine has a maximum optical exposure area called the \textbf{reticle limit} (typically $26\,\mathrm{mm} \times 33\,\mathrm{mm} \approx 858\,\mathrm{mm^2}$). Modern AI processors (such as the NVIDIA Blackwell B200) require over $1000\text{--}1500\,\mathrm{mm^2}$ of silicon. They are simply too big to fit inside the machine's lens in a single shot!
     
-    \item \textbf{Defect Density and Yield Collapse}: Silicon factories are among the cleanest rooms on Earth, but microscopic dust specks ($D_0$, measured in defects per square centimeter) still randomly fall onto wafers. If a dust speck strikes a critical wire, the entire die is dead. The percentage of functional surviving chips is called the \textbf{manufacturing yield} ($Y$). Under Murphy's classic defect model:
-    \begin{equation}
-        Y = \left( \frac{1 - e^{-A \cdot D_0}}{A \cdot D_0} \right)^2 \quad \text{or approximately} \quad Y = e^{-\sqrt{A \cdot D_0}}
-        \label{eq:chiplet-yield}
-    \end{equation}
-    where $A$ is the active silicon area in $\mathrm{cm^2}$. Notice that area $A$ is in the exponent: as chip size grows, the chance of surviving drops \emph{exponentially}. For a defect density of $D_0 = 0.08\,\mathrm{defects/cm^2}$:
+    \item \textbf{Defect Density and Manufacturing Yield Models}: Silicon fabrication facilities (fabs) maintain ISO Class 1 cleanrooms, yet microscopic particulate contamination ($D_0$, measured in defect count per unit area) randomly precipitates onto wafers during chemical-mechanical planarization (CMP), photolithography, and plasma etching. A single killer defect striking an active gate or metal trace invalidates the entire die.
+
+    The percentage of functional, defect-free dies harvested from a wafer is the \textbf{Manufacturing Yield} ($Y$). In the semiconductor literature, several mathematical models formulate yield as a function of active silicon area $A$ ($\mathrm{cm^2}$) and defect density $D_0$ ($\mathrm{defects/cm^2}$):
+    \begin{align}
+    \text{Poisson Yield Model:} \quad & Y_{\mathrm{Poisson}} = \exp(-A \cdot D_0) \label{eq:yield_poisson} \\
+    \text{Seed's Yield Model:} \quad & Y_{\mathrm{Seed}} = \frac{1}{1 + A \cdot D_0} \label{eq:yield_seed} \\
+    \text{Murphy's Yield Model:} \quad & Y_{\mathrm{Murphy}} = \left( \frac{1 - \exp(-A \cdot D_0)}{A \cdot D_0} \right)^2 \label{eq:yield_murphy} \\
+    \text{Bose-Einstein / Negative Binomial:} \quad & Y_{\mathrm{BE}} = \frac{1}{(1 + A \cdot D_0 / \gamma)^\gamma} \label{eq:yield_bose}
+    \end{align}
+    where $\gamma \approx 1.5\text{--}2.5$ represents the defect clustering coefficient.
+
+    Under Murphy's model (Eq.~\ref{eq:yield_murphy}) with a typical defect density of $D_0 = 0.08\,\mathrm{defects/cm^2}$:
     \begin{itemize}
-        \item A massive $800\,\mathrm{mm^2}$ die ($A = 8.0\,\mathrm{cm^2}$) achieves a yield of only $\approx 25\%$ (three out of every four chips are thrown away!).
-        \item Four small $200\,\mathrm{mm^2}$ chiplets ($A = 2.0\,\mathrm{cm^2}$) each achieve a yield of $\approx 82\%$.
+        \item A monolithic reticle-limit die of $800\,\mathrm{mm^2}$ ($A = 8.0\,\mathrm{cm^2}$) achieves a functional yield of only $Y \approx 25.1\%$. Nearly three out of four produced chips are discarded as scrap!
+        \item Conversely, four partitioned chiplets of $200\,\mathrm{mm^2}$ each ($A = 2.0\,\mathrm{cm^2}$) achieve a yield of $Y \approx 82.3\%$ per chiplet.
     \end{itemize}
-    Discarding fewer ruined chips saves hundreds of millions of dollars in factory costs.
-    
+
+    \item \textbf{Wafer Edge Geometry and Die-Per-Wafer (DPW) Economics}: On a circular $300\,\mathrm{mm}$ silicon wafer (radius $R_{\mathrm{wafer}} = 150\,\mathrm{mm}$), the geometric arrangement of rectangular dies results in substantial edge clipping loss. The total number of gross complete dies per wafer ($DPW$) is governed by:
+    \begin{equation}
+    DPW = \frac{\pi R_{\mathrm{wafer}}^2}{A} - \frac{\pi \cdot 2 R_{\mathrm{wafer}}}{\sqrt{2 A}} - N_{\mathrm{margin}}
+    \label{eq:dpw_formula}
+    \end{equation}
+    where the second term accounts for dies partially truncated by the circular wafer perimeter, and $N_{\mathrm{margin}}$ accounts for edge exclusion zones (typically $3\,\mathrm{mm}$). For an $800\,\mathrm{mm^2}$ monolithic die, a $300\,\mathrm{mm}$ wafer yields only $\approx 68$ complete candidate dies. Multiplying by a $25\%$ yield produces merely $\approx 17$ functional chips per $\$20,000$ wafer ($\$1,176$ per raw silicon die before packaging).
+
+    In contrast, for $200\,\mathrm{mm^2}$ chiplets, the wafer yields $\approx 312$ candidate dies. With an $82.3\%$ yield, the fab harvests $\approx 256$ functional chiplets per wafer ($\$78$ per chiplet, or $\$312$ for four chiplets). Even when factoring in a $\$60\text{--}\$100$ advanced packaging surcharge, \textbf{the multi-chiplet architecture cuts total manufacturing costs by over $60\%$}.
+
     \item \textbf{The LEGO Principle (Process Node Specialization)}: Cutting-edge 3\,nm silicon manufacturing is astronomical in cost. High-speed compute cores (AI matrix multipliers and CPU arithmetic units) benefit tremendously from 3\,nm density. However, analog circuits, phase-locked loops (PLL clock generators), and external USB/PCIe memory controllers do not shrink well in 3\,nm. Building memory controllers in 3\,nm is like making car tires out of gold when rubber works better! Chiplets allow architects to build compute cores in 3\,nm, while building memory controllers in mature, inexpensive 14\,nm silicon, snapping them together like LEGO bricks.
 \end{enumerate}
 
@@ -42,7 +56,7 @@ The word \emph{monolithic} comes from the Greek words \emph{mono} (single) and \
 \label{sec:chiplet-packaging}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: Dirt Roads vs. 16-Lane Glass Bridges} \\
+\textbf{Architectural Intuition: Dirt Roads vs. 16-Lane Glass Bridges} \\
 Connecting chiplets across a standard organic circuit board is like driving on a bumpy, slow dirt road: the metal traces are thick ($110\,\mu\mathrm{m}$ bump pitch) and consume $1.2\,\mathrm{pJ/bit}$ to push signals across centimeters of board. In contrast, an \textbf{advanced 2.5D silicon interposer} is like building a 16-lane high-speed glass bridge directly between two houses! Microscopic micro-bumps ($45\,\mu\mathrm{m}$) and ultra-short wires ($1.8\,\mathrm{mm}$) slash energy consumption to $0.33\,\mathrm{pJ/bit}$ while carrying over $4\times$ more data per second.
 \end{svgraybox}
 
@@ -78,18 +92,33 @@ Fig.~\ref{fig:vivet-active-interposer} illustrates the groundbreaking IntAct pro
 \label{sec:ucie-standard}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: The Universal USB-C for Chiplets} \\
+\textbf{Architectural Intuition: The Universal USB-C for Chiplets} \\
 Can you plug an AMD compute chiplet into an Intel memory chiplet or an Apple graphics chiplet? Historically no, because each semiconductor company invented its own secret proprietary wires. The \textbf{Universal Chiplet Interconnect Express (UCIe)} standard acts as the universal ``USB-C'' standard for chiplets: an open industry rulebook that allows silicon tiles from any foundry in the world to connect and communicate seamlessly.
 \end{svgraybox}
 
-To prevent a world where chiplets from different foundries cannot talk to one another, an open consortium of tech companies created the \textbf{UCIe standard}~\cite{UCIe2023}. UCIe organizes communication into three clear layers, exactly like sending a letter through the postal service:
+To prevent a fragmented ecosystem where chiplets from different foundries cannot interconnect, an open industry consortium established the \textbf{UCIe standard}~\cite{UCIe2023}. UCIe organizes inter-die communication into three hierarchical protocol layers:
 
 \begin{enumerate}
-    \item \textbf{Protocol Layer (The Message)}: What language is the message written in? UCIe can carry standard PCIe 6.0/7.0 traffic (for peripherals), CXL 2.0/3.0 (for sharing memory across chiplets), or Raw Streaming NoC packets (for custom on-chip router flits).
+    \item \textbf{Protocol Layer}: Standardizes application message framing across heterogeneous dies. UCIe natively supports:
+    \begin{itemize}
+        \item \textbf{PCIe 6.0/7.0}: For peripheral device connectivity and root-complex attach.
+        \item \textbf{Compute Express Link (CXL 2.0/3.0)}: Split into \texttt{CXL.io} (I/O virtualization), \texttt{CXL.cache} (coherent processor caching of accelerator memory), and \texttt{CXL.mem} (ultra-low-latency direct memory expansion).
+        \item \textbf{UCIe Streaming Mode}: Raw packet streaming interface optimized for custom on-chip router flit transport, eliminating protocol translation overhead for multi-chiplet NoC meshes.
+    \end{itemize}
     
-    \item \textbf{Die-to-Die (D2D) Adapter Layer (The Postal Envelope)}: Packages raw data into standardized Flits (Flow Control Units). It adds error-detecting checksums (CRC-16 or CRC-32) to catch corrupted bits, manages retry buffers to re-send lost data, and tracks return credits to ensure the receiver's mailbox never overflows.
+    \item \textbf{Die-to-Die (D2D) Adapter Layer}: Bridges raw protocol transactions onto physical link channels. It performs:
+    \begin{itemize}
+        \item \textbf{Flit Packing}: Aggregates protocol bytes into standardized Flits (Flow Control Units): 68-byte raw flits, 128-byte flits with 32-bit CRC, or 256-byte latency-optimized flits.
+        \item \textbf{Link-Level Retry (LLR)}: Guarantees ultra-high data integrity. Incoming flits are checked via CRC-32; upon detection of bit errors, an automatic replay request forces the transmitter's retry FIFO to retransmit corrupted flits, driving the uncorrectable Bit Error Rate to $\text{BER} < 10^{-27}$.
+        \item \textbf{Credit-Based Flow Control}: Prevents receiver FIFO overflow across asynchronous clock domain boundaries.
+    \end{itemize}
     
-    \item \textbf{Physical Layer (PHY, The Delivery Highway)}: The physical copper pins, transmitter drivers, receivers, and clock forwarding wires that blast bits across micro-bumps at up to $32\,\mathrm{Gbps}$ per lane.
+    \item \textbf{Physical Layer (PHY)}: Divided into a \textbf{Logical PHY} (lane mapping, deskew, scrambling, bit alignment) and an \textbf{Electrical PHY} (analog front-end, transmitter drivers, receivers, and phase interpolators). UCIe defines two physical packaging profiles:
+    \begin{itemize}
+        \item \textbf{Standard Package (Organic Substrate)}: Designed for cost-sensitive multi-chip modules. Operates with trace reaches up to $25\,\mathrm{mm}$, solder bump pitches of $100\text{--}130\,\mu\mathrm{m}$, and data rates from $4\text{ to }16\,\mathrm{Gbps/lane}$, delivering edge bandwidth densities of $\approx 150\,\mathrm{Gbps/mm}$.
+        \item \textbf{Advanced Package (Silicon Interposer / Bridge)}: Targets high-performance computing (TSMC CoWoS, Intel EMIB). Operates across ultra-short reaches ($\le 2\,\mathrm{mm}$), microscopic bump pitches of $25\text{--}55\,\mu\mathrm{m}$, and speeds up to $32\,\mathrm{Gbps/lane}$, yielding shoreline bandwidth densities exceeding \textbf{$1300\,\mathrm{Gbps/mm}$} at an unprecedented energy efficiency of \textbf{$< 0.25\,\mathrm{pJ/bit}$}.
+    \end{itemize}
+    In addition to high-speed data lanes, the PHY includes a dedicated $800\,\mathrm{MHz}$ Manchester-encoded \textbf{Sideband channel} for out-of-band link training, lane repair, and power state negotiation without requiring active mainband clocks.
 \end{enumerate}
 
 \section{Inter-Chiplet Latency \& Credit Buffer Sizing}
@@ -111,7 +140,7 @@ When a packet travels from Chiplet A to Chiplet B, how long does the journey tak
 \subsection{Little's Law: The Baseball Catching Problem}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: Playing Catch with Baseballs} \\
+\textbf{Architectural Intuition: Playing Catch with Baseballs} \\
 Imagine two friends playing catch across a football field. It takes 4 seconds for a thrown ball to fly across, and 4 seconds for your friend to throw a ball back. If you only own 1 baseball, you throw it, and then you have to stand with your hands in your pockets for 8 seconds waiting for the ball to return! 
 To keep throwing a ball every single second without ever stopping, how many balls do you need in your bucket? Exactly 8 balls!
 In computer networking, this is called \textbf{Little's Law}: you must have enough buffer space to hold all the data in flight during a complete round trip!
@@ -138,7 +167,7 @@ If the buffer has fewer than 17 flits, the transmitter exhausts its credits and 
 \label{sec:chiplet-deadlocks}
 
 \begin{svgraybox}
-\textbf{High-School Intuition: The Four-Way Traffic Jam} \\
+\textbf{Architectural Intuition: The Four-Way Traffic Jam} \\
 Imagine four cars arrive at an intersection at the same time: Car 1 waits for Car 2, Car 2 waits for Car 3, Car 3 waits for Car 4, and Car 4 waits for Car 1. Nobody can move! That is a routing deadlock. The \textbf{In/Outbound Swap} mechanism acts like a smart traffic cop: after detecting cars waiting too long ($\tau_{\mathrm{stall}}$), the cop tells Car 1 to pull into a side driveway (a 2-flit escape register). Instantly, Cars 4, 3, and 2 drive through! Then Car 1 rejoins the road. The jam is cleared with zero dropped packets.
 \end{svgraybox}
 
@@ -317,6 +346,43 @@ module chiplet_bridge_protocol #(
     end
 endmodule
 \end{lstlisting}
+
+\section{Industrial Multi-Chiplet Interconnect Case Studies}
+\label{sec:chiplet-case-studies}
+
+To examine how these architectural principles are realized in commercial high-performance computing, we analyze four landmark industrial chiplet architectures.
+
+\subsection{AMD Zen 4/5: CCD and IOD Infinity Fabric Architecture}
+AMD pioneered commercial chiplet processors with its Zen family. In the Zen 4/5 server processor (EPYC 9004/9005 series):
+\begin{itemize}
+    \item Up to 12 or 16 \textbf{Core Complex Dies (CCDs)}, fabricated in advanced TSMC 5\,nm/4\,nm nodes, host 8 to 16 high-performance x86 compute cores each with private L2 and shared L3 caches.
+    \item A single centralized \textbf{I/O Die (IOD)}, fabricated in a mature, low-cost TSMC 6\,nm process, integrates 12 channels of DDR5 memory controllers, 128 lanes of PCIe 5.0/CXL, and hardware security engines.
+    \item All CCDs connect point-to-point to the central IOD across an organic package substrate using the proprietary \textbf{Global Memory Interconnect (GMI)} link of the AMD Infinity Fabric. By segregating analog and memory logic into the mature IOD, AMD maximized compute silicon yields while slashing manufacturing costs by over $50\%$ compared to a hypothetical monolithic 96-core die.
+\end{itemize}
+
+\subsection{Intel Sapphire Rapids and Granite Rapids: EMIB Multi-Tile Meshes}
+Intel's Xeon Scalable processors (Sapphire Rapids and Granite Rapids) deploy Embedded Multi-die Interconnect Bridges (EMIB) to construct a seamless multi-tile compute engine:
+\begin{itemize}
+    \item In Sapphire Rapids, four identical symmetric compute tiles (each hosting cores, L3 cache, memory controllers, and PCIe interfaces) are interconnected across their edges by ten EMIB bridges.
+    \item The 2D on-chip mesh fabric continues seamlessly across the EMIB silicon bridges: packet flits cross between adjacent tiles in just $1.5$ clock cycles with sub-picosecond jitter.
+    \item To software, the multi-tile assembly presents a unified, coherent shared memory space with symmetric NUMA properties, eliminating the software partitioning complexity associated with asymmetric I/O dies.
+\end{itemize}
+
+\subsection{NVIDIA Blackwell B200 / GB200: NVLink-C2C and CoWoS-L}
+The NVIDIA Blackwell B200 accelerator pushes chiplet integration to the absolute reticle boundary:
+\begin{itemize}
+    \item Two full reticle-limit silicon dies ($> 800\,\mathrm{mm^2}$ each) are co-packaged on a TSMC CoWoS-L substrate containing embedded high-density passive silicon bridges.
+    \item The two dies are interconnected across their long beachfront by the proprietary \textbf{NVLink-C2C (Chip-to-Chip)} interface, delivering an astronomical \textbf{$10\,\mathrm{TB/s}$ of bidirectional bandwidth} at $< 0.5\,\mathrm{pJ/bit}$.
+    \item Because NVLink-C2C provides cache-coherent memory access with latency indistinguishable from on-die crossbars, CUDA software treats the two dies as a single monolithic 208-billion transistor GPU.
+\end{itemize}
+
+\subsection{CEA-Leti IntAct 96-Core Active Interposer Platform}
+Vivet et al.~\cite{Vivet2021} fabricated the landmark \textbf{IntAct} processor (Fig.~\ref{fig:chen-chiplet-packaging}d), demonstrating the full potential of \textbf{Active Silicon Interposers}:
+\begin{itemize}
+    \item Six 16-core FDSOI compute chiplets are 3D-stacked via micro-bumps onto a $196\,\mathrm{mm^2}$ active CMOS interposer die.
+    \item Rather than serving merely as a passive wiring board, the active interposer embeds a distributed 2D mesh network-on-chip with 3D vertical router ports, integrated switched-capacitor DC-DC voltage regulators, and system memory controllers.
+    \item IntAct demonstrated that embedding routers directly into the active interposer reduces compute chiplet silicon area by $30\%$ and delivers $3\,\mathrm{Tbps/mm^2}$ bisection bandwidth with full dynamic voltage and frequency scaling across each chiplet.
+\end{itemize}
 
 \section{Simulation Model \& Quantitative Evaluation}
 \label{sec:chiplet-sim-results}
