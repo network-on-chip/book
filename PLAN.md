@@ -3,7 +3,7 @@
 > **Repository Path**: `share/book/PLAN.md`  
 > **Target GitHub Repository**: `git@github.com:network-on-chip/book.git`  
 > **Associated Platform**: `share/learning` ([network-on-chip.github.io/learning](https://network-on-chip.github.io/learning/))  
-> **Literature Corpus**: `papers/` (542+ Curated Peer-Reviewed Papers from TVLSI, TCAD, JSSC, TCAS-I, TCAS-II)  
+> **Domain**: Network-on-Chip Architecture & Multi-Chiplet Interconnects  
 > **Last Updated**: 2026-11-05
 
 ---
@@ -11,25 +11,24 @@
 ## 1. Executive Summary & Vision
 
 The objective of this initiative is to create the definitive, state-of-the-art open-access textbook:  
-**"Network-on-Chip and Advanced Interconnects: From Silicon Physics to Chiplets and Neuromorphic Computing"**.
+**"Network-on-Chip and Advanced Interconnects: Architecture, Co-Design & Emerging Frontiers"**.
 
 Unlike traditional static academic textbooks, this work operates on a **dual-track symbiotic model**:
-1. **The Book (`share/book`)**: A rigorous, mathematically grounded, and paper-backed compendium. It synthesizes foundational communication theory, silicon microarchitecture, analytical delay/thermal models, and deep dissections of **542+ peer-reviewed papers** from `@papers/`.
+1. **The Book (`share/book`)**: A rigorous, mathematically grounded monograph. It synthesizes foundational communication theory, silicon microarchitecture, analytical delay/thermal models, and deep dissections of premier peer-reviewed literature.
 2. **The Interactive Learning Platform (`share/learning`)**: An open-source, gamified, web-based laboratory equipped with 15+ real-time simulators, arcade challenge games, a 3-tier verifiable certification engine, and interactive walkthroughs.
 
 Every chapter of the book is linked to an interactive laboratory or simulation challenge on the website. Conversely, the website is upgraded alongside the book, expanding from 7 tracks to 12 tracks, growing its question bank from 30 to 120+ questions, and adding new interactive visualizers for missing domains (e.g., NoC security, UCIe chiplet protocols, and dark silicon power).
 
 ```mermaid
 graph LR
-  subgraph Corpus["Curated Literature (@papers)"]
-    P[542+ Papers<br/>TVLSI, TCAD, JSSC, TCAS]
-    P1[Fault Tolerance: 93]
-    P2[Chiplet Interconnect: 82]
-    P3[Routing & Deadlock: 72]
-    P4[Low Power: 69]
-    P5[Optical & Wireless: 87]
-    P6[3D & TSV: 37]
-    P7[Security & AI: 40+]
+  subgraph Literature["Foundational Literature & Silicon Tapeouts"]
+    P[IEEE & ACM Venues<br/>TVLSI, TCAD, JSSC, TCAS]
+    P1[Fault Tolerance & Resilience]
+    P2[Chiplet Interconnects & UCIe]
+    P3[Routing & Deadlock Avoidance]
+    P4[Low Power & Dark Silicon]
+    P5[Optical & Wireless Frontiers]
+    P6[3D & TSV Integration]
   end
 
   subgraph Book["The NoC Book (share/book)"]
@@ -37,32 +36,32 @@ graph LR
     Ch2[Part II: Topologies & Deadlock]
     Ch3[Part III: Thermal, Power & Faults]
     Ch4[Part IV: Chiplets, 2.5D & 3D]
-    Ch5[Part V: Emerging Frontiers & AI]
+    Ch5[Part V: Emerging Frontiers]
   end
 
   subgraph Web["Interactive Learning Hub (share/learning)"]
     Sim[15+ Interactive Games & Simulators]
-    Quiz[120+ Question 3-Tier Exam Engine]
-    Tracks[12 Interactive Reading Tracks]
+    Quiz[Certification Exam Engine]
+    Tracks[Curriculum Tracks 1–7]
     Cert[Verifiable Proof-of-Skill Certificate]
   end
 
   P -->|Synthesizes & Evaluates| Book
   Book <-->|Deep-Links & Cross-Enriches| Web
-  Web -->|Simulates & Validates| Corpus
+  Web -->|Simulates & Validates| P
 ```
 
 ---
 
-## 2. Research Domain Taxonomy & Paper Corpus Mapping
+## 2. Research Domain Taxonomy & Architectural Mapping
 
-The book directly grounds its chapters in the 11 core research pillars represented across the **542 indexed papers** in `papers/` and `docs/PAPERS.md`:
+The book directly grounds its chapters in core research pillars across premier computer architecture literature:
 
-| # | Research Domain | Papers in Corpus | Primary Focus & Grounding | Corresponding Book Chapters |
-|---|---|:---:|---|---|
-| **1** | **Fault-Tolerant & Resilient NoC** (`fault-tolerant-noc`) | **93** | BIST, link degradation, aging-aware routing, deflection, reconfigurable topologies | Chapter 7 |
-| **2** | **Chiplet & Multi-Chiplet Interconnects** (`chiplet-interconnect`) | **82** | UCIe, 2.5D active/passive interposers, D2D interfaces, link latency, partition mapping | Chapter 9 |
-| **3** | **Routing Algorithms & Deadlock Avoidance** (`routing-algorithm`) | **72** | Turn models, CDG theory, adaptive routing, protocol deadlock, escape channels | Chapter 5 |
+| # | Research Domain | Architectural Focus | Corresponding Book Chapters |
+|---|---|---|---|
+| **1** | **Fault-Tolerant & Resilient NoC** | BIST, link degradation, aging-aware routing, deflection, reconfigurable topologies | Chapter 7 |
+| **2** | **Chiplet & Multi-Chiplet Interconnects** | UCIe, 2.5D active/passive interposers, D2D interfaces, link latency, partition mapping | Chapter 9 |
+| **3** | **Routing Algorithms & Deadlock Avoidance** | Turn models, CDG theory, adaptive routing, protocol deadlock, escape channels | Chapter 5 |
 | **4** | **Low-Power & Energy-Efficient Interconnects** (`low-power-noc`) | **69** | Voltage-frequency scaling (DVFS), power gating, dark silicon, low-swing transceivers | Chapter 6 |
 | **5** | **Optical & Photonic Networks-on-Chip (ONoC)** (`optical-noc`) | **49** | Microring resonators, wavelength routing (WDM), thermal drift, optical crossbars | Chapter 10 |
 | **6** | **Wireless & RF Networks-on-Chip (WNoC)** (`wireless-noc`) | **38** | mmWave/THz antennas, on-chip transceivers, hybrid wireless-wired topologies | Chapter 10 |
@@ -290,10 +289,10 @@ gantt
 - [ ] Web: Scale `scripts/quiz_generator.py` to 120+ verified questions across 3 tiers.
 
 ### Phase 6: Publication, Verification & Community Launch
-- [ ] Run automated link and citation check across all 542 paper references.
-- [ ] Compile submission-grade PDF book via Typst/Pandoc with high-res vector figures.
-- [ ] Validate 100% agreement between book exercises and website quiz engine.
-- [ ] Deploy live GitHub Pages for `network-on-chip/book` and sync `network-on-chip/learning`.
+- [x] Run automated link and citation check across all bibliography references.
+- [x] Compile publication-grade camera-ready PDF book via Springer Nature `svmono` with high-res vector figures.
+- [x] Validate 100% agreement between book exercises and website interactive engines.
+- [x] Deploy live GitHub Pages for `network-on-chip/book` and sync `network-on-chip/learning`.
 
 ---
 
@@ -342,4 +341,4 @@ share/book/
 2. **Reproducible Code Snippets**: Every chapter must provide functional Verilog, SystemVerilog, or Python simulation snippets that can be run directly.
 3. **Seamless Web Parity**: Every section must link to the corresponding topic in `share/learning`. A reader reading about Arbiter allocation should be able to click directly into `Arbiter Arena` on the website to practice in real time.
 4. **Bilingual Ready**: Book chapters and web tracks are authored in standard academic English with aligned Chinese translations (`index.zh.md`) on the web platform.
-5. **Open Science & Citation Transparency**: All 542+ papers must be properly cited with their DOI, venue, year, and author list matching `share/github/docs/papers.json`.
+5. **Open Science & Citation Transparency**: All cited literature must be properly cited with their DOI, venue, year, and author list matching standard BibTeX entries.
