@@ -38,7 +38,7 @@ For the full detailed curriculum and enhancement milestones, see the [Master Pla
   - **[Chapter 8: Three-Dimensional Networks-on-Chip (3D-NoC) & TSVs](chapters/ch08-3d-noc-tsvs/index.md)**
   - **[Chapter 9: Multi-Chiplet Interconnects, 2.5D Systems & UCIe](chapters/ch09-chiplets-ucie/index.md)**
 - **Part V: Emerging Frontiers: Optical, Wireless, Security & AI**
-  - **Chapter 10**: Optical & Wireless Networks-on-Chip (ONoC / WNoC)
+  - **[Chapter 10: Optical & Wireless Networks-on-Chip (ONoC / WNoC)](chapters/ch10-optical-wireless/index.md)**
   - **Chapter 11**: Hardware Security & Trust in On-Chip Networks
   - **Chapter 12**: Domain-Specific NoCs for LLMs, Transformers & Neuromorphic SNNs
 
