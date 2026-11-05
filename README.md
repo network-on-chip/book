@@ -26,7 +26,7 @@ For the full detailed curriculum and enhancement milestones, see the [Master Pla
 
 - **Part I: Foundations & Router Microarchitecture**
   - **[Chapter 1: The Multi-Core Communication Crisis & Interconnect Physics](chapters/ch01-interconnect-crisis/index.md)**
-  - **Chapter 2**: Switching Techniques, Flow Control & Buffer Management
+  - **[Chapter 2: Switching Techniques, Flow Control & Buffer Management](chapters/ch02-switching-flow-control/index.md)**
   - **Chapter 3**: High-Performance Router Microarchitecture & Arbitration
 - **Part II: Topologies, Routing & Deadlock Freedom**
   - **Chapter 4**: Direct, Indirect & High-Radix Interconnect Topologies
