@@ -11,6 +11,16 @@
 \section{The Non-Traditional Interconnect Paradigm}
 \label{sec:optical-wireless-intro}
 
+\begin{svgraybox}
+\textbf{High-School Intuition: Garden Hoses vs. Laser Pointers} \\
+Why replace copper wires with light beams and wireless radio waves?
+\begin{itemize}
+    \item \textbf{The Copper Wire (The Garden Hose)}: To get water out of a long empty garden hose, you first have to fill up the entire volume of the hose under pressure. In microchips, every copper wire has electrical capacitance ($C$); before a signal arrives, the transmitter must spend electrical energy charging the entire wire, generating latency and heat.
+    \item \textbf{The Optical Waveguide (The Laser Pointer)}: Shining a laser pointer across the room delivers photons instantly at the speed of light ($85{,}000\,\mathrm{km/s}$ in silicon). Once turned on, it takes zero extra energy whether you blink it slowly or billions of times per second!
+    \item \textbf{The Wireless Link (The Walkie-Talkie)}: Passing packets across a 64-core grid of routers is like whispering a message down 14 rows of desks in a classroom. A wireless link is like speaking into a walkie-talkie: every core in the room hears the broadcast in a single clock cycle!
+\end{itemize}
+\end{svgraybox}
+
 In conventional electrical Networks-on-Chip, global packet delivery across large silicon dies requires multi-hop store-and-forward or wormhole router hops. Each intermediate hop incurs input buffering, arbitration latency, and crossbar traversal energy, while long copper wire segments dissipate substantial dynamic power ($P \propto \alpha C V^2 f$). 
 
 Optical and wireless interconnects represent complementary physical solutions to the on-chip communication crisis:
@@ -23,6 +33,11 @@ Optical and wireless interconnects represent complementary physical solutions to
 
 \section{Silicon Nanophotonics Physical Foundations}
 \label{sec:nanophotonics-foundations}
+
+\begin{svgraybox}
+\textbf{High-School Intuition: The Optical Tuning Fork} \\
+A musical tuning fork vibrates only when a sound matches its exact pitch. A \textbf{Micro-Ring Resonator (MRR)} is an optical tuning fork: it captures only one specific color (wavelength $\lambda_{\mathrm{res}}$) of light while letting all other colors pass straight through. This allows \textbf{Wavelength Division Multiplexing (WDM)}: sending 16 to 64 independent colors of light down a single microscopic silicon tube simultaneously!
+\end{svgraybox}
 
 Silicon nanophotonics leverages standard CMOS silicon-on-insulator (SOI) fabrication processes. An active silicon core layer ($n_{\mathrm{Si}} \approx 3.48$) is encapsulated by a silicon dioxide cladding layer ($\mathrm{SiO_2}$, $n_{\mathrm{ox}} \approx 1.45$). The large refractive index contrast ($\Delta n \approx 2.03$) provides strong optical confinement via Total Internal Reflection (TIR), enabling microscopic sub-micron waveguide cross-sections (typically $450\text{--}500\,\mathrm{nm}$ wide by $220\,\mathrm{nm}$ high) with bend radii as tight as $3\text{--}5\,\mu\mathrm{m}$.
 
@@ -96,6 +111,11 @@ Because laser power scales exponentially with insertion loss in decibels ($P \pr
 \section{Thermal Sensitivity \& Closed-Loop Resonance Tuning}
 \label{sec:optical-thermal-effects}
 
+\begin{svgraybox}
+\textbf{High-School Intuition: The Out-of-Tune Guitar} \\
+If you leave a guitar in the hot sun, the wooden neck and metal strings expand, throwing the instrument completely out of tune! Silicon does the exact same thing: when a multi-core processor runs hot, silicon's refractive index rises ($dn_{\mathrm{Si}}/dT$), expanding the optical cavity and drifting resonant wavelengths by $\approx 0.10\,\mathrm{nm/^\circ C}$. To prevent data channels from detuning, tiny integrated electric microheaters warm cooler resonators to a steady baseline temperature.
+\end{svgraybox}
+
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.88\textwidth]{chapters/ch10-optical-wireless/figures/ye_fig01_onoc_thermal_drift.png}
@@ -119,6 +139,11 @@ To combat thermal drift, localized resistive microheaters (Ti/Pt or doped silico
 
 \section{Wireless Networks-on-Chip (WNoC) \& Millimeter-Wave Interconnects}
 \label{sec:wnoc-foundations}
+
+\begin{svgraybox}
+\textbf{High-School Intuition: Walkie-Talkies in a Crowded Classroom} \\
+Passing messages through a 64-core grid of routers is like whispering a message down 14 rows of desks in a classroom. A wireless link is like speaking into a \textbf{walkie-talkie}: every core in the room hears the broadcast in a single clock cycle! On-chip antennas under $1\,\mathrm{mm}$ radiate $60\,\mathrm{GHz}$ millimeter waves, providing lightning-fast broadcast shortcuts for cache coherence and AI reduction collectives.
+\end{svgraybox}
 
 While nanophotonics excels at high-bandwidth point-to-point lightpaths, \textbf{Wireless Networks-on-Chip (WNoC)} address global latency bottlenecks through short-range electromagnetic wave propagation in the millimeter-wave ($30\text{--}100\,\mathrm{GHz}$) and sub-terahertz ($100\text{--}300\,\mathrm{GHz}$) bands.
 
@@ -295,3 +320,4 @@ Optical Networks-on-Chip (ONoC) and Wireless Networks-on-Chip (WNoC) transcend t
         \item Explain why on-chip wireless channels experience higher attenuation than free-space wireless propagation.
     \end{enumerate}
 \end{enumerate}
+

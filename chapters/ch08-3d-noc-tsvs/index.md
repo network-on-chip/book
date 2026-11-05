@@ -9,6 +9,14 @@
 
 ## 8.1 The Three-Dimensional Scaling Paradigm
 
+> [!NOTE] 💡 High-School Intuition: Sprawling Suburbs vs. City Skyscrapers
+> Imagine a sprawling suburban town of 64 single-story houses spread across a massive county. If the person living in the bottom-left corner wants to visit the person in the top-right corner, they have to drive across 14 miles of crowded highways, hitting stoplights at every intersection!
+>
+> Now imagine taking those 64 houses and stacking them vertically into an **8-story skyscraper**!
+> Instead of driving miles on flat roads, you step into a **high-speed elevator** (a Through-Silicon Via, or TSV). You reach the other person in just a few seconds!
+>
+> That is the magic of **3D Networks-on-Chip (3D-NoC)**: by stacking silicon floors on top of each other, we cut wire distances by **$75\%$** and hop latencies by over **$35\%$**!
+
 In planar two-dimensional (2D) integrated circuits, as processor core counts scale into the hundreds, interconnect wire lengths grow with the square root of the node count ($L_{\text{max}} \propto \sqrt{N}$). Consequently, global planar wires span centimeters of high-resistance, highly capacitive copper tracks, suffering quadratic Elmore RC delays and consuming massive dynamic driving energy.
 
 Three-Dimensional Integrated Circuits (3D-ICs) break this planar constraint by stacking multiple thinned active silicon tiers vertically, interconnecting them through dense arrays of microscopic vertical pillars known as **Through-Silicon Vias (TSVs)**.
@@ -80,6 +88,13 @@ To economize TSV footprint and routing area, many architectures deploy **shared 
 ---
 
 ## 8.4 Thermal Stacking & Heat Trapping
+
+> [!WARNING] 💡 High-School Intuition: The Attic Oven (Why the Top Floor is Boiling Hot!)
+> Have you ever noticed that in a multi-story house, the top floor or attic is always scorching hot in the summer?
+> 
+> The exact same thing happens in a 3D chip! The heavy copper heat sink and cooling fan sit on the **bottom floor (Tier 0)**. Heat generated in the middle and top floors cannot easily escape: it gets trapped between layers of insulating glue and silicon. To reach the heat sink, heat from Tier 2 must crawl all the way down through Tier 1 and Tier 0.
+> 
+> As our simulation proves: while Tier 0 stays at a reasonable $97^\circ\text{C}$, Tier 2 gets baked at **$136.5^\circ\text{C}$**! Managing this "attic oven" is the biggest thermal challenge in 3D silicon design.
 
 While 3D stacking slashes communication latency, it creates an acute physical challenge: **thermal trapping**.
 

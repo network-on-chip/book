@@ -11,6 +11,13 @@
 \section{The Chiplet Revolution \& Modular Disaggregation}
 \label{sec:chiplet-revolution}
 
+\begin{svgraybox}
+\textbf{High-School Intuition: The Giant Pizza Problem} \\
+Imagine you are baking a giant pizza the size of a dining table ($800\,\mathrm{mm^2}$). If a single microscopic dust particle or fly lands on it during baking, the health inspector forces you to throw the \emph{entire giant pizza} into the dumpster! This is the monolithic yield crisis: making giant chips results in throwing away over $75\%$ of expensive silicon wafers.
+
+Now imagine instead baking four personal-sized pizzas ($200\,\mathrm{mm^2}$ each) and placing them side by side on a serving board. If a dust speck lands on one, you toss only that single small pizza and keep the other three! Your success rate jumps from $25\%$ to over $82\%$. This is why the semiconductor industry switched from giant monolithic chips to modular \textbf{chiplets}.
+\end{svgraybox}
+
 For over four decades, Moore's law progressed through monolithic integration, scaling transistor densities while preserving the entire system on a single monolithic silicon die. In cutting-edge sub-3\,nm nodes, monolithic scaling has encountered severe economic and physical barriers:
 
 \begin{enumerate}
@@ -28,6 +35,11 @@ For over four decades, Moore's law progressed through monolithic integration, sc
 
 \section{2.5D Packaging Taxonomies \& Interposer Technologies}
 \label{sec:chiplet-packaging}
+
+\begin{svgraybox}
+\textbf{High-School Intuition: Dirt Roads vs. 16-Lane Glass Bridges} \\
+Connecting chiplets across a standard organic circuit board is like driving on a bumpy, slow dirt road: the metal traces are thick ($110\,\mu\mathrm{m}$ bump pitch) and consume $1.2\,\mathrm{pJ/bit}$ to push signals across centimeters of board. In contrast, an \textbf{advanced 2.5D silicon interposer} is like building a 16-lane high-speed glass bridge directly between two houses! Microscopic micro-bumps ($45\,\mu\mathrm{m}$) and ultra-short wires ($1.8\,\mathrm{mm}$) slash energy consumption to $0.33\,\mathrm{pJ/bit}$ while carrying over $4\times$ more data per second.
+\end{svgraybox}
 
 Integrating multiple chiplets into a coherent computing substrate relies on advanced packaging substrates. As categorized by Chen et al.~\cite{Chen2026} and illustrated in Fig.~\ref{fig:chen-chiplet-packaging}, multi-chiplet packaging spans four distinct integration regimes.
 
@@ -61,6 +73,11 @@ Fig.~\ref{fig:vivet-active-interposer} showcases the IntAct processor demonstrat
 
 \section{The Universal Chiplet Interconnect Express (UCIe) Standard}
 \label{sec:ucie-standard}
+
+\begin{svgraybox}
+\textbf{High-School Intuition: The Universal USB-C for Chiplets} \\
+Can you plug an AMD compute chiplet into an Intel memory chiplet or an Apple graphics chiplet? Historically no, because each semiconductor company invented its own secret proprietary wires. The \textbf{Universal Chiplet Interconnect Express (UCIe)} standard acts as the universal ``USB-C'' standard for chiplets: an open industry rulebook that allows silicon tiles from any foundry in the world to connect and communicate seamlessly.
+\end{svgraybox}
 
 To prevent market fragmentation and proprietary interconnect lock-in, the open industry consortium established the \textbf{Universal Chiplet Interconnect Express (UCIe)} standard~\cite{UCIe2023}. UCIe provides a complete, standardized die-to-die interconnect stack partitioned into three hierarchical layers:
 
@@ -113,6 +130,11 @@ If $B < B_{\mathrm{min}}$, the transmitter exhausts its credit pool before recei
 
 \section{Deadlock in Multi-Chiplet Networks \& In/Outbound Swap Recovery}
 \label{sec:chiplet-deadlocks}
+
+\begin{svgraybox}
+\textbf{High-School Intuition: The Four-Way Traffic Jam} \\
+Imagine four cars arrive at an intersection at the same time: Car 1 waits for Car 2, Car 2 waits for Car 3, Car 3 waits for Car 4, and Car 4 waits for Car 1. Nobody can move! That is a routing deadlock. The \textbf{In/Outbound Swap} mechanism acts like a smart traffic cop: after detecting cars waiting too long ($\tau_{\mathrm{stall}}$), the cop tells Car 1 to pull into a side driveway (a 2-flit escape register). Instantly, Cars 4, 3, and 2 drive through! Then Car 1 rejoins the road. The jam is cleared with zero dropped packets.
+\end{svgraybox}
 
 \subsection{The Inter-Chiplet Deadlock Anomaly}
 

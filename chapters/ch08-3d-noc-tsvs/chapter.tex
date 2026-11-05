@@ -11,6 +11,12 @@
 \section{The Three-Dimensional Scaling Paradigm}
 \label{sec:3d-scaling-paradigm}
 
+\begin{svgraybox}
+\textbf{High-School Intuition: Sprawling Suburbs vs. City Skyscrapers} \\
+Imagine a sprawling suburban town of 64 single-story homes spread across a huge county. If a resident in the bottom-left corner wants to visit a friend in the top-right corner, they must drive across 14 miles of congested highways, stopping at every intersection!
+Now imagine stacking those 64 homes into an \textbf{8-story skyscraper}. Instead of driving across miles of flat roads, you step into a \textbf{high-speed elevator} (a Through-Silicon Via, or TSV) and arrive in just a few seconds! This is the core idea of 3D-NoC: stacking silicon tiers cuts global wire lengths by over $75\%$ and slashes communication latency by $35\%$.
+\end{svgraybox}
+
 In planar two-dimensional (2D) architectures, as processor core counts scale into the hundreds, interconnect wire lengths grow with the square root of the node count ($L_{\mathrm{max}} \propto \sqrt{N}$) according to Rent's rule~\cite{Pavlidis2009}. Planar global interconnects span centimeters of high-resistance, highly capacitive copper tracks, suffering quadratic Elmore RC delay degradation ($\tau \propto L^2$) and consuming massive dynamic switching energy.
 
 Three-Dimensional Integrated Circuits (3D-ICs) break this planar barrier by vertically stacking thinned silicon dies, interconnecting them with microscopic vertical copper pillars termed \textbf{Through-Silicon Vias (TSVs)}.
@@ -102,6 +108,11 @@ In systems deploying shared vertical links, multiple planar directions contend f
 
 \section{Thermal Stacking \& Heat Trapping in 3D Silicon}
 \label{sec:thermal-stacking}
+
+\begin{svgraybox}
+\textbf{High-School Intuition: The Attic Oven} \\
+Why is the top floor of a house always scorching hot in summer? Because heat gets trapped under the roof! In a 3D-stacked chip, the copper heat sink sits on the bottom (Tier 0). Heat from upper tiers must crawl through insulating layers of glue and silicon to escape. As our simulation demonstrates, while Tier 0 sits at $97^\circ\mathrm{C}$, Tier 2 climbs to an alarming $136.5^\circ\mathrm{C}$! Managing this thermal ladder is crucial to avoid silicon meltdown.
+\end{svgraybox}
 
 In 3D-ICs, only the bottom tier (Tier 0) is directly attached to the package heat sink. Heat dissipated by upper tiers (Tier 1, Tier 2, etc.) must conduct downward through thinned silicon substrates and low-conductivity dielectric bonding interfaces ($\mathrm{SiO_2}$ or polymer adhesives, $k_{\mathrm{th}} \approx 0.2\text{ to }1.4\,\mathrm{W/(m\cdot K)}$).
 

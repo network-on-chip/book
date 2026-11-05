@@ -176,3 +176,4 @@ def print_evaluation_report(results: Dict[str, Dict[str, float]]) -> None:
 if __name__ == "__main__":
     res = evaluate_cse_vs_pse_topologies()
     print_evaluation_report(res)
+
