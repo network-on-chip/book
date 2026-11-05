@@ -35,7 +35,7 @@ For the full detailed curriculum and enhancement milestones, see the [Master Pla
   - **[Chapter 6: Low-Power Architectures & Dark Silicon Dynamics](chapters/ch06-low-power-dark-silicon/index.md)**
   - **[Chapter 7: Thermal Modeling, Hotspots & Fault-Tolerant Resilience](chapters/ch07-thermal-fault-tolerance/index.md)**
 - **Part IV: Advanced Packaging, 3D NoC & Chiplets**
-  - **Chapter 8**: Three-Dimensional Networks-on-Chip (3D-NoC) & TSVs
+  - **[Chapter 8: Three-Dimensional Networks-on-Chip (3D-NoC) & TSVs](chapters/ch08-3d-noc-tsvs/index.md)**
   - **Chapter 9**: Multi-Chiplet Interconnects, 2.5D Systems & UCIe
 - **Part V: Emerging Frontiers: Optical, Wireless, Security & AI**
   - **Chapter 10**: Optical & Wireless Networks-on-Chip (ONoC / WNoC)
