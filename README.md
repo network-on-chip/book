@@ -30,7 +30,7 @@ For the full detailed curriculum and enhancement milestones, see the [Master Pla
   - **[Chapter 3: High-Performance Router Microarchitecture & Arbitration](chapters/ch03-router-microarchitecture/index.md)**
 - **Part II: Topologies, Routing & Deadlock Freedom**
   - **[Chapter 4: Direct, Indirect & High-Radix Interconnect Topologies](chapters/ch04-topologies-and-metrics/index.md)**
-  - **Chapter 5**: Deadlock Theory, Turn Models & Adaptive Routing
+  - **[Chapter 5: Deadlock Theory, Turn Models & Adaptive Routing](chapters/ch05-routing-deadlock-theory/index.md)**
 - **Part III: Physical Constraints: Power, Thermal & Reliability**
   - **Chapter 6**: Low-Power Architectures & Dark Silicon Dynamics
   - **Chapter 7**: Thermal Modeling, Hotspots & Fault-Tolerant Resilience
