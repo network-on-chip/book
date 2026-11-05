@@ -1,0 +1,39 @@
+%%%%%%%%%%%%%%%%%%%% preface.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Preface for Springer Monograph
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\preface
+
+For nearly four decades, the computing revolution drew its momentum from the harmonic cadence of Moore's Law and Dennard Scaling: transistors shrank, clock frequencies accelerated into the multi-gigahertz regime, and single-threaded execution performance soared without threatening silicon thermal limits. Around 2005, the irreversible breakdown of Dennard scaling halted clock frequency scaling, forcing a historic pivot toward spatial parallelism: multi-core processors, massively parallel graphics processors, and heterogeneous Systems-on-Chip (SoCs).
+
+Yet scaling compute elements from tens to hundreds, and now thousands of cores on a single die or across 2.5D/3D multi-chiplet assemblies, immediately collided with an unyielding physical reality: the \textbf{interconnect crisis}. Global shared multi-drop buses collapsed under quadratic $RC$ wire delay and serialization contention; full crossbar matrices exploded in $O(N^2)$ silicon area and routing track congestion; and deep-submicron copper interconnects below 14~nm succumbed to severe electron scattering and resistive degradation.
+
+The \textbf{Network-on-Chip (NoC)} paradigm answered this crisis by transposing packet-switched networking principles directly onto silicon. Today, on-chip and die-to-die communication fabrics form the nervous system of modern computing---from mobile application processors and high-performance server SoCs to wafer-scale accelerators and neuromorphic tensor processors.
+
+\section*{Scope and Structure of This Book}
+This textbook offers a rigorous, first-principles exploration of on-chip and multi-chiplet interconnection networks. Rather than treating interconnects as abstract graph topologies, this volume bridges the chasm between physical silicon reality, router microarchitecture, mathematical deadlock theory, and emerging technology frontiers.
+
+The book is organized into five cohesive parts:
+\begin{itemize}
+    \item \textbf{Part I: Foundations \& Router Microarchitecture (Chapters 1--3)} establishes the physical interconnect crisis, mathematical delay formulations, switching techniques, credit and token flow control, and pipelined router microarchitecture with virtual channel allocation and crossbar arbitration.
+    \item \textbf{Part II: Topologies, Routing \& Deadlock Freedom (Chapters 4--5)} investigates direct, indirect, and high-radix networks, Dally's channel dependency graph (CDG) theorems, Duato's adaptive routing theory, and turn models.
+    \item \textbf{Part III: Physical Constraints: Power, Thermal \& Reliability (Chapters 6--7)} addresses dark silicon dynamics, voltage/frequency scaling, compact thermal RC modeling, hotspot mitigation, and fault-tolerant routing.
+    \item \textbf{Part IV: Advanced Packaging, 3D NoC \& Chiplets (Chapters 8--9)} explores through-silicon via (TSV) vertical architectures, 2.5D silicon interposers, and the Universal Chiplet Interconnect Express (UCIe) die-to-die standard.
+    \item \textbf{Part V: Emerging Frontiers: Optical, Wireless, Security \& AI (Chapters 10--12)} covers silicon photonic interconnects (ONoC), RF/wireless communication (WNoC), hardware security against side-channel and denial-of-service attacks, and domain-specific interconnects for large language models and spiking neural networks.
+\end{itemize}
+
+\section*{Grounding in 542+ Curated Research Papers}
+Every theoretical formulation, architectural trade-off, and silicon case study in this monograph is grounded directly in our curated corpus of over 542 peer-reviewed articles from premier IEEE journals, including \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems} (TVLSI), \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems} (TCAD), \emph{IEEE Journal of Solid-State Circuits} (JSSC), and \emph{IEEE Transactions on Circuits and Systems} (TCAS-I/II). Landmark silicon achievements---such as the 2,048-core HammerBlade SoC, the FlooNoC open-source AXI4 fabric, and the SWIFT token flow-control architecture---are dissected alongside first-principles physics.
+
+\section*{Co-Design with the Interactive Companion Hub}
+To enhance pedagogy and provide hands-on experimentation, this monograph is co-designed with an interactive online platform:
+\begin{center}
+\textbf{NoC Learning Hub}: \url{https://network-on-chip.github.io/learning/}
+\end{center}
+Each chapter links directly to interactive browser-based simulators, including the 2D Mesh Routing Visualizer, Arbiter Arena, Credit Commander, and UCIe Protocol Analyzer, accompanied by multi-tier assessment engines and executable Verilog/Python code repositories.
+
+\vspace{1cm}
+\begin{flushright}
+\textbf{The NoC-Lab Research Consortium}\\
+\emph{November 2026}
+\end{flushright}

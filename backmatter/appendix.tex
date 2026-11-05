@@ -1,0 +1,38 @@
+%%%%%%%%%%%%%%%%%%%% appendix.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Appendix: Open-Source Artifacts and Simulation Toolchains
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+\chapter{Open-Source NoC Frameworks, RTL Repositories \& PDKs}
+\label{ch:appendix_tools}
+
+\section{Synthesizable Verilog \& SystemVerilog NoC Codebases}
+To facilitate reproducible experimentation, several landmark academic and industrial NoC architectures have been made open-source:
+
+\begin{itemize}
+    \item \textbf{FlooNoC (ETH Z{\"u}rich / University of Bologna)}:
+    An open-source SystemVerilog Network-on-Chip supporting wide physical links, AXI4 parallel multistreaming, and AXI-Stream virtualization.
+    \begin{itemize}
+        \item Repository: \url{https://github.com/pulp-platform/floonoc}
+        \item Key Reference: Fischer et al., \emph{IEEE TVLSI 2025}~\cite{Fischer2025}.
+    \end{itemize}
+    \item \textbf{HammerBlade Manycore (University of Washington / UCSD / Cornell)}:
+    A complete open-source 2,048-core RISC-V compute fabric and Ruche network silicon implementation in 12nm FinFET.
+    \begin{itemize}
+        \item Repository: \url{https://github.com/bespoke-silicon-group/bsg_manycore}
+        \item Key Reference: Gao et al., \emph{IEEE TVLSI 2026}~\cite{Gao2026}.
+    \end{itemize}
+    \item \textbf{OpenPiton \& Princeton Piton NoC}:
+    A scalable manycore framework supporting SPARC and RISC-V with a 2D mesh packet-switched interconnect.
+    \begin{itemize}
+        \item Repository: \url{https://github.com/PrincetonUniversity/openpiton}
+    \end{itemize}
+\end{itemize}
+
+\section{Open-Source Physical Design PDKs}
+Academic exploration of sub-14nm interconnect physics is supported by open-source process design kits:
+\begin{itemize}
+    \item \textbf{FreePDK45}: 45nm predictive technology model with 10 metal layers.
+    \item \textbf{ASAP7}: 7nm FinFET Predictive Process Design Kit developed by Arizona State University in collaboration with ARM.
+    \item \textbf{SkyWater 130nm (SKY130)}: The first fully open-source manufacturable 130nm CMOS foundry PDK.
+\end{itemize}

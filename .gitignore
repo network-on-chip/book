@@ -1,0 +1,17 @@
+# LaTeX compilation artifacts
+*.aux
+*.log
+*.toc
+*.idx
+*.ind
+*.ilg
+*.bbl
+*.blg
+*.out
+*.synctex.gz
+compile.log
+frontmatter/*.aux
+parts/*.aux
+chapters/*/*.aux
+backmatter/*.aux
+DescriptionTexts.txt

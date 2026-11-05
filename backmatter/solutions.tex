@@ -1,0 +1,46 @@
+%%%%%%%%%%%%%%%%%%%% solutions.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Solutions to Checkpoint Assessment Questions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter*{Solutions to Checkpoint Questions}
+\addcontentsline{toc}{chapter}{Solutions to Checkpoint Questions}
+\label{ch:solutions}
+
+\section*{Chapter 1: The Multi-Core Communication Crisis \& Interconnect Physics}
+
+\begin{description}
+    \item[Question 1.1] \textbf{Answer: B}.
+    According to the Elmore delay formulation (Eq.~\ref{eq:elmore_delay}), the propagation delay of a shared wire is $\tau \approx 0.38 R_{wire} C_{wire} + R_{driver} \sum C_{tap} + \sum R_{wire} C_{tap}$. Because each attached core introduces transceiver parasitic capacitance ($C_{taps} \propto N$) and the physical wire length across the chip perimeter scales as $L \propto \sqrt{N}$, the total $RC$ product surges as $O(N^{3/2})$, resulting in severe frequency throttling for $N > 8$.
+
+    \item[Question 1.2] \textbf{Answer: B}.
+    The Mayadas-Shatzkes effect models electron scattering at polycrystalline grain boundaries in nanoscale metal lines. When wire trench width approaches the electron mean free path ($\lambda_0 \approx 39$~nm in bulk copper), grain boundary reflection ($R \approx 0.3$--$0.5$) and surface diffuse reflection combine with non-conductive barrier liners (Ta/TaN) to surge effective resistivity by $5\times$ to $15\times$ above bulk values, destroying global interconnect RC performance.
+
+    \item[Question 1.3] \textbf{Answer: A}.
+    An $N \times N$ crossbar requires $N^2$ crosspoint multiplexer switches and $2N \times W_{data}$ wiring tracks crossing the central layout. For $N = 128$, this dictates 16,384 crosspoints and thousands of parallel global wires, creating insurmountable physical routing track congestion and parasitic crosstalk in silicon layout.
+\end{description}
+
+\section*{Chapter 2: Switching Techniques, Flow Control \& Buffer Management}
+
+\begin{description}
+    \item[Question 2.1] \textbf{Answer: B}.
+    Wormhole switching operates at the granularity of individual flits rather than entire packets. By allowing body flits to stream across established router paths behind the head flit, input buffer depth can be reduced to as few as 1--4 flits, reducing router SRAM buffer area by 75\%--93\% compared to Store-and-Forward and Virtual Cut-Through.
+
+    \item[Question 2.2] \textbf{Answer: B}.
+    The credit turnaround loop Round-Trip Time is $RTT = t_{tx} + t_{flight\_fwd} + t_{rx} + t_{flight\_cred} = 4$~cycles. By the Fundamental Throughput Theorem (Eq.~\ref{eq:bmin_theorem}), sustaining 100\% wire-rate throughput requires $B \ge RTT = 4$~flits. With $B = 2$, the transmitter exhausts its credits after 2 cycles and is forced to stall during cycles 3 and 4 while waiting for credit feedback, throttling link utilization to $40\%$--$50\%$.
+
+    \item[Question 2.3] \textbf{Answer: B}.
+    In the SWIFT NoC, lightweight tokens travel ahead of data flits to reserve crossbar switch allocation in advance. When a token is granted, the incoming data flit cuts directly through the crossbar into the outgoing link without writing into or reading from input FIFO SRAM cells, saving up to 38\% of dynamic router power at saturation.
+\end{description}
+
+\section*{Chapter 3: High-Performance Router Microarchitecture \& Arbitration}
+
+\begin{description}
+    \item[Question 3.1] \textbf{Answer: B}.
+    The canonical synchronous 5-stage router pipeline comprises: Buffer Write (BW), Route Computation (RC), Virtual Channel Allocation (VA), Switch Allocation (SA), and Switch Traversal (ST), followed by inter-router Link Traversal (LT).
+
+    \item[Question 3.2] \textbf{Answer: A}.
+    When Client $k$ receives a grant ($G_k = 1$), row $k$ is cleared to zero ($M[k][j] = 0\ \forall j \ne k$) and column $k$ is set to one ($M[i][k] = 1\ \forall i \ne k$). This places client $k$ at the lowest priority relative to all other requesters, implementing an exact, single-cycle Least Recently Used (LRU) policy.
+
+    \item[Question 3.3] \textbf{Answer: B}.
+    Updating round-robin pointers in later iterations would cause output grant arbiters to synchronize into identical priority positions when traffic is heavy. Restricting pointer updates to the first iteration preserves pointer diversity (entropy), preventing cyclic grant lockouts and achieving 100\% throughput under uniform traffic.
+\end{description}

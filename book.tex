@@ -1,0 +1,89 @@
+%%%%%%%%%%%%%%%%%%%% book.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Springer Nature Monograph: Network-on-Chip (NoC) and Advanced Interconnects
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[graybox,envcountchap,sectrefs]{svmono}
+
+% Mathematical packages
+\usepackage{amsmath,amssymb}
+
+% Font selection (Latin Modern Type 1 fonts compatible with standard TeX engines)
+\usepackage{lmodern}
+
+% Standard Springer monograph packages
+\usepackage{makeidx}         % allows index generation
+\usepackage{graphicx}        % standard LaTeX graphics tool
+\usepackage{multicol}        % used for two-column index
+\usepackage[bottom]{footmisc}% places footnotes at page bottom
+\usepackage{booktabs}        % high-quality professional tables
+\usepackage{cite}            % sorted numerical citations
+\usepackage{url}             % clickable and formatted URLs
+\usepackage{listings}       % source code listings
+\usepackage{xcolor}          % colors for listings and links
+
+% Hyperref setup with Springer-appropriate dark blue palette
+\usepackage[colorlinks=true,
+            linkcolor=blue!70!black,
+            citecolor=blue!70!black,
+            urlcolor=blue!70!black]{hyperref}
+
+% Listings configuration
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue!80!black}\bfseries,
+    commentstyle=\color{green!50!black}\itshape,
+    stringstyle=\color{red!70!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    backgroundcolor=\color{gray!5},
+    frame=single,
+    framerule=0.5pt,
+    rulecolor=\color{gray!30},
+    tabsize=2,
+    breaklines=true,
+    breakatwhitespace=false,
+    showspaces=false,
+    showstringspaces=false
+}
+
+\makeindex
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\author{NoC-Lab Research Consortium}
+\title{Network-on-Chip and Advanced Interconnects}
+\subtitle{Architecture, Co-Design \& Emerging Frontiers}
+\maketitle
+
+\frontmatter%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\include{frontmatter/dedication}
+\include{frontmatter/preface}
+
+\tableofcontents
+
+\include{frontmatter/acronym}
+
+\mainmatter%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\include{parts/part1}
+\include{chapters/ch01-interconnect-crisis/chapter}
+\include{chapters/ch02-switching-flow-control/chapter}
+\include{chapters/ch03-router-microarchitecture/chapter}
+
+\include{backmatter/appendix}
+
+\backmatter%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\include{backmatter/solutions}
+
+\bibliographystyle{spmpsci}
+\bibliography{book}
+
+\printindex
+
+\end{document}

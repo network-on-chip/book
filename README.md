@@ -29,7 +29,7 @@ For the full detailed curriculum and enhancement milestones, see the [Master Pla
   - **[Chapter 2: Switching Techniques, Flow Control & Buffer Management](chapters/ch02-switching-flow-control/index.md)**
   - **[Chapter 3: High-Performance Router Microarchitecture & Arbitration](chapters/ch03-router-microarchitecture/index.md)**
 - **Part II: Topologies, Routing & Deadlock Freedom**
-  - **Chapter 4**: Direct, Indirect & High-Radix Interconnect Topologies
+  - **[Chapter 4: Direct, Indirect & High-Radix Interconnect Topologies](chapters/ch04-topologies-and-metrics/index.md)**
   - **Chapter 5**: Deadlock Theory, Turn Models & Adaptive Routing
 - **Part III: Physical Constraints: Power, Thermal & Reliability**
   - **Chapter 6**: Low-Power Architectures & Dark Silicon Dynamics
@@ -41,6 +41,42 @@ For the full detailed curriculum and enhancement milestones, see the [Master Pla
   - **Chapter 10**: Optical & Wireless Networks-on-Chip (ONoC / WNoC)
   - **Chapter 11**: Hardware Security & Trust in On-Chip Networks
   - **Chapter 12**: Domain-Specific NoCs for LLMs, Transformers & Neuromorphic SNNs
+
+---
+
+## 🖨️ Springer Nature Monograph Format & Compilation
+
+This textbook is authored using the official **Springer Nature Monograph (`svmono` / `SNmono`)** LaTeX publishing format, compiling into a publication-grade camera-ready book.
+
+### Directory Structure
+```text
+share/book/
+├── SNmono.cls                # Official Springer Nature Monograph document class
+├── svmono.cls                # Class alias (symlink to SNmono.cls)
+├── framed.sty                # Support package for Springer graybox callouts
+├── spmpsci.bst               # Springer mathematical/computer science BibTeX style
+├── svind.ist                 # Springer index formatting style
+├── book.tex                  # Master root document (\documentclass[graybox,envcountchap,sectrefs]{svmono})
+├── book.bib                  # Unified BibTeX bibliography (TVLSI, TCAD, JSSC, TCAS)
+├── book.pdf                  # Compiled 44+ page Springer monograph PDF
+├── compile.sh                # 4-pass automated build pipeline (pdflatex + bibtex + makeindex)
+├── Makefile                  # Build automation (make pdf, make clean)
+├── frontmatter/              # Dedication, Preface, and List of Acronyms
+├── parts/                    # Part title dividers (Part I: Foundations & Microarch)
+├── chapters/                 # Modular chapters with LaTeX, Markdown, figures & RTL/Python code
+│   ├── ch01-interconnect-crisis/      (chapter.tex, index.md, figures/, code/)
+│   ├── ch02-switching-flow-control/   (chapter.tex, index.md, figures/, code/)
+│   └── ch03-router-microarchitecture/ (chapter.tex, index.md, figures/, code/)
+└── backmatter/               # Appendix (open-source RTL & PDKs) and Checkpoint Solutions
+```
+
+### Compiling the Book
+To build the complete book from source:
+```bash
+bash compile.sh
+# or
+make pdf
+```
 
 ---
 
