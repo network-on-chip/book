@@ -11,18 +11,18 @@
 \section{The Thermal Emergency in Deep Sub-Micron Silicon}
 \label{sec:thermal-emergency}
 
-In modern sub-5\,nm multi-core architectures, power density frequently exceeds $100\,\mathrm{W/cm^2}$---a thermal flux comparable to the surface of the sun. Networks-on-Chip (NoC) routers and high-speed serial links contribute between $20\%$ to $40\%$ of overall chip power dissipation. Because network traffic is intrinsically bursty and spatially non-uniform, switching activity concentrates at topological bottlenecks (such as memory controller interfaces and bisection crossbars), forming extreme localized temperature spikes termed \emph{thermal hotspots}.
+In modern sub-5\,nm multi-core architectures, power density frequently exceeds $100\,\mathrm{W/cm^2}$---a thermal flux comparable to the surface of the sun~\cite{Borkar1999,Skadron2003}. Networks-on-Chip (NoC) routers and high-speed serial links contribute between $20\%$ to $40\%$ of overall chip power dissipation~\cite{Ho2001,Skadron2003}. Because network traffic is intrinsically bursty and spatially non-uniform, switching activity concentrates at topological bottlenecks (such as memory controller interfaces and bisection crossbars), forming extreme localized temperature spikes termed \emph{thermal hotspots}.
 
 The physical consequences of unmitigated thermal hotspots are severe across four fundamental failure mechanisms:
 \begin{enumerate}
-    \item \textbf{Sub-Threshold Leakage Runaway}: Sub-threshold leakage current exhibits an exponential dependence on absolute operating temperature governed by the Arrhenius formulation:
+    \item \textbf{Sub-Threshold Leakage Runaway}: Sub-threshold leakage current exhibits an exponential dependence on absolute operating temperature governed by the Arrhenius formulation~\cite{Dennard1974,Skadron2003}:
     \begin{equation}
         I_{\mathrm{leak}}(T) \propto T^2 \exp\left(-\frac{q V_{\mathrm{th}}}{m k_B T}\right)
         \label{eq:arrhenius-leakage}
     \end{equation}
     where $V_{\mathrm{th}}$ is the threshold voltage, $k_B$ is Boltzmann's constant, and $q$ is the elementary electron charge. As local silicon heats up, $V_{\mathrm{th}}$ drops while thermal carrier excitation intensifies, triggering a positive feedback loop that culminates in \emph{thermal runaway}.
     
-    \item \textbf{Carrier Mobility Degradation}: Acoustic phonon scattering increases with temperature, degrading electron and hole mobility according to:
+    \item \textbf{Carrier Mobility Degradation}: Acoustic phonon scattering increases with temperature, degrading electron and hole mobility according to~\cite{Borkar1999}:
     \begin{equation}
         \mu(T) = \mu(T_0) \left(\frac{T}{T_0}\right)^{-1.5}
         \label{eq:mobility-degradation}
@@ -302,7 +302,7 @@ endmodule
 \section{Simulation Model \& Experimental Verification}
 \label{sec:simulation-model}
 
-The Python model \texttt{thermal\_rc\_mesh\_sim.py} executes state-space thermal simulation of a $4 \times 4$ mesh under severe hotspot injection (center tiles 5 and 6 at $95\%$ traffic saturation).
+The Python model \texttt{thermal\_rc\_mesh\_sim.py} executes state-space thermal simulation of a $4 \times 4$ mesh grounded in HotSpot electro-thermal RC duality~\cite{Huang2006,Skadron2003} and Gaussian-Sum Filter telemetry~\cite{Fu2019,Fu2017} under severe hotspot injection (center tiles 5 and 6 at $95\%$ traffic saturation).
 
 \begin{table}[htbp]
 \centering
@@ -365,7 +365,7 @@ where $\dot{V}$ is the volumetric flow rate and $\eta_{\mathrm{pump}} \approx 30
 \index{Thermal Floorplanning}
 \index{Simulated Annealing}
 
-While Dynamic Thermal Management (DTM) quenches hotspots at run time, physical floorplanning during chip design can prevent hotspots from emerging altogether.
+While Dynamic Thermal Management (DTM) quenches hotspots at run time, physical floorplanning during chip design can prevent hotspots from emerging altogether~\cite{Zheng2025Thermal,Wang2011Variation}.
 
 \subsection{Mathematical Problem Formulation}
 Let $\mathcal{B} = \{B_1, B_2, \dots, B_N\}$ denote the set of $N$ functional blocks (compute cores, cache memories, router switches), each characterized by dimensions $(w_i, h_i)$ and nominal power dissipation $P_i$. The objective of \textbf{Thermal-Aware Floorplanning} is to determine coordinate positions $(x_i, y_i)$ that minimize a multi-objective cost function $\Phi$:
@@ -430,17 +430,17 @@ Explore the interactive thermal and resilience simulators on the \textbf{NoC Lea
 \label{sec:ch7_exercises}
 
 \begin{enumerate}
-    \item \textbf{Thermal Time Constant \& Reactive Throttling Latency}: A $1.2\,\mathrm{mm} \times 1.2\,\mathrm{mm}$ router tile has vertical thermal resistance $R_v = 15.0\,\mathrm{K/W}$ and lumped thermal capacitance $C_{\mathrm{th}} = 3.6\,\mathrm{mJ/K}$.
+    \item \textbf{Thermal Time Constant \& Reactive Throttling Latency}~\cite{Skadron2003,Huang2006}: A $1.2\,\mathrm{mm} \times 1.2\,\mathrm{mm}$ router tile has vertical thermal resistance $R_v = 15.0\,\mathrm{K/W}$ and lumped thermal capacitance $C_{\mathrm{th}} = 3.6\,\mathrm{mJ/K}$.
     \begin{enumerate}
         \item Compute the thermal time constant $\tau_{\mathrm{th}} = R_v \cdot C_{\mathrm{th}}$.
         \item For an on-chip router clocked at $2.5\,\mathrm{GHz}$ ($T_{\mathrm{clk}} = 0.4\,\mathrm{ns}$), calculate the number of clock cycles spanned by $\tau_{\mathrm{th}}$ ($135 \times 10^6$ cycles) and explain why reactive throttling fails to catch packet-scale bursts.
     \end{enumerate}
 
-    \item \textbf{Electromigration \& Reliability Degradation via Black's Equation}: An interconnect wire operates at $T_1 = 60^\circ\mathrm{C}$ ($333.15\,\mathrm{K}$). During sustained network congestion, localized self-heating elevates the temperature to $T_2 = 85^\circ\mathrm{C}$ ($358.15\,\mathrm{K}$). Assuming copper activation energy $E_a = 0.90\,\mathrm{eV}$ and Boltzmann constant $k_B = 1.3806 \times 10^{-23}\,\mathrm{J/K}$, calculate the ratio $\frac{MTTF(T_2)}{MTTF(T_1)}$ and the percentage reduction in interconnect lifetime (showing an $88.8\%$ reduction).
+    \item \textbf{Electromigration \& Reliability Degradation via Black's Equation}~\cite{Black1969}: An interconnect wire operates at $T_1 = 60^\circ\mathrm{C}$ ($333.15\,\mathrm{K}$). During sustained network congestion, localized self-heating elevates the temperature to $T_2 = 85^\circ\mathrm{C}$ ($358.15\,\mathrm{K}$). Assuming copper activation energy $E_a = 0.90\,\mathrm{eV}$ and Boltzmann constant $k_B = 1.3806 \times 10^{-23}\,\mathrm{J/K}$, calculate the ratio $\frac{MTTF(T_2)}{MTTF(T_1)}$ and the percentage reduction in interconnect lifetime (showing an $88.8\%$ reduction).
 
-    \item \textbf{Non-Gaussian Sensor Filtering}: Explain why standard linear Kalman filters diverge when on-chip thermal diode measurements are corrupted by power distribution network $L \cdot di/dt$ ground bounce and digital switching noise. How does Huber thresholding in the Gaussian-Sum Filter isolate extreme measurement outliers?
+    \item \textbf{Non-Gaussian Sensor Filtering}~\cite{Fu2019,Fu2017}: Explain why standard linear Kalman filters diverge when on-chip thermal diode measurements are corrupted by power distribution network $L \cdot di/dt$ ground bounce and digital switching noise. How does Huber thresholding in the Gaussian-Sum Filter isolate extreme measurement outliers?
 
-    \item \textbf{ZoneDefense Deadlock Freedom}: In a 2D mesh without virtual channels, explain why concave fault patterns can induce circular channel dependencies. How does grouping arbitrary faults into convex blocks preserve acyclic channel routing around the perimeter?
+    \item \textbf{ZoneDefense Deadlock Freedom}~\cite{Fu2014,Glass1994}: In a 2D mesh without virtual channels, explain why concave fault patterns can induce circular channel dependencies. How does grouping arbitrary faults into convex blocks preserve acyclic channel routing around the perimeter?
 \end{enumerate}
 
 \section{References \& Further Reading}

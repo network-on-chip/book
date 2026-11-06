@@ -1,10 +1,9 @@
 # Chapter 4: Direct, Indirect & High-Radix Interconnect Topologies
 
-> **Authors**: NoC-Lab Research Consortium  
-> **Domain**: Silicon Microarchitecture & Interconnect Design  
-> **Interactive Companion**: [NoC Learning Hub — Track 3: Topologies & Metrics](https://network-on-chip.github.io/learning/track3-topologies/)  
-> **Interactive Lab**: [Topology Titans: Graph Architect](https://network-on-chip.github.io/learning/interactive/topology/)  
-> **Accompanying Code**: [`code/topology_metrics_sim.py`](code/topology_metrics_sim.py), [`code/topology_router_mesh_torus.v`](code/topology_router_mesh_torus.v)
+[![Companion Platform](https://img.shields.io/badge/Interactive%20Lab-Topology%20Titans-0f766e?logo=bookstack&logoColor=white)](https://network-on-chip.github.io/learning/interactive/topology/)
+[![Curriculum Track](https://img.shields.io/badge/Learning%20Track-Track%203%3A%20Topologies-blue)](https://network-on-chip.github.io/learning/track3-topologies/)
+[![Simulation Model](https://img.shields.io/badge/Python%20Model-topology__metrics__sim.py-blueviolet)](code/topology_metrics_sim.py)
+[![Hardware RTL](https://img.shields.io/badge/Verilog%20RTL-topology__router__mesh__torus.v-success)](code/topology_router_mesh_torus.v)
 
 ---
 
@@ -360,7 +359,55 @@ The following table summarizes the graph-theoretic, microarchitectural, and phys
 
 ---
 
-## 4.8 Checkpoint Assessment
+## 4.8 Interactive Lab & Hands-on Challenges
+
+<div class="noc-book-banner" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.65)); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="font-weight: 700; color: #93c5fd; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+      <span>🌐 Dedicated Interactive Lab: Topology Titans: Graph Architect</span>
+    </div>
+    <div style="font-size: 0.92rem; color: #e2e8f0; margin-top: 6px; max-width: 800px; line-height: 1.5;">
+      Construct and benchmark high-performance network graphs: 2D Mesh, 2D Torus, Hypercube, Dragonfly, and Flattened Butterfly under real-time synthetic traffic stress.
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="../../interactive/topology.md" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Launch Topology Titans →</span>
+    </a>
+  </div>
+</div>
+
+Complete the following three hands-on laboratory missions in **[Topology Titans](../../interactive/topology.md)**:
+
+### Challenge Mission 4.1: Topological Metric Trade-offs: Bisection Bandwidth vs Router Radix
+- **Objective:** Quantify the trade-offs between router degree $k_R$, network diameter $D$, and bisection bandwidth $\mathcal{B}_C$ across 64-node networks.
+- **Setup & Procedure:**
+  1. In **Topology Titans**, synthesize an $8 \times 8$ **2D Mesh**. Record diameter ($D = 14$), bisection channels ($B_C = 8$), and maximum router degree ($k = 4$).
+  2. Switch topology to **2D Torus ($8 \times 8$)**. Observe that adding wrap-around links cuts diameter in half ($D = 8$) and doubles bisection bandwidth ($B_C = 16$).
+  3. Synthesize a **6-Cube Hypercube** ($N = 64$).
+- **Architectural Observation:** The hypercube achieves a tiny diameter ($D = 6$) and massive bisection ($B_C = 32$), but requires router degree $k = 6$ with high wiring complexity. On 2D planar silicon, hypercube channels require complex wire crossings on upper metal layers, illustrating why planar 2D Torus and cMesh topologies are often preferred for monolithic silicon dies.
+- **Verification Formula:** $\mathcal{B}_{Mesh} = k \cdot w, \quad \mathcal{B}_{Torus} = 2k \cdot w, \quad \mathcal{B}_{Hypercube} = \frac{N}{2} \cdot w$.
+
+### Challenge Mission 4.2: Adversarial Traffic Patterns & Center Bisection Bottlenecks
+- **Objective:** Compare saturation throughput of a 2D Mesh against a Dragonfly under non-uniform traffic workloads.
+- **Setup & Procedure:**
+  1. In **Topology Titans**, inject **Uniform Random Traffic** into the $8 \times 8$ Mesh. Observe smooth packet dispersal.
+  2. Switch traffic to **Bit-Complement Traffic** (node $(x,y)$ transmits exclusively to $(k-1-x, k-1-y)$).
+  3. Compare queue occupancies at edge routers versus center routers $(3,3)$ and $(4,4)$.
+- **Architectural Observation:** Under Bit-Complement and Transpose traffic, all communication flows must cross the central bisection cut. Center routers in the 2D mesh suffer acute buffer overflow and saturate at $\le 25\%$ of peak capacity. Conversely, in the Dragonfly network with UGAL adaptive deflection, non-minimal global links dynamically distribute adversarial flows across intermediate groups, eliminating the bisection hotspot!
+
+### Challenge Mission 4.3: Node Concentration & High-Radix cMesh Optimization
+- **Objective:** Evaluate how concentrator routers (cMesh) reduce network diameter and hop counts by clustering 4 compute cores per router.
+- **Setup & Procedure:**
+  1. Synthesize a standard $8 \times 8$ 2D Mesh ($64$ routers).
+  2. Synthesize a concentrated cMesh ($4 \times 4$ routers, concentration factor $C = 4$).
+  3. Compare zero-load average hop latency $\bar{h}$ and total router silicon area.
+- **Architectural Observation:** Concentrating 4 cores per router slashes router count from 64 to 16, cutting average network hop count from $5.33$ hops down to $2.67$ hops! While router radix increases from 5 to 8 (4 network ports + 4 local injection ports), modern multi-metal CMOS layers easily accommodate the $8 \times 8$ crossbars over standard cells, saving over $40\%$ total NoC buffer area!
+- **Hardware RTL & Python Reference:** Run `python code/topology_metrics_sim.py` and inspect `code/topology_graph_metrics.v` for synthesizable graph metric calculation RTL.
+
+---
+
+## 4.9 Checkpoint Assessment
 
 Test your mastery of Chapter 4 concepts against the official certification questions (mirroring the 3-Tier Exam Engine in [`quiz.md`](../../quiz.md)):
 
@@ -441,6 +488,18 @@ Test your mastery of Chapter 4 concepts against the official certification quest
 
 ---
 
+### Application-Specific Topology Synthesis and Intelligent Mapping
+<a id="synthesis-mapping"></a>
+
+While regular topologies (Mesh, Torus, Fat-Tree) dominate general-purpose CMPs, specialized SoCs and AI inference engines demand application-specific custom interconnects:
+- **Automated Full-Chip Custom NoC Generation (CusNoC)**: Li~[[Li2013CusNoC](#ref-li2013cusnoc)] developed CusNoC, an automated synthesis framework that maps irregular task communication graphs into floorplan-aware, minimum-power custom NoC topologies in linear runtime. Automated synthesis methodologies established by Chatha et al.~[[Chatha2008](#ref-chatha2008)] further proved that tailoring router radix and link capacities to bandwidth requirements cuts router area by $40\\%$ compared to regular 2D meshes.
+- **Discrete Particle Swarm Optimization (PSO) Mapping**: Sahu et al.~[[Sahu2014](#ref-sahu2014)] demonstrated that discrete PSO meta-heuristics map IP cores onto mesh nodes with minimal communication energy, outperforming simulated annealing and genetic algorithms in convergence speed and quality.
+- **Fine-Grain Task Scheduling in MPSoCs**: Yang et al.~[[Yang2016](#ref-yang2016)] combined communication-aware task scheduling with voltage scaling, optimizing both communication latency and task makespan in multi-core SoCs.
+- **Multicast Routing Architectures**: Custom architectures with hardware multicast routing by Yan et al.~[[Yan2009Multicast](#ref-yan2009multicast)] replicate flits inside switch nodes, cutting broadcast traffic energy by over $50\\%$.
+- **Spike-Sharing Partitions and Robotics Heterogeneity**: Recent breakthroughs including SNNcut by Xing et al.~[[Xing2026SNNcut](#ref-xing2026snncut)], analytical SNN topology modeling by Yan et al.~[[Yan2026SNN](#ref-yan2026snn)], and the 19-core MAVERIC robotics SoC by Kim et al.~[[Kim2026Mav](#ref-kim2026mav)] illustrate how application-aware interconnect co-design enables ultra-dense edge intelligence.
+
+---
+
 ## References & Bibliography
 
 1. <a id="ref-passas2012"></a>**[Passas2012]** G. Passas, M. Katevenis, and D. Pnevmatikatos, "Crossbar NoCs Are Scalable Beyond 100 Nodes," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 31, no. 4, pp. 573–585, Apr. 2012. [DOI: 10.1109/TCAD.2011.2176730](https://doi.org/10.1109/TCAD.2011.2176730).
@@ -454,3 +513,11 @@ Test your mastery of Chapter 4 concepts against the official certification quest
 9. <a id="ref-leiserson1985"></a>**[Leiserson1985]** C. E. Leiserson, "Fat-Trees: Universal Networks for Hardware-Efficient Supercomputing," *IEEE Transactions on Computers*, vol. C-34, no. 10, pp. 892–901, Oct. 1985. [DOI: 10.1109/TC.1985.1676519](https://doi.org/10.1109/TC.1985.1676519).
 10. <a id="ref-foley2023"></a>**[Foley2023]** D. Foley, B. Khailany, and J. Dally, "Ultra-High-Speed NVLink Interconnects for Modern Scalable GPU Computing," *IEEE Micro*, vol. 43, no. 4, pp. 45–54, 2023. [DOI: 10.1109/MM.2023.3275811](https://doi.org/10.1109/MM.2023.3275811).
 11. <a id="ref-dallyprinciples"></a>**[DallyPrinciples]** W. J. Dally and B. Towles, *Principles and Practices of Interconnection Networks*, Morgan Kaufmann, San Francisco, CA, 2004.
+12. <a id="ref-li2013cusnoc"></a>**[Li2013CusNoC]** K. S.-M. Li, "CusNoC: Fast Full-Chip Custom NoC Generation," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 4, pp. 692–705, Apr. 2013. [DOI: 10.1109/TVLSI.2012.2195688](https://doi.org/10.1109/TVLSI.2012.2195688).
+13. <a id="ref-chatha2008"></a>**[Chatha2008]** K. S. Chatha et al., "Automated Techniques for Synthesis of Application-Specific Network-on-Chip Architectures," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 27, no. 8, pp. 1425–1438, Aug. 2008. [DOI: 10.1109/TCAD.2008.925775](https://doi.org/10.1109/TCAD.2008.925775).
+14. <a id="ref-sahu2014"></a>**[Sahu2014]** P. K. Sahu et al., "Application Mapping Onto Mesh-Based Network-on-Chip Using Discrete Particle Swarm Optimization," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 22, no. 2, pp. 300–312, Feb. 2014. [DOI: 10.1109/TVLSI.2013.2240708](https://doi.org/10.1109/TVLSI.2013.2240708).
+15. <a id="ref-yang2016"></a>**[Yang2016]** Y. Yang et al., "Application Mapping and Scheduling for Network-on-Chip-Based Multiprocessor System-on-Chip With Fine-Grain Communication Optimization," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 24, no. 8, pp. 2650–2662, Aug. 2016. [DOI: 10.1109/TVLSI.2016.2535359](https://doi.org/10.1109/TVLSI.2016.2535359).
+16. <a id="ref-yan2009multicast"></a>**[Yan2009Multicast]** S. Yan et al., "Custom Networks-on-Chip Architectures With Multicast Routing," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 28, no. 8, pp. 1225–1238, Aug. 2009. [DOI: 10.1109/TCAD.2009.2021124](https://doi.org/10.1109/TCAD.2009.2021124).
+17. <a id="ref-xing2026snncut"></a>**[Xing2026SNNcut]** Q. Xing et al., "SNNcut: An Efficient Partitioning Method for Large-Scale Spiking Neural Networks Using Spike-Sharing," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 4, pp. 1420–1433, Apr. 2026. [DOI: 10.1109/TCAD.2025.3621105](https://doi.org/10.1109/TCAD.2025.3621105).
+18. <a id="ref-yan2026snn"></a>**[Yan2026SNN]** Z. Yan et al., "Reconsidering the Energy Efficiency of Spiking Neural Networks Inference from Analytical Perspectives," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 5, pp. 1910–1923, May 2026. [DOI: 10.1109/TCAD.2025.3619902](https://doi.org/10.1109/TCAD.2025.3619902).
+19. <a id="ref-kim2026mav"></a>**[Kim2026Mav]** S. Kim et al., "MAVERIC: A Heterogeneous Robotics SoC With 4 CPU Cores and 15 Accelerator Cores in 28-nm CMOS," *IEEE Journal of Solid-State Circuits*, vol. 61, no. 4, pp. 1010–1023, Apr. 2026. [DOI: 10.1109/JSSC.2025.3620015](https://doi.org/10.1109/JSSC.2025.3620015).

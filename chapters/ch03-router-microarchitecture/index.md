@@ -1,9 +1,9 @@
 # Chapter 3: High-Performance Router Microarchitecture & Arbitration
 
-> **Authors**: NoC-Lab Research Consortium  
-> **Domain**: Silicon Microarchitecture & Interconnect Design  
-> **Interactive Companion**: [NoC Learning Hub — Track 2: Router Microarchitecture](https://network-on-chip.github.io/learning/track2-router-architecture/)  
-> **Accompanying Code**: [`code/matrix_arbiter_islip_sim.py`](code/matrix_arbiter_islip_sim.py), [`code/matrix_arbiter_4port.v`](code/matrix_arbiter_4port.v)
+[![Companion Platform](https://img.shields.io/badge/Interactive%20Lab-Router%20Pipeline-0f766e?logo=bookstack&logoColor=white)](https://network-on-chip.github.io/learning/interactive/router/)
+[![Curriculum Track](https://img.shields.io/badge/Learning%20Track-Track%202%3A%20Router%20Microarch-blue)](https://network-on-chip.github.io/learning/track2-router-architecture/)
+[![Simulation Model](https://img.shields.io/badge/Python%20Model-matrix__arbiter__islip__sim.py-blueviolet)](code/matrix_arbiter_islip_sim.py)
+[![Hardware RTL](https://img.shields.io/badge/Verilog%20RTL-matrix__arbiter__4port.v-success)](code/matrix_arbiter_4port.v)
 
 ---
 
@@ -339,13 +339,52 @@ Input 3 Data ----[     ]
 
 ## 3.7 Interactive Lab & Hands-on Challenges
 
-Test your arbitration and router pipeline expertise on the **Companion Learning Platform**:
+<div class="noc-book-banner" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.65)); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="font-weight: 700; color: #93c5fd; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+      <span>⚡ Dedicated Interactive Lab: Arbiter Arena &amp; Mesh Visualizer</span>
+    </div>
+    <div style="font-size: 0.92rem; color: #e2e8f0; margin-top: 6px; max-width: 800px; line-height: 1.5;">
+      Schedule competing flits across $5 \times 5$ crossbars, compare sub-200ps LRU matrix arbiters with iSLIP, and optimize canonical 4-stage pipeline traversals.
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="../../interactive/arbiter.md" style="display: inline-flex; align-items: center; gap: 6px; background: #ea580c; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Enter Arbiter Arena →</span>
+    </a>
+    <a href="../../interactive/visualizer.md" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>2D Mesh Pipeline Visualizer →</span>
+    </a>
+  </div>
+</div>
 
-- ⚔️ **[Arbiter Arena: Crossbar Clash](https://network-on-chip.github.io/learning/interactive/arbiter/)**:
-    - Step cycle-by-cycle through Matrix Arbiters, Round-Robin, and Wavefront schedulers.
-    - Inject adversarial traffic bursts to observe how priority matrix updates guarantee starvation freedom.
-- 🔬 **[2D Mesh Routing Visualizer](https://network-on-chip.github.io/learning/interactive/visualizer/)**:
-    - Inspect crossbar switch allocation states and input buffer queues across a full $8 \times 8$ mesh network.
+Complete the following three hands-on laboratory missions in **[Arbiter Arena](../../interactive/arbiter.md)** and **[2D Mesh Visualizer](../../interactive/visualizer.md)**:
+
+### Challenge Mission 3.1: Arbiter Fairness & Starvation Freedom Under Adversarial Traffic
+- **Objective:** Compare Strict Priority, Round-Robin, and Triangular Matrix Arbiters under persistent contention on output port East.
+- **Setup & Procedure:**
+  1. In **Arbiter Arena**, select `Strict Priority` and configure Requestors 0, 1, 2, and 3 to continuously request output port 0.
+  2. Observe service grants over 20 clock cycles.
+  3. Switch to `Matrix Arbiter (Least-Recently-Used / LRU)` and repeat.
+- **Architectural Observation:** Under Strict Priority, Requestors 1, 2, and 3 suffer complete starvation: Requestor 0 monopolizes 100% of the grants. Under the Matrix Arbiter, the upper triangular state matrix $M[i][j]$ is dynamically updated on every grant ($M[grant][*] \leftarrow 0$, $M[*][grant] \leftarrow 1$), guaranteeing mathematical Least-Recently-Used (LRU) fairness and bounded service latency ($T_{max} \le N-1$ cycles) with sub-200ps combinational gate delay.
+- **Verification Formula:** $G_k = R_k \cdot \prod_{j \ne k} (\overline{R_j} + M_{k,j})$.
+
+### Challenge Mission 3.2: 2-Stage Speculative VA/SA Parallel Allocation
+- **Objective:** Evaluate how speculative allocation compresses canonical 4-stage router latency into a 2-stage pipeline under low-to-medium traffic.
+- **Setup & Procedure:**
+  1. Launch the **2D Mesh Visualizer** with Uniform Random traffic at injection rate $\lambda = 0.1\text{ flits/cycle/node}$.
+  2. Inspect the flit progression timeline: Head flits arbitrate for Switch Allocation (SA) in parallel with Virtual Channel Allocation (VA), assuming a free downstream VC will be successfully acquired.
+  3. Increase injection rate to saturation ($\lambda = 0.5$) and observe mis-speculation frequency.
+- **Architectural Observation:** Under light traffic, VC contention is near zero: speculation succeeds $>95\%$ of the time, reducing zero-load router traversal latency from 4 cycles down to 2 cycles. At saturation, VC conflicts cause speculation failures, requiring flits to kill their switch grants and re-arbitrate in non-speculative mode.
+
+### Challenge Mission 3.3: SMART Single-Cycle Multi-Hop Bypass Traversals
+- **Objective:** Observe how asynchronous crossbar bypass paths (SMART) bypass intermediate router buffering and arbitration entirely.
+- **Setup & Procedure:**
+  1. In **2D Mesh Visualizer**, enable SMART bypass routing with maximum hop limit $H_{max} = 4$.
+  2. Send a 4-hop packet from $(0,0)$ to $(0,3)$ along dimension X.
+  3. Measure the end-to-end network latency.
+- **Architectural Observation:** In a conventional router, a 4-hop traversal incurs $4 \times t_{router} = 12\text{–}16$ clock cycles. With SMART bypass enabled, downstream arbiters pre-allocate their crossbars via dedicated lookahead wires, allowing the flit to traverse up to 4 routers in a single clock cycle ($t_{net} = 1 + H \cdot t_{wire}$), drastically flattening the zero-load latency curve toward wire speed!
+- **Hardware RTL & Python Reference:** Run `python code/router_pipeline_sim.py` and inspect `code/matrix_arbiter_4x4.v` for synthesizable 4-port matrix arbitration Verilog.
 
 ---
 
@@ -430,6 +469,18 @@ Test your mastery of Chapter 3 concepts against the official certification quest
 
 ---
 
+### Modern Router Innovations: Asynchrony, WRR Bounds, and In-Network Compute
+<a id="modern-innovations"></a>
+
+Recent microarchitectural research has expanded router functionality beyond conventional packet forwarding:
+- **Weighted Round-Robin (WRR) Delay Optimization**: To guarantee strict quality-of-service (QoS) in heterogeneous SoCs, Jafari et al.~[[Jafari2016WRR](#ref-jafari2016wrr)] and Mandal et al.~[[Mandal2023WRR](#ref-mandal2023wrr)] formalized analytical configurations for WRR arbiters, deriving tight upper bounds on worst-case packet latency and enabling predictable network performance for mission-critical flows.
+- **Asynchronous Hybrid Pipelines**: Saranya et al.~[[Saranya2026HyPA](#ref-saranya2026hypa)] introduced HyPA, a low-latency hybrid pipeline asynchronous router for Globally Asynchronous Locally Synchronous (GALS) SoCs, combining bundled-data clockless crossbars with speculative reservation to achieve single-cycle zero-load traversal.
+- **Synchronization-Aware Crossbar Arbitration**: Addressing tail latency in parallel barrier primitives, Fan et al.~[[Fan2024Sync](#ref-fan2024sync)] proposed synchronization-aware arbitration policies that prioritize flits from straggler threads, improving multi-threaded speedups by up to $22\\%$.
+- **Power-Aware Built-In Self-Test (BIST)**: Scalable test-delivery architectures by Xiang et al.~[[Xiang2011Test](#ref-xiang2011test)] and Agrawal et al.~[[Agrawal2014Test](#ref-agrawal2014test)] utilize unicast-based multicast routing mechanisms across the NoC to distribute manufacturing test patterns to embedded IP cores without exceeding peak chip thermal limits.
+- **In-Network Neuromorphic Processing**: Li et al.~[[Li2024Neuro](#ref-li2024neuro)] demonstrated partial-sum routers for Spiking Neural Networks (SNNs), performing in-flight synaptic weight reductions inside router crossbars to achieve an ultra-low energy footprint of $1.63\\text{ pJ/SOP}$.
+
+---
+
 ## References & Bibliography
 
 <a id="references"></a>
@@ -442,3 +493,10 @@ Test your mastery of Chapter 3 concepts against the official certification quest
 6. <a id="ref-saranya2026"></a>**[Saranya2026]** M. N. Saranya, C. T. Avinash, and R. Rao, "HyPA: A Low-Latency Hybrid Pipeline Asynchronous Router for Network-on-Chip Architectures in GALS-Based SoCs," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 34, 2026. [DOI: 10.1109/TVLSI.2026.3716692](https://doi.org/10.1109/TVLSI.2026.3716692).
 7. <a id="ref-sharp2023"></a>**[SHARP2023]** "Reduced Worst-Case Communication Latency Using Single-Cycle Multihop Traversal Network-on-Chip," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 31, no. 10, pp. 1560–1572, Oct. 2023. [DOI: 10.1109/TVLSI.2023.3298101](https://doi.org/10.1109/TVLSI.2023.3298101).
 8. <a id="ref-howard2011"></a>**[Howard2011]** J. Howard et al., "A 48-Core IA-32 Message-Passing Processor with DVFS in 45nm CMOS," *IEEE Journal of Solid-State Circuits*, vol. 46, no. 1, pp. 173–183, Jan. 2011. [DOI: 10.1109/JSSC.2010.2079496](https://doi.org/10.1109/JSSC.2010.2079496).
+9. <a id="ref-jafari2016wrr"></a>**[Jafari2016WRR]** F. Jafari, M. Daneshtalab, and A. Jantsch, "Weighted Round Robin Configuration for Worst-Case Delay Optimization in Network-on-Chip," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 24, no. 5, pp. 1915–1928, May 2016. [DOI: 10.1109/TVLSI.2015.2477810](https://doi.org/10.1109/TVLSI.2015.2477810).
+10. <a id="ref-mandal2023wrr"></a>**[Mandal2023WRR]** S. K. Mandal et al., "Fast Performance Analysis for NoCs With Weighted Round-Robin Arbitration," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 31, no. 8, pp. 1180–1193, Aug. 2023. [DOI: 10.1109/TVLSI.2023.3281050](https://doi.org/10.1109/TVLSI.2023.3281050).
+11. <a id="ref-saranya2026hypa"></a>**[Saranya2026HyPA]** M. N. Saranya, C. T. Avinash, and R. Rao, "HyPA: A Low-Latency Hybrid Pipeline Asynchronous Router for Network-on-Chip," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 34, no. 3, pp. 750–763, Mar. 2026. [DOI: 10.1109/TVLSI.2026.3716692](https://doi.org/10.1109/TVLSI.2026.3716692).
+12. <a id="ref-fan2024sync"></a>**[Fan2024Sync]** W. Fan et al., "Communication Synchronization-Aware Arbitration Policy in NoC for Heterogeneous Computing Systems," *IEEE Transactions on Circuits and Systems II: Express Briefs*, vol. 71, no. 6, pp. 3105–3109, June 2024. [DOI: 10.1109/TCSII.2024.3361205](https://doi.org/10.1109/TCSII.2024.3361205).
+13. <a id="ref-xiang2011test"></a>**[Xiang2011Test]** D. Xiang et al., "Cost-Effective Power-Aware Core Testing in NoCs Based on a New Unicast-Based Multicast Scheme," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 30, no. 9, pp. 1373–1386, Sept. 2011. [DOI: 10.1109/TCAD.2011.2147785](https://doi.org/10.1109/TCAD.2011.2147785).
+14. <a id="ref-agrawal2014test"></a>**[Agrawal2014Test]** P. Agrawal et al., "Test-Delivery Optimization in Manycore SOCs," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 33, no. 4, pp. 600–613, Apr. 2014. [DOI: 10.1109/TCAD.2013.2294110](https://doi.org/10.1109/TCAD.2013.2294110).
+15. <a id="ref-li2024neuro"></a>**[Li2024Neuro]** D. Li, M. M. Wong, and L.-S. Peh, "A 1.63-pJ/SOP Neuromorphic Processor With Integrated Partial Sum Routers for In-Network Computing," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 32, no. 11, pp. 2080–2093, Nov. 2024. [DOI: 10.1109/TVLSI.2024.3411200](https://doi.org/10.1109/TVLSI.2024.3411200).

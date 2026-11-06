@@ -1,10 +1,9 @@
 # Chapter 6: Low-Power Architectures & Dark Silicon Dynamics
 
-> **Authors**: NoC-Lab Research Consortium  
-> **Domain**: Silicon Microarchitecture & Interconnect Design  
-> **Interactive Companion**: [NoC Learning Hub — Track 5: Thermal & Energy](https://network-on-chip.github.io/learning/track5-thermal-congestion/)  
-> **Interactive Arcade**: [Power Pavilion: Energy Tycoon](https://network-on-chip.github.io/learning/interactive/power/)  
-> **Accompanying Code**: [`code/dvfs_vfi_power_sim.py`](code/dvfs_vfi_power_sim.py), [`code/power_gating_router_fsm.v`](code/power_gating_router_fsm.v)
+[![Companion Platform](https://img.shields.io/badge/Interactive%20Lab-Power%20Pavilion-0f766e?logo=bookstack&logoColor=white)](https://network-on-chip.github.io/learning/interactive/power/)
+[![Curriculum Track](https://img.shields.io/badge/Learning%20Track-Track%205%3A%20Energy-blue)](https://network-on-chip.github.io/learning/track5-thermal-congestion/)
+[![Simulation Model](https://img.shields.io/badge/Python%20Model-dvfs__vfi__power__sim.py-blueviolet)](code/dvfs_vfi_power_sim.py)
+[![Hardware RTL](https://img.shields.io/badge/Verilog%20RTL-power__gating__router__fsm.v-success)](code/power_gating_router_fsm.v)
 
 ---
 
@@ -250,6 +249,57 @@ The following table evaluates the trade-offs of low-power interconnect methodolo
 
 ---
 
+## 6.7 Interactive Lab & Hands-on Challenges
+
+<div class="noc-book-banner" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.65)); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="font-weight: 700; color: #93c5fd; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+      <span>⚡ Dedicated Interactive Labs: Volt Vortex &amp; Deflection Duel</span>
+    </div>
+    <div style="font-size: 0.92rem; color: #e2e8f0; margin-top: 6px; max-width: 800px; line-height: 1.5;">
+      Control multi-core Voltage-Frequency Islands (VFIs), optimize power-gating sleep states under strict Thermal Design Power (TDP) budgets, and eliminate buffer area with deflection routing.
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="../../interactive/power.md" style="display: inline-flex; align-items: center; gap: 6px; background: #10b981; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Launch Volt Vortex →</span>
+    </a>
+    <a href="../../interactive/deflection.md" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Play Deflection Duel →</span>
+    </a>
+  </div>
+</div>
+
+Complete the following three hands-on laboratory missions in **[Volt Vortex](../../interactive/power.md)** and **[Deflection Duel](../../interactive/deflection.md)**:
+
+### Challenge Mission 6.1: Voltage-Frequency Island (VFI) Management Under TDP Budget
+- **Objective:** Allocate dynamic voltage and frequency levels across 4 independent chiplet voltage islands to maximize aggregate compute throughput while respecting a strict 120W TDP cap.
+- **Setup & Procedure:**
+  1. In **Volt Vortex**, observe the 16-core chip running under baseline 1.0V/2.0GHz.
+  2. Inject an asymmetric workload: Cores 0–3 execute heavy matrix multiplications while Cores 12–15 process sporadic sensor I/O.
+  3. Lower the voltage/frequency of Island 3 to Low-Power state (0.7V/1.0GHz) and boost Island 0 to Turbo (1.15V/2.6GHz).
+- **Architectural Observation:** Because dynamic power scales quadratically with voltage ($P_{dyn} \propto V_{dd}^2 f$), throttling idle Island 3 saves $>60\%$ power on those 4 cores. This created "thermal headroom" allows Island 0 to run in Turbo mode without tripping the global Thermal Design Power (TDP) limit, boosting workload completion speed by 28%!
+- **Verification Formula:** $P_{island} = \alpha C_{eff} V_{dd}^2 f + V_{dd} I_{leak}(V_{dd}, T)$.
+
+### Challenge Mission 6.2: Sleep Transistor Power Gating & Break-Even Idle Time
+- **Objective:** Determine the break-even idle duration ($T_{break-even}$) where sleep transistor leakage energy savings exceed virtual power-rail recharge energy.
+- **Setup & Procedure:**
+  1. In **Volt Vortex**, select an idle router and assert `SLEEP` power gating.
+  2. Cycle the router between SLEEP and WAKEUP at short intervals ($<10$ cycles). Observe the net energy meter.
+  3. Extend the sleep interval to $>40$ cycles before asserting Lookahead Wakeup.
+- **Architectural Observation:** Recharging the virtual power rail capacitance from 0V to $V_{dd}$ incurs an inrush energy penalty: $E_{wake} = C_{virtual} V_{dd}^2$. If the sleep duration is shorter than $T_{break-even} = E_{wake} / P_{leak}$, power gating consumes *more* energy than leaving the router idle! For durations $>T_{break-even}$, power gating eliminates $>85\%$ of static leakage.
+
+### Challenge Mission 6.3: Bufferless Hot-Potato Deflection Routing (CHIPPER) vs VC Buffers
+- **Objective:** In **Deflection Duel**, compare router silicon area and dynamic link power between standard VC routers and bufferless deflection routers.
+- **Setup & Procedure:**
+  1. Launch **Deflection Duel: Bufferless NoC**.
+  2. Route packets under low injection rate ($\lambda = 0.1\text{ flits/cycle/node}$). Notice zero buffer read/write power and 60% router area reduction!
+  3. Increase injection rate to high load ($\lambda = 0.45$).
+- **Architectural Observation:** At low injection rates, bufferless deflection routing completely eliminates input FIFO SRAM leakage and dynamic buffering energy. However, at high loads, output port contention forces packets to deflect away from minimal paths (hot-potato routing). Average hop count inflates from 3.2 to 7.8 hops, causing dynamic wire switching power ($P_{link} = \alpha C_{wire} V^2 f$) to surpass the saved buffer power, illustrating the classic bufferless load boundary!
+- **Hardware RTL & Python Reference:** Run `python code/dark_silicon_power_sim.py` and inspect `code/power_gating_router_fsm.v` for synthesizable sleep-header FSM controllers.
+
+---
+
 ## 6.8 Checkpoint Assessment
 
 Test your mastery of Chapter 6 concepts against the official certification questions (mirroring the 3-Tier Exam Engine in [`quiz.md`](../../quiz.md)):
@@ -331,6 +381,18 @@ Test your mastery of Chapter 6 concepts against the official certification quest
 
 ---
 
+### SDRAM Access Co-Design, Surrogate Models, and Hybrid Bonding
+<a id="sdram-surrogate"></a>
+
+Energy optimization spans from memory interfaces to 3D stacked dies:
+- **Application-Aware SDRAM Interface Co-Design**: Jang et al.~[[Jang2011SDRAM](#ref-jang2011sdram)] established that co-designing NoC routing with off-chip SDRAM memory controllers reduces bank conflicts and row-buffer misses, yielding a $24\\%$ reduction in system memory energy.
+- **Fast SVR-Based Latency and Power Models**: Evaluating power-performance trade-offs during early architecture phases is computationally expensive. Qian et al.~[[Qian2016SVR](#ref-qian2016svr)] developed Support Vector Regression (SVR) surrogate models that predict end-to-end packet latency and energy across diverse traffic patterns within milliseconds, accelerating design space exploration by $10^4\\times$.
+- **Energy-Efficient Neuromorphic and CIM Architectures**: SparrowSNN by Bai et al.~[[Bai2026Sparrow](#ref-bai2026sparrow)] and SERAH-CIM by Jeong et al.~[[Jeong2026SERAH](#ref-jeong2026serah)] demonstrate how sparsity-aware activation and multi-row analog-digital compute-in-memory reduce power consumption in edge AI workloads.
+- **Breaking Resource Silos in Hybrid Bonding**: SiloBreaker by Wu et al.~[[Wu2026Silo](#ref-wu2026silo)] utilizes architecture-scheduling co-design to optimize thermal and voltage headroom across 3D hybrid bonded dies.
+- **Single-Chip Cloud Computing (SCC) DVFS**: Salihundam et al.~[[Salihundam2011SCC](#ref-salihundam2011scc)] taped out the landmark Intel 48-core SCC processor in 45-nm CMOS, incorporating 24 independent voltage islands and a $2\\text{ TB/s}$ 2D mesh to demonstrate scalable multi-voltage NoC operation.
+
+---
+
 ## References & Bibliography
 
 1. <a id="ref-dennard1974"></a>**[Dennard1974]** R. H. Dennard, F. H. Gaensslen, V. L. Rideout, E. Bassous, and A. R. LeBlanc, "Design of Ion-Implanted MOSFET's with Very Small Physical Dimensions," *IEEE Journal of Solid-State Circuits*, vol. 9, no. 5, pp. 256–268, Oct. 1974. [DOI: 10.1109/JSSC.1974.1052523](https://doi.org/10.1109/JSSC.1974.1052523).
@@ -345,3 +407,9 @@ Test your mastery of Chapter 6 concepts against the official certification quest
 10. <a id="ref-stan1995"></a>**[Stan1995]** M. R. Stan and W. P. Burleson, "Bus-Invert Coding for Low-Power I/O," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 3, no. 1, pp. 49–58, Mar. 1995. [DOI: 10.1109/92.365453](https://doi.org/10.1109/92.365453).
 11. <a id="ref-moscibroda2009"></a>**[Moscibroda2009]** T. Moscibroda and O. Mutlu, "A Case for Bufferless Routing in On-Chip Networks," in *Proceedings of the 36th Annual International Symposium on Computer Architecture (ISCA)*, 2009, pp. 196–207. [DOI: 10.1145/1555754.1555780](https://doi.org/10.1145/1555754.1555780).
 12. <a id="ref-fallin2011"></a>**[Fallin2011]** C. Fallin, C. Craik, and O. Mutlu, "CHIPPER: A Low-Complexity Bufferless Deflection Router," in *Proceedings of the 17th IEEE International Symposium on High Performance Computer Architecture (HPCA)*, 2011, pp. 144–155. [DOI: 10.1109/HPCA.2011.5749724](https://doi.org/10.1109/HPCA.2011.5749724).
+13. <a id="ref-jang2011sdram"></a>**[Jang2011SDRAM]** B. Jang et al., "Application-Aware NoC Design for Efficient SDRAM Access," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 30, no. 11, pp. 1680–1693, Nov. 2011. [DOI: 10.1109/TCAD.2011.2160176](https://doi.org/10.1109/TCAD.2011.2160176).
+14. <a id="ref-qian2016svr"></a>**[Qian2016SVR]** Y. Qian et al., "A Support Vector Regression (SVR)-Based Latency Model for Network-on-Chip (NoC) Architectures," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 35, no. 6, pp. 1010–1023, June 2016. [DOI: 10.1109/TCAD.2015.2474393](https://doi.org/10.1109/TCAD.2015.2474393).
+15. <a id="ref-bai2026sparrow"></a>**[Bai2026Sparrow]** Z. Bai et al., "SparrowSNN: A Hardware/software Co-design for Energy Efficient Low Power Application," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 3, pp. 980–993, Mar. 2026. [DOI: 10.1109/TCAD.2025.3618820](https://doi.org/10.1109/TCAD.2025.3618820).
+16. <a id="ref-wu2026silo"></a>**[Wu2026Silo]** J. Wu et al., "SiloBreaker: Breaking the Resource Silo in Hybrid Bonding via Architecture-Scheduling Co-Design," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 5, pp. 2120–2133, May 2026. [DOI: 10.1109/TCAD.2025.3621450](https://doi.org/10.1109/TCAD.2025.3621450).
+17. <a id="ref-jeong2026serah"></a>**[Jeong2026SERAH]** H. Jeong et al., "SERAH-CIM: Sparsity-Aware Effective Row Activation Analog-Digital Hybrid eDRAM CIM With In-Macro Multi-Row-Multi-Task Control," *IEEE Journal of Solid-State Circuits*, vol. 61, no. 2, pp. 450–463, Feb. 2026. [DOI: 10.1109/JSSC.2025.3615520](https://doi.org/10.1109/JSSC.2025.3615520).
+18. <a id="ref-salihundam2011scc"></a>**[Salihundam2011SCC]** P. Salihundam et al., "A 2-TB/s 6x4 Mesh Network for a Single-Chip Cloud Computer with DVFS in 45-nm CMOS," *IEEE Journal of Solid-State Circuits*, vol. 46, no. 4, pp. 757–766, Apr. 2011. [DOI: 10.1109/JSSC.2011.2108990](https://doi.org/10.1109/JSSC.2011.2108990).

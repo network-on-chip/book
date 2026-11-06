@@ -36,7 +36,9 @@ This chapter delivers a rigorous, multidisciplinary exploration of 3D-NoC archit
 - **Section 8.6**: Hardware Microarchitecture: 7-Port Vertical Link Arbiter.
 - **Section 8.7**: Simulation Model & Numerical Verification.
 - **Section 8.8**: Summary & Cross-Disciplinary Synergies.
-- **Section 8.9**: Comprehensive Problem Set & Solutions.
+- **Section 8.9**: Interactive Lab & Hands-on Challenges.
+- **Section 8.10**: Comprehensive Problem Set & Solutions.
+- **Section 8.11**: Checkpoint Assessment & Certification Questions.
 
 ---
 
@@ -318,13 +320,60 @@ Self-test passed successfully!
     - Micro-scale manufacturing defects in vertical vias can catastrophically disable an entire multi-die stack.
     - Self-healing hardware crossbars, reconfigurable multiplexers, and 4:1 spare-wire repair networks restore link continuity transparently with zero flit loss.
 
-### Companion Platform Interactive Labs
-- **[Interactive Lab: Chiplet Tycoon](https://network-on-chip.github.io/learning/interactive/chiplet/)**: Architect multi-die 2.5D and 3D stacked topologies with live TSV latency and thermal throttling gauges.
-- **[Curriculum Track 6: Chiplets & 3D Interconnects](https://network-on-chip.github.io/learning/track6-chiplets-and-3d/)**: Master die-to-die PHY protocols, TSV Keep-Out Zones, and vertical routing algorithms.
+---
+
+## 8.9 Interactive Lab & Hands-on Challenges
+
+<div class="noc-book-banner" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.65)); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="font-weight: 700; color: #93c5fd; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+      <span>🏢 Dedicated Interactive Lab: TSV Titan: 3D-NoC Architect</span>
+    </div>
+    <div style="font-size: 0.92rem; color: #e2e8f0; margin-top: 6px; max-width: 800px; line-height: 1.5;">
+      Architect vertical Through-Silicon Via (TSV) interconnects across multi-tier silicon stacks, balance Keep-Out Zone (KOZ) stress boundaries, route 3D flits, and defeat thermal stacking traps using thermal dummy TSVs.
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="../../interactive/tsv3d.md" style="display: inline-flex; align-items: center; gap: 6px; background: #8b5cf6; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Launch TSV Titan →</span>
+    </a>
+    <a href="../../interactive/chiplet.md" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Chiplet Tycoon →</span>
+    </a>
+  </div>
+</div>
+
+Complete the following three hands-on laboratory missions in **[TSV Titan: 3D-NoC Architect](../../interactive/tsv3d.md)**:
+
+### Challenge Mission 8.1: TSV Physical Parameters & Keep-Out Zone (KOZ) Silicon Overhead
+- **Objective:** Quantify the active silicon area penalty imposed by thermo-mechanical stress around copper TSVs across varying via pitches.
+- **Setup & Procedure:**
+  1. In **TSV Titan**, set 3D stack to 3 Tiers (Logic + SRAM + HBM).
+  2. Inspect the TSV physical dimensions: diameter $d = 4\,\mu\text{m}$, height $h = 40\,\mu\text{m}$, pitch $p = 10\,\mu\text{m}$.
+  3. Observe the calculated Keep-Out Zone radius ($r_{koz} \approx 8.8\,\mu\text{m}$) and active silicon area exclusion ratio.
+- **Architectural Observation:** Copper's high coefficient of thermal expansion ($\text{CTE}_{Cu} \approx 17\times 10^{-6}/\text{K}$) versus silicon ($\text{CTE}_{Si} \approx 2.6\times 10^{-6}/\text{K}$) induces radial tensile stress exceeding $200\text{ MPa}$ near the via edge. To prevent threshold voltage shifts and drive-current degradation, standard cell transistors are prohibited inside the KOZ, consuming $4.8\%$ to $15\%$ of active tile silicon area!
+- **Verification Formula:** $\sigma_r(r) = -\Delta\alpha \cdot \Delta T \cdot E \cdot \left(\frac{r_0}{r}\right)^2$.
+
+### Challenge Mission 8.2: 3D Dimension-Order Routing ($Z-X-Y$ vs Elevator Routing)
+- **Objective:** Verify deadlock freedom and vertical link utilization when routing cross-plane flits between Logic Tier 0 and HBM Tier 2.
+- **Setup & Procedure:**
+  1. Set routing algorithm to `Dimension-Order Z-X-Y (Vertical-First)`.
+  2. Inject packets from Core $(1,1,0)$ on Tier 0 to Memory Controller $(3,3,2)$ on Tier 2.
+  3. Switch algorithm to `Elevator Routing (Sparse TSV Pillars with Deflection)` and compare hop latency.
+- **Architectural Observation:** Under $Z-X-Y$, flits traverse vertical TSV links immediately upon injection before executing planar X-Y routing. Because packets never transition from planar channels back to vertical channels, no vertical-horizontal dependency cycles can form in the 3D Channel Dependency Graph, guaranteeing deadlock-free routing. Under sparse Elevator Routing, packets deflect horizontally toward the nearest shared vertical TSV pillar, reducing total TSV area at the cost of $1.8$ extra average hops.
+
+### Challenge Mission 8.3: Defeating the 3D Thermal Stacking Trap via Thermal Dummy TSVs
+- **Objective:** Mitigate the severe "attic oven" thermal stacking effect where heat generated in lower/middle tiers is trapped by low-conductivity dielectric bonding layers.
+- **Setup & Procedure:**
+  1. Click **Toggle Mode** to enter **Mode B: 3D Thermal Stacking Profile**.
+  2. Observe the peak temperature of Tier 1 ($>82^\circ\text{C}$) trapped beneath Inter-Layer Dielectric (ILD) oxide bonds ($k_{ILD} \approx 1.2\text{ W/m}\cdot\text{K}$).
+  3. Deploy **Thermal TSV Conduits (Spacebar)** from 16 to 32 dummy TSVs.
+- **Architectural Observation:** While silicon conducts heat efficiently ($k_{Si} \approx 140\text{ W/m}\cdot\text{K}$), ILD bonding layers act as thermal insulating blankets, trapping heat in active middle tiers. Inserting dummy copper TSVs ($k_{Cu} \approx 400\text{ W/m}\cdot\text{K}$) creates direct low-resistance vertical thermal conduits, shunting trapped heat directly down to the bottom heat sink and lowering peak junction temperature by $>14^\circ\text{C}$!
+- **Hardware RTL & Python Reference:** Run `python code/tsv_rc_delay_model.py` and inspect `code/tsv_arbiter_3d.v` for synthesizable 3D crossbar arbitration RTL.
 
 ---
 
-## 8.9 Comprehensive Problem Set & Solutions
+## 8.10 Comprehensive Problem Set & Solutions
 
 ### Problem 8.1: TSV Elmore Delay vs. Planar Intermediate Metal Wire
 Compare the propagation delay of a vertical TSV link versus a planar intermediate metal layer (M5) wire in a 7nm technology node:
@@ -404,7 +453,7 @@ A 3-tier 3D-IC stack dissipates power uniformly across each layer: $P_0 = P_1 = 
 
 ---
 
-## 8.10 Checkpoint Assessment
+## 8.11 Checkpoint Assessment
 
 Test your mastery of Chapter 8 concepts against the official certification questions (mirroring the 3-Tier Exam Engine in [`quiz.md`](../../quiz.md)):
 
@@ -485,6 +534,15 @@ Test your mastery of Chapter 8 concepts against the official certification quest
 
 ---
 
+### Deep RL Topology Optimization and Hybrid Wireless TSVs
+<a id="drl-wireless"></a>
+
+Recent innovations in vertical interconnects have explored machine learning optimization and hybrid signaling:
+- **Deep Reinforcement Learning (DRL) for 3D NoC Topology**: Deng et al.~[[Deng2026DRL](#ref-deng2026drl)] formulated 3D NoC topology synthesis as a sequential decision process, using deep RL to prune and regrow TSV vertical links for high-speed data acquisition systems, reducing average packet latency by $14.3\\%$ and TSV area overhead by $33\\%$.
+- **TSV-W: Wireless Hybrid Interconnects for 2.5D/3D Packaging**: Anim et al.~[[Anim2026TSVW](#ref-anim2026tsvw)] proposed TSV-W, integrating vertical through-silicon via pillars with near-field wireless antennas to circumvent high-frequency parasitic substrate loss and thermal bottlenecks in advanced multi-die stacks.
+
+---
+
 ## References & Bibliography
 
 1. <a id="ref-pavlidis2009"></a>**[Pavlidis2009]** V. F. Pavlidis and E. G. Friedman, *Three-Dimensional Integrated Circuit Design*, Morgan Kaufmann, Burlington, MA, 2009. ISBN: 978-0-12-374343-5.
@@ -495,3 +553,5 @@ Test your mastery of Chapter 8 concepts against the official certification quest
 6. <a id="ref-chao2013"></a>**[Chao2013]** C.-H. Chao, K.-C. Chen, and A.-Y. Wu, "Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 11, pp. 2118–2131, Nov. 2013. [DOI: 10.1109/TVLSI.2012.2227852](https://doi.org/10.1109/TVLSI.2012.2227852).
 7. <a id="ref-ieee1500"></a>**[IEEE1500]** IEEE, "IEEE Standard Testability Method for Embedded Core-Based Integrated Circuits," *IEEE Std 1500-2005*, 2005. [DOI: 10.1109/IEEESTD.2005.97445](https://doi.org/10.1109/IEEESTD.2005.97445).
 8. <a id="ref-smith1999"></a>**[Smith1999]** L. D. Smith, R. E. Anderson, D. W. Forehand, T. J. Pelc, and T. Roy, "Power Distribution System Design Methodology and Capacitor Selection for Modern CMOS Technology," *IEEE Transactions on Advanced Packaging*, vol. 22, no. 3, pp. 284–291, Aug. 1999. [DOI: 10.1109/6040.784478](https://doi.org/10.1109/6040.784478).
+9. <a id="ref-deng2026drl"></a>**[Deng2026DRL]** Y. Deng et al., "Topology Optimization of 3-D NoC for High-Speed Data Acquisition Systems via Deep Reinforcement Learning," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 34, no. 7, pp. 2213–2226, July 2026. [DOI: 10.1109/TVLSI.2026.3690001](https://doi.org/10.1109/TVLSI.2026.3690001).
+10. <a id="ref-anim2026tsvw"></a>**[Anim2026TSVW]** K. Anim, B. Taskin, A. Ganguly, and K. R. Dandekar, "TSV-W for 2.5-D IC Wireless Interconnects," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 34, no. 6, pp. 1801–1812, June 2026. [DOI: 10.1109/TVLSI.2026.3671654](https://doi.org/10.1109/TVLSI.2026.3671654).

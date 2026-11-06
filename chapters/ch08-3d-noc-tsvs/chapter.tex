@@ -165,14 +165,14 @@ In systems deploying shared vertical links, multiple planar directions contend f
 Why is the top floor of a house always scorching hot in summer? Because heat gets trapped under the roof! In a 3D-stacked chip, the copper heat sink sits on the bottom (Tier 0). Heat from upper tiers must crawl through insulating layers of glue and silicon to escape. As our simulation demonstrates, while Tier 0 sits at $97^\circ\mathrm{C}$, Tier 2 climbs to an alarming $136.5^\circ\mathrm{C}$! Managing this thermal ladder is crucial to avoid silicon meltdown.
 \end{svgraybox}
 
-In 3D-ICs, only the bottom tier (Tier 0) is directly attached to the package heat sink. Heat dissipated by upper tiers (Tier 1, Tier 2, etc.) must conduct downward through thinned silicon substrates and low-conductivity dielectric bonding interfaces ($\mathrm{SiO_2}$ or polymer adhesives, $k_{\mathrm{th}} \approx 0.2\text{ to }1.4\,\mathrm{W/(m\cdot K)}$).
+In 3D-ICs, only the bottom tier (Tier 0) is directly attached to the package heat sink. Heat dissipated by upper tiers (Tier 1, Tier 2, etc.) must conduct downward through thinned silicon substrates and low-conductivity dielectric bonding interfaces ($\mathrm{SiO_2}$ or polymer adhesives, $k_{\mathrm{th}} \approx 0.2\text{ to }1.4\,\mathrm{W/(m\cdot K)}$), creating severe vertical thermal gradients~\cite{Skadron2003,Huang2006,Chao2013}.
 
 The steady-state temperature of each tier in a $K$-tier stack is governed by the thermal resistance ladder:
 \begin{equation}
     T_0 = T_{\mathrm{amb}} + R_{\mathrm{hs}} \sum_{k=0}^{K-1} P_k, \qquad T_z = T_{z-1} + R_{\mathrm{inter}} \sum_{k=z}^{K-1} P_k \quad (z \ge 1)
     \label{eq:thermal-stacking-ladder}
 \end{equation}
-where $R_{\mathrm{hs}}$ is the heat sink thermal resistance and $R_{\mathrm{inter}}$ is the inter-tier bonding resistance. Consequently, upper tiers suffer from acute \textbf{thermal trapping}, operating $30^\circ\mathrm{C}$ to $50^\circ\mathrm{C}$ hotter than bottom tiers under identical workloads.
+where $R_{\mathrm{hs}}$ is the heat sink thermal resistance and $R_{\mathrm{inter}}$ is the inter-tier bonding resistance. Consequently, upper tiers suffer from acute \textbf{thermal trapping}~\cite{Chao2013}, operating $30^\circ\mathrm{C}$ to $50^\circ\mathrm{C}$ hotter than bottom tiers under identical workloads.
 
 \section{TSV Defect Tolerance \& Redundancy}
 \label{sec:tsv-defect-tolerance}
@@ -184,7 +184,7 @@ Loi et al.~\cite{Loi2011} demonstrated that deploying $N:1$ spare TSV redundancy
 \section{Hardware Microarchitecture: 7-Port Vertical Link Arbiter}
 \label{sec:tsv-arbiter-rtl}
 
-Listing~\ref{lst:tsv-arbiter} presents the synthesizable Verilog module implementing a 3D router vertical link arbiter with round-robin priority rotation and automated TSV defect bypass steering.
+Listing~\ref{lst:tsv-arbiter} presents the synthesizable Verilog module implementing a 3D router vertical link arbiter with round-robin priority rotation and automated TSV defect bypass steering, grounded in vertical link microarchitectures developed by Loi et al.~\cite{Loi2011} and More et al.~\cite{More2018}.
 
 \begin{lstlisting}[language=Verilog, caption={Synthesizable 3D-NoC 7-Port Vertical TSV Link Arbiter with Fault Bypass}, label={lst:tsv-arbiter}]
 module tsv_arbiter_3d #(
@@ -261,7 +261,7 @@ endmodule
 \section{Simulation Model \& Numerical Verification}
 \label{sec:3d-sim-verification}
 
-The Python model \texttt{tsv\_vertical\_mesh\_sim.py} simulates packet transport and thermal accumulation across a $4 \times 4 \times 3$ mesh (48 cores) under uniform random traffic. Table~\ref{tab:3d-noc-results} summarizes the experimental results comparing XYZ Dimension-Order Routing and ZXY Dimension-Order Routing.
+The Python model \texttt{tsv\_vertical\_mesh\_sim.py} simulates packet transport and thermal accumulation across a $4 \times 4 \times 3$ mesh (48 cores) under uniform random traffic, evaluating 3D routing dynamics~\cite{Pavlidis2009,More2018}. Table~\ref{tab:3d-noc-results} summarizes the experimental results comparing XYZ Dimension-Order Routing and ZXY Dimension-Order Routing.
 
 \begin{table}[htbp]
 \centering
@@ -312,7 +312,7 @@ To test TSVs before stacking, architectures integrate \textbf{Built-In Self-Test
 \end{enumerate}
 
 \subsection{Post-Bond IEEE 1500 Boundary-Scan Wrappers}
-Once tiers are permanently bonded, physical internal TSVs become completely inaccessible to external probe needles. Inter-tier test access is provided by \textbf{IEEE 1500 Standard Test Wrappers}~\cite{IEEE1500}:
+Once tiers are permanently bonded, physical internal TSVs become completely inaccessible to external probe needles. Inter-tier test access is provided by \textbf{IEEE 1500 Standard Test Wrappers}~\cite{IEEE1500,Agrawal2014Test}:
 \begin{itemize}
     \item Dedicated \textbf{Wrapper Instruction Registers (WIR)} and \textbf{Wrapper Boundary Cells (WBC)} are inserted at every vertical TSV driver and receiver.
     \item During test mode, test vectors are serially shifted through the boundary scan chain, applying at-speed pseudo-random patterns across the vertical link array to verify signal integrity and setup/hold timing margins across all tiers.
@@ -386,23 +386,23 @@ Explore the interactive 3D integration simulators on the \textbf{NoC Learning Hu
 \label{sec:ch8_exercises}
 
 \begin{enumerate}
-    \item \textbf{TSV Elmore Delay vs. Planar Wire}: A TSV has height $h = 40\,\mu\mathrm{m}$, diameter $d = 4\,\mu\mathrm{m}$, resistance $R_{\mathrm{tsv}} = 54.1\,\mathrm{m\Omega}$, and capacitance $C_{\mathrm{tsv}} = 120.1\,\mathrm{fF}$, driven by a $400\,\Omega$ gate. A planar metal wire has length $L = 1.5\,\mathrm{mm}$, resistance $R = 120\,\Omega$, and capacitance $C = 270\,\mathrm{fF}$, driven by the same $400\,\Omega$ gate.
+    \item \textbf{TSV Elmore Delay vs. Planar Wire}~\cite{Loi2011,Pavlidis2009}: A TSV has height $h = 40\,\mu\mathrm{m}$, diameter $d = 4\,\mu\mathrm{m}$, resistance $R_{\mathrm{tsv}} = 54.1\,\mathrm{m\Omega}$, and capacitance $C_{\mathrm{tsv}} = 120.1\,\mathrm{fF}$, driven by a $400\,\Omega$ gate. A planar metal wire has length $L = 1.5\,\mathrm{mm}$, resistance $R = 120\,\Omega$, and capacitance $C = 270\,\mathrm{fF}$, driven by the same $400\,\Omega$ gate.
     \begin{enumerate}
         \item Calculate the Elmore delay of the TSV link ($\tau_{\mathrm{tsv}} \approx 48.04\,\mathrm{ps}$).
         \item Calculate the Elmore delay of the planar wire ($\tau_{\mathrm{planar}} = 124.2\,\mathrm{ps}$).
         \item Compute the speedup of vertical TSV communication over planar routing ($2.59\times$).
     \end{enumerate}
 
-    \item \textbf{3D-IC Thermal Stacking Calculation}: A 3-tier 3D stack dissipates $25.0\,\mathrm{W}$ uniformly per tier ($P_0 = P_1 = P_2 = 25\,\mathrm{W}$, $P_{\mathrm{total}} = 75\,\mathrm{W}$). The heat sink resistance is $R_{\mathrm{hs}} = 0.40\,\mathrm{K/W}$ to $T_{\mathrm{amb}} = 40.0^\circ\mathrm{C}$. Inter-tier dielectric bonding interfaces have $R_{\mathrm{inter}} = 0.35\,\mathrm{K/W}$.
+    \item \textbf{3D-IC Thermal Stacking Calculation}~\cite{Skadron2003,Huang2006,Chao2013}: A 3-tier 3D stack dissipates $25.0\,\mathrm{W}$ uniformly per tier ($P_0 = P_1 = P_2 = 25\,\mathrm{W}$, $P_{\mathrm{total}} = 75\,\mathrm{W}$). The heat sink resistance is $R_{\mathrm{hs}} = 0.40\,\mathrm{K/W}$ to $T_{\mathrm{amb}} = 40.0^\circ\mathrm{C}$. Inter-tier dielectric bonding interfaces have $R_{\mathrm{inter}} = 0.35\,\mathrm{K/W}$.
     \begin{enumerate}
         \item Derive the steady-state temperature equations for each tier.
         \item Calculate $T_0 = 70.0^\circ\mathrm{C}$, $T_1 = 87.5^\circ\mathrm{C}$, and $T_2 = 96.25^\circ\mathrm{C}$.
         \item Explain why the top tier is $26.25^\circ\mathrm{C}$ hotter than the bottom tier.
     \end{enumerate}
 
-    \item \textbf{TSV Keep-Out Zone (KOZ)}: Explain the physical origin of the TSV Keep-Out Zone. Why does thermo-mechanical compressive stress shift PMOS and NMOS transistor mobilities via the piezoresistive effect?
+    \item \textbf{TSV Keep-Out Zone (KOZ)}~\cite{Pavlidis2009,Loi2011}: Explain the physical origin of the TSV Keep-Out Zone. Why does thermo-mechanical compressive stress shift PMOS and NMOS transistor mobilities via the piezoresistive effect?
 
-    \item \textbf{Vertical Crossbar Scaling}: Compare the internal crosspoint complexity of a 5-port 2D router ($5 \times 5 = 25$) versus a full 7-port 3D router ($7 \times 7 = 49$). How do vertical arbitration-free fast-paths eliminate vertical allocators?
+    \item \textbf{Vertical Crossbar Scaling}~\cite{More2018,Seiculescu2010}: Compare the internal crosspoint complexity of a 5-port 2D router ($5 \times 5 = 25$) versus a full 7-port 3D router ($7 \times 7 = 49$). How do vertical arbitration-free fast-paths eliminate vertical allocators?
 \end{enumerate}
 
 \section{References \& Further Reading}
@@ -416,6 +416,7 @@ Explore the interactive 3D integration simulators on the \textbf{NoC Learning Hu
     \item \textbf{[AlAlousi2026]} A.~Al-Alousi, M.~Li, and H.~Meng, ``Vendor-Independent Design Space Exploration and Resource Optimization Framework for 3-D Networks-on-Chip Using Hypergraph-Genetic Algorithm Integration,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~5, pp.~2236--2248, 2026. \url{https://doi.org/10.1109/TCAD.2025.3616073}
     \item \textbf{[Chao2013]} C.-H.~Chao, K.-C.~Chen, and A.-Y.~Wu, ``Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~21, no.~11, pp.~2118--2131, 2013. \url{https://doi.org/10.1109/TVLSI.2012.2227852}
     \item \textbf{[IEEE1500]} IEEE, ``IEEE Standard Testability Method for Embedded Core-Based Integrated Circuits,'' \emph{IEEE Std 1500-2005}, 2005. \url{https://doi.org/10.1109/IEEESTD.2005.97445}
+    \item \textbf{[Agrawal2014Test]} V.~D.~Agrawal et al., ``Testing of 3-D Integrated Circuits: Challenges and Solutions,'' in \emph{Proceedings of the IEEE International Test Conference (ITC)}, 2014, pp.~1--10. \url{https://doi.org/10.1109/TEST.2014.7035310}
     \item \textbf{[Smith1999]} L.~D.~Smith, R.~E.~Anderson, D.~W.~Forehand, T.~J.~Pelc, and T.~Roy, ``Power Distribution System Design Methodology and Capacitor Selection for Modern CMOS Technology,'' \emph{IEEE Transactions on Advanced Packaging}, vol.~22, no.~3, pp.~284--291, 1999. \url{https://doi.org/10.1109/6040.784478}
     \item \textbf{[Deng2026DRL]} Y.~Deng et al., ``Topology Optimization of 3-D NoC for High-Speed Data Acquisition Systems via Deep Reinforcement Learning,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~7, pp.~2213--2226, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3690001}
     \item \textbf{[Anim2026TSVW]} K.~Anim, B.~Taskin, A.~Ganguly, and K.~R.~Dandekar, ``TSV-W for 2.5-D IC Wireless Interconnects,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~6, pp.~1801--1812, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3671654}

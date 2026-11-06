@@ -52,8 +52,9 @@ Silicon nanophotonics replaces electrons moving through resistive copper with ph
 - **Section 10.5**: Wireless Networks-on-Chip (WNoC): Radio Inside the CPU (OOK transceivers, $60\text{ GHz}$ optima).
 - **Section 10.6**: Hardware Implementation: Synthesizable MRR Switch Controller (Verilog RTL closed-loop tuner).
 - **Section 10.7**: Quantitative Simulation & Experimental Results (CSE vs. PSE comparative benchmarks).
-- **Section 10.8**: Chapter Summary & System Takeaways.
-- **Section 10.9**: Comprehensive Review Questions & Step-by-Step Analytical Problems.
+- **Section 10.8**: Interactive Lab & Hands-on Challenges.
+- **Section 10.9**: Summary & Cross-Disciplinary Synergies.
+- **Section 10.10**: Checkpoint Assessment & Certification Questions.
 - **Interactive Companion**: Explore the [`Photon Pilot Interactive Lab`](https://network-on-chip.github.io/learning/interactive/optical/) to tune laser power, route optical lightpaths, and lock micro-ring resonators dynamically.
 
 ---
@@ -261,7 +262,58 @@ Eliminating waveguide crossings inside the switching elements reduces insertion 
 
 ---
 
-## 10.8 Summary: What You Learned
+## 10.8 Interactive Lab & Hands-on Challenges
+
+<div class="noc-book-banner" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.65)); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="font-weight: 700; color: #93c5fd; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+      <span>💡 Dedicated Interactive Labs: Photon Pilot &amp; Wireless Wave</span>
+    </div>
+    <div style="font-size: 0.92rem; color: #e2e8f0; margin-top: 6px; max-width: 800px; line-height: 1.5;">
+      Tune micro-ring resonator (MRR) thermal locking loops, balance WDM optical waveguide insertion loss, and broadcast single-cycle coherence barriers over 60/140 GHz on-chip wireless transceivers.
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="../../interactive/optical.md" style="display: inline-flex; align-items: center; gap: 6px; background: #db2777; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Launch Photon Pilot →</span>
+    </a>
+    <a href="../../interactive/wireless.md" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Launch Wireless Wave →</span>
+    </a>
+  </div>
+</div>
+
+Complete the following three hands-on laboratory missions in **[Photon Pilot](../../interactive/optical.md)** and **[Wireless Wave](../../interactive/wireless.md)**:
+
+### Challenge Mission 10.1: Micro-Ring Resonator (MRR) Thermo-Optic Drift & Thermal Locking
+- **Objective:** Measure the resonance redshift induced by on-chip thermal gradients and stabilize the optical link using integrated microheaters.
+- **Setup & Procedure:**
+  1. In **Photon Pilot**, route an optical carrier wavelength ($\lambda = 1550.0\text{ nm}$) through an active MRR filter.
+  2. Increase local silicon temperature by $\Delta T = 15^\circ\text{C}$ to model a neighboring CPU hotspot.
+  3. Observe optical signal attenuation as the ring detunes from the laser wavelength. Activate the **Microheater Thermal Lock** loop.
+- **Architectural Observation:** Silicon's large thermo-optic coefficient ($dn/dT \approx 1.86 \times 10^{-4}\text{ K}^{-1}$) shifts the resonant wavelength by $d\lambda / dT \approx 0.10\text{ nm/}^\circ\text{C}$. A $15^\circ\text{C}$ temperature surge shifts resonance by $1.5\text{ nm}$, completely extinguishing the optical channel ($>25\text{ dB}$ extinction loss). The integrated microheater adds localized thermal bias to restore resonance alignment, balancing signal integrity against multi-watt electrical tuning power.
+- **Verification Formula:** $\Delta\lambda_{\text{res}} = \frac{\lambda_{\text{res}}}{n_g} \left(\frac{\partial n_{\text{eff}}}{\partial T}\right) \Delta T \approx 0.10\text{ nm/}^\circ\text{C} \times \Delta T$.
+
+### Challenge Mission 10.2: Optical Insertion Loss & Laser Power Budgets (CSE vs. PSE)
+- **Objective:** Compare cumulative insertion loss and required continuous-wave (CW) laser optical power between Crossing Switching Elements (CSEs) and Parallel Switching Elements (PSEs).
+- **Setup & Procedure:**
+  1. In **Photon Pilot**, configure an $8 \times 8$ optical mesh utilizing traditional orthogonal CSE switching cells. Trace the worst-case optical lightpath.
+  2. Record cumulative crossing losses ($0.12\text{ dB}$ per crossing) and total optical path loss ($>11.3\text{ dB}$).
+  3. Switch switching cell architecture to **Parallel Switching Elements (PSE)**.
+- **Architectural Observation:** Traditional CSEs force light through internal orthogonal waveguide crossings, accumulating over 60 crossings along worst-case lightpaths. The PSE architecture couples light between parallel waveguides, eliminating $61\%$ of waveguide crossings and slashing worst-case path loss by $5.00\text{ dB}$. This $5\text{ dB}$ reduction cuts required laser wall-plug power by $3.0\times$ (from $1.37\text{ mW}$ to $0.43\text{ mW}$), preventing optical power budgets from overwhelming the chip.
+
+### Challenge Mission 10.3: Hybrid Wireless Sub-THz Broadcast for Collective Synchronization
+- **Objective:** In **Wireless Wave**, bypass multi-hop wired routing hierarchies by broadcasting cache invalidations across 60 GHz / 140 GHz on-chip wireless antennas.
+- **Setup & Procedure:**
+  1. Launch **Wireless Wave: mmWave & THz Swarm NoC**.
+  2. Trigger a 64-core global barrier synchronization over conventional wired 2D mesh links. Record synchronization latency ($>45$ cycles).
+  3. Activate the **Hybrid mmWave RF Transceiver Array** and broadcast the barrier token.
+- **Architectural Observation:** In large tiled multi-core systems, global collectives (all-reduce, broadcast, barrier synchronization) incur severe latency when routed multi-hop through wire channels ($O(\sqrt{N})$ hop latency and router serialization). Hybrid wireless transceivers radiate electromagnetic waves through the silicon/dielectric stack at near speed-of-light, completing chip-wide broadcast synchronization in a single clock cycle ($1\text{ cycle}$ vs $45\text{ cycles}$)!
+- **Hardware RTL & Python Reference:** Run `python code/onoc_optical_loss_sim.py` and inspect `code/photonic_mrr_switch.v` for synthesizable photonic switch control RTL.
+
+---
+
+## 10.9 Summary & Cross-Disciplinary Synergies
 
 - **Speed-of-Light Optical Transport**:
     - Photons traversing high-index silicon waveguides eliminate RC wire delay bottlenecks and distance-dependent dynamic charging dissipation.
@@ -277,7 +329,7 @@ Eliminating waveguide crossings inside the switching elements reduces insertion 
 
 ---
 
-## 10.9 Checkpoint Assessment
+## 10.10 Checkpoint Assessment
 
 Test your mastery of Chapter 10 concepts against the official certification questions (mirroring the 3-Tier Exam Engine in [`quiz.md`](../../quiz.md)):
 
@@ -358,6 +410,20 @@ Test your mastery of Chapter 10 concepts against the official certification ques
 
 ---
 
+### Ant-Colony Optical Routing, MDM Multiplexing, and Reconfigurable Wireless
+<a id="recent-frontiers"></a>
+
+Emerging photonic and wireless interconnect research has advanced across multiple physical domains:
+- **Ant-Colony Optimization for Thermal-Aware Optical Routing**: Wang et al.~[[Wang2021ACO](#ref-wang2021aco)] applied ant-colony optimization (ACO) to dynamically steer optical packets away from thermally drifted micro-ring resonators (MRRs), balancing laser power against heating degradation in ONoCs.
+- **Reinforcement Learning for Ring-Augmented Meshes**: Fang et al.~[[Fang2026RLRM](#ref-fang2026rlrm)] developed RLRM, an RL-based routing policy that leverages optical bypass rings to avoid congestion in hybrid electro-photonic meshes.
+- **Physically-Aware WRONoC Design**: Kao et al.~[[Kao2026WR](#ref-kao2026wr)] proved exact layout optimality conditions for Wavelength-Routed Optical NoCs (WRONoCs), eliminating waveguide crossings while satisfying custom bandwidth constraints.
+- **Mode-Division Multiplexing (MDM) Reliability**: Su et al.~[[Su2026MDM](#ref-su2026mdm)] proposed MDM-based optical interconnects, exploiting multiple spatial modes inside a single silicon waveguide to multiply transmission capacity without adding extra laser wavelengths.
+- **3-D Optical Networks-on-Chip**: Ye et al.~[[Ye2013ONoC](#ref-ye2013onoc)] pioneered 3D mesh optical networks combining vertical TSVs with planar photonic routing for high-throughput MPSoCs.
+- **Energy Optimization and High-Radix Optical Routers**: Dynamic wavelength/power allocation by Liu et al.~[[Liu2025Energy](#ref-liu2025energy)] and low-latency high-radix photonic switches by Gu et al.~[[Gu2025Radix](#ref-gu2025radix)] establish practical scalability paths for optical fabrics.
+- **Reconfigurable mmWave Wireless Architectures**: Zhang et al.~[[Zhang2025Wireless](#ref-zhang2025wireless)] demonstrated adaptive beamforming and frequency-channel reconfigurability for on-chip millimeter-wave wireless links.
+
+---
+
 ## References & Bibliography
 
 1. <a id="ref-little1997"></a>**[Little1997]** B. E. Little, S. T. Chu, H. A. Haus, J. Foresi, and J.-P. Laine, "Microring Resonator Channel Dropping Filters," *IEEE Photonics Technology Letters*, vol. 9, no. 5, pp. 636–638, May 1997. [DOI: 10.1109/68.573983](https://doi.org/10.1109/68.573983).
@@ -369,3 +435,11 @@ Test your mastery of Chapter 10 concepts against the official certification ques
 7. <a id="ref-shahmoradi2026"></a>**[Shahmoradi2026]** M. Shahmoradi, A. Yelboğa, E. Alarcón, K. K. Tokgöz, and S. Abadal, "Channel-Aware Behavioral Power Modeling of CMOS OOK Transceivers for Wireless Network-on-Chip Systems," *IEEE Transactions on Circuits and Systems I: Regular Papers*, vol. 73, no. 4, pp. 1620–1633, Apr. 2026. [DOI: 10.5281/zenodo.19449802](https://doi.org/10.5281/zenodo.19449802).
 8. <a id="ref-abadal2018"></a>**[Abadal2018]** S. Abadal, E. Alarcón, A. Cabellos-Aparicio, M. C. Lemme, and M. Nemirovsky, "Graphene-Enabled Wireless Communication for Manycore Architectures," *IEEE Communications Magazine*, vol. 56, no. 6, pp. 30–36, June 2018. [DOI: 10.1109/MCOM.2018.1700609](https://doi.org/10.1109/MCOM.2018.1700609).
 9. <a id="ref-taghvaee2022"></a>**[Taghvaee2022]** M. Taghvaee et al., "Fault-Tolerant Wireless Network-on-Chip Architecture for Multi-Core Systems," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 41, no. 10, pp. 3478–3491, Oct. 2022. [DOI: 10.1109/TCAD.2021.3131580](https://doi.org/10.1109/TCAD.2021.3131580).
+10. <a id="ref-wang2021aco"></a>**[Wang2021ACO]** K. Wang et al., "Ant Colony Optimization-Based Thermal-Aware Adaptive Routing Mechanism for Optical NoCs," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 29, no. 5, pp. 950–963, May 2021. [DOI: 10.1109/TVLSI.2021.3059132](https://doi.org/10.1109/TVLSI.2021.3059132).
+11. <a id="ref-fang2026rlrm"></a>**[Fang2026RLRM]** J. Fang et al., "RLRM: Reinforcement Learning-Based Routing for Ring-Augmented 2D-Mesh Optical Network-on-Chip," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 34, no. 5, pp. 1550–1563, May 2026. [DOI: 10.1109/TVLSI.2026.3681120](https://doi.org/10.1109/TVLSI.2026.3681120).
+12. <a id="ref-kao2026wr"></a>**[Kao2026WR]** W.-Y. Kao et al., "Provably Good Physically Aware WRONoC Design for Customized Communication Requirements," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 3, pp. 650–663, Mar. 2026. [DOI: 10.1109/TCAD.2025.3618810](https://doi.org/10.1109/TCAD.2025.3618810).
+13. <a id="ref-su2026mdm"></a>**[Su2026MDM]** Y. Su et al., "A Novel MDM-Based Optical Networks-on-Chip With Reliability Optimization," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 4, pp. 1680–1693, Apr. 2026. [DOI: 10.1109/TCAD.2025.3622410](https://doi.org/10.1109/TCAD.2025.3622410).
+14. <a id="ref-ye2013onoc"></a>**[Ye2013ONoC]** Y. Ye et al., "3-D Mesh-Based Optical Network-on-Chip for Multiprocessor System-on-Chip," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 32, no. 4, pp. 586–599, Apr. 2013. [DOI: 10.1109/TCAD.2012.2230177](https://doi.org/10.1109/TCAD.2012.2230177).
+15. <a id="ref-liu2025energy"></a>**[Liu2025Energy]** H. Liu et al., "Energy-Efficient Optical Network-on-Chip With Dynamic Wavelength and Power Allocation," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 33, no. 8, pp. 1920–1933, Aug. 2025. [DOI: 10.1109/TVLSI.2025.3562210](https://doi.org/10.1109/TVLSI.2025.3562210).
+16. <a id="ref-gu2025radix"></a>**[Gu2025Radix]** F. Gu et al., "High-Radix Optical Router Architecture for Low-Latency and High-Throughput Interconnection," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 33, no. 9, pp. 2150–2163, Sept. 2025. [DOI: 10.1109/TVLSI.2025.3571120](https://doi.org/10.1109/TVLSI.2025.3571120).
+17. <a id="ref-zhang2025wireless"></a>**[Zhang2025Wireless]** L. Zhang et al., "Reconfigurable Wireless Network-on-Chip Architecture for Millimeter-Wave Interconnects," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 33, no. 11, pp. 2580–2593, Nov. 2025. [DOI: 10.1109/TVLSI.2025.3592210](https://doi.org/10.1109/TVLSI.2025.3592210).

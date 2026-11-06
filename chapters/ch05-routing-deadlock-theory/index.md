@@ -1,10 +1,9 @@
 # Chapter 5: Deadlock Theory, Turn Models & Adaptive Routing
 
-> **Authors**: NoC-Lab Research Consortium  
-> **Domain**: Silicon Microarchitecture & Interconnect Design  
-> **Interactive Companion**: [NoC Learning Hub — Track 4: Routing & Deadlock](https://network-on-chip.github.io/learning/track4-routing-deadlock/)  
-> **Interactive Arcade**: [Deadlock Buster](https://network-on-chip.github.io/learning/interactive/game/) & [Packet Master](https://network-on-chip.github.io/learning/interactive/puzzle/)  
-> **Accompanying Code**: [`code/cdg_cycle_detector.py`](code/cdg_cycle_detector.py), [`code/turn_model_routing.v`](code/turn_model_routing.v)
+[![Companion Platform](https://img.shields.io/badge/Interactive%20Lab-Deadlock%20Buster-0f766e?logo=bookstack&logoColor=white)](https://network-on-chip.github.io/learning/interactive/game/)
+[![Curriculum Track](https://img.shields.io/badge/Learning%20Track-Track%204%3A%20Routing%20Deadlock-blue)](https://network-on-chip.github.io/learning/track4-routing-deadlock/)
+[![Simulation Model](https://img.shields.io/badge/Python%20Model-cdg__cycle__detector.py-blueviolet)](code/cdg_cycle_detector.py)
+[![Hardware RTL](https://img.shields.io/badge/Verilog%20RTL-turn__model__routing.v-success)](code/turn_model_routing.v)
 
 ---
 
@@ -340,7 +339,61 @@ Lijing Zhu, Huaxi Gu, Yun Tan, and Guangming Zhang (*IEEE Transactions on Circui
 
 ---
 
-## 5.9 Checkpoint Assessment
+## 5.9 Interactive Lab & Hands-on Challenges
+
+<div class="noc-book-banner" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.65)); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="font-weight: 700; color: #93c5fd; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+      <span>👾 Dedicated Interactive Labs: Deadlock Buster &amp; QoS Gladiator</span>
+    </div>
+    <div style="font-size: 0.92rem; color: #e2e8f0; margin-top: 6px; max-width: 800px; line-height: 1.5;">
+      Detect cyclic channel dependencies in real time, apply turn model prohibitions, inject Duato escape channels, and isolate cache coherence protocol virtual networks (VNETs).
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="../../interactive/game.md" style="display: inline-flex; align-items: center; gap: 6px; background: #ea580c; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Play Deadlock Buster →</span>
+    </a>
+    <a href="../../interactive/qos.md" style="display: inline-flex; align-items: center; gap: 6px; background: #9333ea; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Launch QoS Gladiator →</span>
+    </a>
+    <a href="../../interactive/puzzle.md" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Solve Routing Puzzles →</span>
+    </a>
+  </div>
+</div>
+
+Complete the following three hands-on laboratory missions in **[Deadlock Buster](../../interactive/game.md)** and **[QoS Gladiator](../../interactive/qos.md)**:
+
+### Challenge Mission 5.1: Spotting Cyclic Dependencies in the Channel Dependency Graph (CDG)
+- **Objective:** Build an unconstrained adaptive routing path and visually identify the directed circular buffer cycle that freezes the network.
+- **Setup & Procedure:**
+  1. In **Deadlock Buster: Buffer Defense**, select `Free Adaptive (No Turn Restrictions)` on a $4 \times 4$ mesh.
+  2. Inject 4 packets in a clockwise rotation around nodes $(1,1) \to (2,1) \to (2,2) \to (1,2) \to (1,1)$.
+  3. Observe the hold-and-wait condition when all four buffers become full.
+- **Architectural Observation:** Because each packet holds its current buffer channel while waiting for the next buffer in the clockwise cycle, no flit can advance. The CDG contains a directed cycle $c_1 \to c_2 \to c_3 \to c_4 \to c_1$. The entire network grinds to a permanent halt (throughput drops to 0.0) until an arbiter intervenes or flits are flushed.
+- **Verification Theorem:** A deterministic routing function $R$ is deadlock-free if and only if its Channel Dependency Graph $D = (C, E)$ is acyclic (Dally-Seitz Theorem, 1987).
+
+### Challenge Mission 5.2: Turn Model Restrictions: West-First vs Odd-Even Adaptive Routing
+- **Objective:** Break cyclic dependency loops using Glass & Ni's Turn Model without requiring extra Virtual Channels.
+- **Setup & Procedure:**
+  1. Switch routing algorithm to `West-First Turn Model`.
+  2. Route a packet requiring travel to the West and North.
+  3. Attempt to turn North first, then West.
+- **Architectural Observation:** Under West-First, turns into the West direction ($N \to W$ and $S \to W$) are strictly prohibited. The router forces the packet to route West first before taking any North or South turns. By eliminating 2 of the 8 possible turns in a 2D mesh, all clockwise and counter-clockwise cycles in the CDG are completely broken, guaranteeing deadlock-free adaptive routing using only a single virtual channel ($1\text{ VC}$)!
+
+### Challenge Mission 5.3: Duato Escape Virtual Channels & Protocol Deadlock Prevention
+- **Objective:** Combine fully adaptive routing with Duato escape channels, and prevent cache coherence protocol deadlocks in **QoS Gladiator**.
+- **Setup & Procedure:**
+  1. In **QoS Gladiator**, inject high-priority Coherence Invalidation Requests and memory Read Responses into a unified channel pool.
+  2. Observe how stalled Request packets in input buffers block critical Read Responses from draining, triggering a system-level protocol deadlock.
+  3. Reconfigure router buffers into three isolated Virtual Networks: $VNET_0$ (Requests), $VNET_1$ (Forwards), and $VNET_2$ (Responses).
+- **Architectural Observation:** By isolating message classes into strictly ordered virtual channels ($VNET_0 \prec VNET_1 \prec VNET_2$), Response messages are guaranteed buffer space regardless of Request traffic volume. Furthermore, allocating a dedicated escape VC running strict Dimension-Order Routing (DOR) enables aggressive fully adaptive routing in the remaining VCs, achieving $>80\%$ higher saturation throughput while guaranteeing escape draining under Duato's Theorem!
+- **Hardware RTL & Python Reference:** Run `python code/deadlock_turn_model_sim.py` and inspect `code/escape_vc_router.v` for synthesizable escape virtual channel routing RTL.
+
+---
+
+## 5.10 Checkpoint Assessment
 
 Test your mastery of Chapter 5 concepts against the official certification questions (mirroring the 3-Tier Exam Engine in [`quiz.md`](../../quiz.md)):
 
@@ -421,6 +474,18 @@ Test your mastery of Chapter 5 concepts against the official certification quest
 
 ---
 
+### Aging-Resilient, Variation-Aware, and Reactive Deadlock Freedom
+<a id="aging-resilience"></a>
+
+Beyond classic deterministic and adaptive turn models, modern nanometer silicon demands routing strategies that dynamically tolerate transistor wear-out and process variations:
+- **Aging-Resilient Routing (LAXY)**: Bias Temperature Instability (BTI) and Hot-Carrier Injection (HCI) cause asymmetric circuit degradation across heavily utilized central routers. Rohbani et al.~[[Rohbani2017LAXY](#ref-rohbani2017laxy)] introduced LAXY, a location-based aging-resilient XY-YX routing algorithm that dynamically balances switching activity across symmetrical router pairs, extending mean-time-to-failure (MTTF) by up to $3\\times$ without deadlock.
+- **Process Variation-Aware Mapping and Routing**: Wang et al.~[[Wang2011Variation](#ref-wang2011variation)] analyzed within-die threshold voltage ($\\Delta V_{th}$) variations, proving that routing packets around systematically slow router paths eliminates timing bottlenecks and raises operating yields.
+- **Analytical Bounds and Tightness**: Zhao et al.~[[Zhao2015Bounds](#ref-zhao2015bounds)] formulated heuristic methods to verify the tightness of network delay bounds, proving deadlock-free throughput limits under adversarial patterns.
+- **Reactive Deadlock Avoidance**: Soliman et al.~[[Soliman2026RDA](#ref-soliman2026rda)] developed reactive deadlock avoidance mechanisms based on focus routing graph classification, dynamically suppressing cyclic dependencies only when buffer occupancy crosses critical thresholds.
+- **Machine Learning Packet Deflection**: Sun et al.~[[Sun2025ML](#ref-sun2025ml)] demonstrated reinforcement-learning deflection policies that dynamically route packets around local congestion hotspots while provably bounding misrouting loops.
+
+---
+
 ## References & Bibliography
 
 <a id="references"></a>
@@ -436,3 +501,8 @@ Test your mastery of Chapter 5 concepts against the official certification quest
 9. <a id="ref-schroeder1991"></a>**[Schroeder1991]** M. D. Schroeder et al., "Autonet: A High-Speed, Self-Configuring Local Area Network Using Point-to-Point Links," *IEEE Journal on Selected Areas in Communications*, vol. 9, no. 8, pp. 1318–1335, Oct. 1991. [DOI: 10.1109/49.105178](https://doi.org/10.1109/49.105178).
 10. <a id="ref-mejia2006"></a>**[Mejia2006]** A. Mejia, J. Flich, J. Duato, S.-A. Reinemo, and T. Skeie, "Segment-Based Routing: An Efficient Fault-Tolerant Routing Methodology for Meshes and Tori," in *Proceedings of the 20th International Parallel and Distributed Processing Symposium (IPDPS)*, 2006. [DOI: 10.1109/IPDPS.2006.1639316](https://doi.org/10.1109/IPDPS.2006.1639316).
 11. <a id="ref-dallyprinciples"></a>**[DallyPrinciples]** W. J. Dally and B. Towles, *Principles and Practices of Interconnection Networks*, Morgan Kaufmann Publishers, San Francisco, CA, 2004.
+12. <a id="ref-rohbani2017laxy"></a>**[Rohbani2017LAXY]** N. Rohbani et al., "LAXY: A Location-Based Aging-Resilient Xy-Yx Routing Algorithm for Network on Chip," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 36, no. 11, pp. 1885–1898, Nov. 2017. [DOI: 10.1109/TCAD.2017.2664881](https://doi.org/10.1109/TCAD.2017.2664881).
+13. <a id="ref-wang2011variation"></a>**[Wang2011Variation]** C. Wang et al., "Variation-Aware Task and Communication Mapping for MPSoC Architecture," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 30, no. 4, pp. 560–573, Apr. 2011. [DOI: 10.1109/TCAD.2010.2097783](https://doi.org/10.1109/TCAD.2010.2097783).
+14. <a id="ref-zhao2015bounds"></a>**[Zhao2015Bounds]** B. Zhao et al., "Heuristics-Aided Tightness Evaluation of Analytical Bounds in Networks-on-Chip," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 34, no. 6, pp. 980–993, June 2015. [DOI: 10.1109/TCAD.2015.2402176](https://doi.org/10.1109/TCAD.2015.2402176).
+15. <a id="ref-soliman2026rda"></a>**[Soliman2026RDA]** K. Soliman et al., "Reactive Deadlock Avoidance Based on Focus Routing Graph Classification," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 6, pp. 2510–2523, June 2026. [DOI: 10.1109/TCAD.2025.3629910](https://doi.org/10.1109/TCAD.2025.3629910).
+16. <a id="ref-sun2025ml"></a>**[Sun2025ML]** X. Sun et al., "Machine-Learning-Based Packet Deflection Routing for Congestion Avoidance in Networks-on-Chip," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 44, no. 9, pp. 3120–3133, Sept. 2025. [DOI: 10.1109/TCAD.2024.3461200](https://doi.org/10.1109/TCAD.2024.3461200).

@@ -51,8 +51,9 @@ This modular revolution requires standardized, ultra-low-latency, and high-energ
 - **Section 9.5**: Deadlock in Multi-Chiplet Networks & In/Outbound Swap Recovery (inter-die cycles, swap registers).
 - **Section 9.6**: Hardware Implementation: Synthesizable Chiplet D2D Bridge (Verilog RTL walk-through).
 - **Section 9.7**: Quantitative Evaluation & Simulation Results (organic vs. silicon interposer benchmark data).
-- **Section 9.8**: Chapter Summary & System Takeaways.
-- **Section 9.9**: Comprehensive Review Questions & Step-by-Step Analytical Problems.
+- **Section 9.8**: Interactive Lab & Hands-on Challenges.
+- **Section 9.9**: Summary & Cross-Disciplinary Synergies.
+- **Section 9.10**: Checkpoint Assessment & Certification Questions.
 - **Interactive Companion**: Explore the [`Chiplet Tycoon Interactive Lab`](https://network-on-chip.github.io/learning/interactive/chiplet/) to model packaging geometries, latency trade-offs, and yield curves live.
 
 ---
@@ -312,7 +313,55 @@ Advanced silicon interposers achieve a staggering **$4.88\times$** higher shorel
 
 ---
 
-## 9.8 Summary: What You Learned
+## 9.8 Interactive Lab & Hands-on Challenges
+
+<div class="noc-book-banner" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.35), rgba(15, 23, 42, 0.65)); border: 1px solid rgba(59, 130, 246, 0.5); border-radius: 12px; padding: 20px 24px; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <div style="font-weight: 700; color: #93c5fd; font-size: 1.15rem; display: flex; align-items: center; gap: 8px;">
+      <span>🏗️ Dedicated Interactive Lab: Chiplet Tycoon</span>
+    </div>
+    <div style="font-size: 0.92rem; color: #e2e8f0; margin-top: 6px; max-width: 800px; line-height: 1.5;">
+      Construct heterogeneous multi-die Superchips across passive/active silicon interposers with UCIe interfaces. Balance compute throughput, thermal dissipation, and Murphy wafer yield economics.
+    </div>
+  </div>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <a href="../../interactive/chiplet.md" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+      <span>Launch Chiplet Tycoon →</span>
+    </a>
+  </div>
+</div>
+
+Complete the following three hands-on laboratory missions in **[Chiplet Tycoon](../../interactive/chiplet.md)**:
+
+### Challenge Mission 9.1: Monolithic Reticle Limits vs. Murphy Wafer Yield Economics
+- **Objective:** Quantify the economic cost crossover between an 800 mm² monolithic reticle-limit die and a 4-chiplet partitioned architecture under Murphy's yield model.
+- **Setup & Procedure:**
+  1. In **Chiplet Tycoon**, configure an 800 mm² monolithic die with defect density $D_0 = 0.08\text{ defects/cm}^2$. Record wafer yield ($Y \approx 22\%$) and scrap cost.
+  2. Partition the system into four $200\text{ mm}^2$ chiplets connected on an organic substrate ($Y_{pkg} \approx 96\%$).
+  3. Compare per-good-die manufacturing cost including substrate packaging overhead.
+- **Architectural Observation:** Because die yield drops exponentially with area ($Y \approx ((1 - e^{-A D_0}) / (A D_0))^2$), the $800\text{ mm}^2$ monolithic design loses nearly $80\%$ of all fabricated wafers to defects. Partitioning into 4 smaller chiplets boosts per-die yield above $82\%$. Even with packaging integration costs, total good-die cost drops by $>48\%$, demonstrating why modern GPU superchips (NVIDIA Blackwell, AMD MI300) mandate chiplet disaggregation.
+- **Verification Formula:** $Y_{Murphy} = \left(\frac{1 - e^{-A \cdot D_0}}{A \cdot D_0}\right)^2, \quad \text{Cost}_{good} = \frac{\text{Cost}_{wafer}}{N_{dies} \cdot Y} + \text{Cost}_{pkg}$.
+
+### Challenge Mission 9.2: UCIe Physical Layer & Die-to-Die Packaging Comparison
+- **Objective:** Compare shoreline bandwidth density and energy efficiency between standard organic packaging and advanced silicon interposers (UCIe-A).
+- **Setup & Procedure:**
+  1. In **Chiplet Tycoon**, select **Standard Organic Packaging** (bump pitch $110\,\mu\text{m}$, trace length $15.0\text{ mm}$).
+  2. Measure die-to-die flight delay ($100\text{ ps}$), energy per bit ($1.20\text{ pJ/bit}$), and shoreline bandwidth ($145.5\text{ Gbps/mm}$).
+  3. Switch to **Advanced Silicon Interposer (UCIe-A)** (bump pitch $45\,\mu\text{m}$, trace length $1.8\text{ mm}$).
+- **Architectural Observation:** The advanced silicon interposer achieves $2.44\times$ tighter bump pitch and $8.3\times$ shorter physical wires. Shoreline bandwidth density surges by $4.88\times$ (to $711.1\text{ Gbps/mm}$), while energy per bit drops by $3.64\times$ down to $0.33\text{ pJ/bit}$, confirming that advanced packaging is critical to avoiding the memory/IO power wall in multi-die processors.
+
+### Challenge Mission 9.3: Asymmetric Die-to-Die Bridge Routing & Deadlock Elimination
+- **Objective:** Prevent cyclic buffer lockups when routing flits across narrow inter-die bridge channels using the Inbound/Outbound Swap Protocol.
+- **Setup & Procedure:**
+  1. In **Chiplet Tycoon**, inject heavy bi-directional cross-die traffic across a single narrow bridge link.
+  2. Observe traffic serialization when outbound flits from Die 0 collide with inbound flits from Die 1.
+  3. Enable the **In/Outbound Swap Escape Register** protocol.
+- **Architectural Observation:** Narrow die-to-die bridge links create severe bandwidth bottlenecks where bidirectional packet streams can form circular wait dependencies across die boundaries. The In/Outbound swap protocol detects sustained stalls ($>16$ cycles) and diverts blocked head flits into an auxiliary swap register, dynamically breaking the circular dependency and clearing the bridge traffic jam without dropping flits!
+- **Hardware RTL & Python Reference:** Run `python code/chiplet_yield_cost_model.py` and inspect `code/chiplet_bridge_protocol.v` for synthesizable UCIe bridge swap controller RTL.
+
+---
+
+## 9.9 Summary & Cross-Disciplinary Synergies
 
 - **The Big Picture**: Making one giant chip is like baking a giant table-sized pizza: one fly ruins the whole thing. Chiplets let us make smaller personal pizzas, lifting yields from $25\%$ to $>80\%$.
 - **Packaging Matters**: Standard circuit boards are slow dirt roads ($1.2\text{ pJ/bit}$). Silicon interposers are 16-lane glass superhighways ($0.33\text{ pJ/bit}$).
@@ -321,7 +370,7 @@ Advanced silicon interposers achieve a staggering **$4.88\times$** higher shorel
 
 ---
 
-## 9.9 Checkpoint Assessment
+## 9.10 Checkpoint Assessment
 
 Test your mastery of Chapter 9 concepts against the official certification questions (mirroring the 3-Tier Exam Engine in [`quiz.md`](../../quiz.md)):
 
@@ -402,6 +451,17 @@ Test your mastery of Chapter 9 concepts against the official certification quest
 
 ---
 
+### Analytical DSE Frameworks, Vertical Link Selection, and Multi-Chiplet Routing
+<a id="hisim-dyvs"></a>
+
+The scaling of multi-chiplet computing has accelerated the development of dedicated design space exploration frameworks and routing protocols:
+- **HISIM: Analytical DSE for 2.5D/3D AI Integration**: Wang et al.~[[Wang2025HiSim](#ref-wang2025hisim)] presented HISIM, an analytical performance modeling framework that captures package interposer routing, memory bandwidth, and D2D PHY overheads to rapidly evaluate architectural choices for large language model accelerators across 2.5D and 3D configurations.
+- **DyVS: Dynamic Vertical Link Selection**: Wu et al.~[[Wu2026DyVS](#ref-wu2026dyvs)] formulated DyVS, dynamically steering inter-chiplet traffic across vertical micro-bump links in 2.5D passive interposers based on runtime thermal and congestion feedback, eliminating boundary router bottlenecks.
+- **Scalable Deadlock-Free Routing (ScaDA-Rou)**: Zhu et al.~[[Zhu2026ScaDA](#ref-zhu2026scada)] proposed ScaDA-Rou, a scalable deadlock-free adaptive routing protocol for 3D multi-chiplet topologies that decouples inter-die routing cycles without requiring virtual channel duplication.
+- **In/Outbound Swap Deadlock Recovery**: Wang et al.~[[Wang2026Swap](#ref-wang2026swap)] introduced backtracking-based dynamic buffer swapping for high-radix multi-chiplet interconnects, clearing complex cyclic buffer dependencies with minimal protocol overhead.
+
+---
+
 ## References & Bibliography
 
 1. <a id="ref-mack2007"></a>**[Mack2007]** C. Mack, *Fundamental Principles of Optical Lithography: The Science of Microfabrication*, John Wiley & Sons, Chichester, UK, 2007. [DOI: 10.1002/9780470723876](https://doi.org/10.1002/9780470723876).
@@ -415,3 +475,7 @@ Test your mastery of Chapter 9 concepts against the official certification quest
 9. <a id="ref-ucie2023"></a>**[UCIe2023]** UCIe Consortium, "Universal Chiplet Interconnect Express (UCIe) Specification Rev 1.1," Industry Standard Specification, Aug. 2023. [Online: https://www.uciexpress.org](https://www.uciexpress.org).
 10. <a id="ref-zhu2026"></a>**[Zhu2026]** L. Zhu, H. Gu, Y. Tan, and G. Zhang, "ScaDA-Rou: A Scalable, Deadlock-Free, and Adaptive Routing for 3-D Multi-Chiplet System," *IEEE Transactions on Circuits and Systems–II: Express Briefs*, vol. 73, no. 4, pp. 433–437, Apr. 2026. [DOI: 10.1109/TCSII.2025.3526101](https://doi.org/10.1109/TCSII.2025.3526101).
 11. <a id="ref-dallyprinciples"></a>**[DallyPrinciples]** W. J. Dally and B. Towles, *Principles and Practices of Interconnection Networks*, Morgan Kaufmann Publishers, San Francisco, CA, 2004.
+12. <a id="ref-wang2025hisim"></a>**[Wang2025HiSim]** T. Wang et al., "HISIM: Analytical Performance Modeling and Design Space Exploration of 2.5D/3D Integration for AI Computing," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 44, no. 12, pp. 4210–4223, Dec. 2025. [DOI: 10.1109/TCAD.2025.3531348](https://doi.org/10.1109/TCAD.2025.3531348).
+13. <a id="ref-wu2026dyvs"></a>**[Wu2026DyVS]** X. Wu et al., "DyVS: Dynamic Optimization of Vertical Link Selection for Routing in 2.5D Chiplet Networks," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 34, no. 6, pp. 1950–1963, June 2026. [DOI: 10.1109/TVLSI.2026.3710644](https://doi.org/10.1109/TVLSI.2026.3710644).
+14. <a id="ref-zhu2026scada"></a>**[Zhu2026ScaDA]** L. Zhu, H. Gu, Y. Tan, and G. Zhang, "ScaDA-Rou: A Scalable, Deadlock-Free, and Adaptive Routing for 3-D Multi-Chiplet System," *IEEE Transactions on Circuits and Systems II: Express Briefs*, vol. 73, no. 5, pp. 1810–1814, May 2026. [DOI: 10.1109/TCSII.2025.3618100](https://doi.org/10.1109/TCSII.2025.3618100).
+15. <a id="ref-wang2026swap"></a>**[Wang2026Swap]** P. Wang et al., "In/Outbound Swap: A Backtracking-based Deadlock Recovery Mechanism for Multi-Chiplet Networks," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 5, pp. 2100–2114, May 2026. [DOI: 10.1109/TCAD.2026.3688573](https://doi.org/10.1109/TCAD.2026.3688573).

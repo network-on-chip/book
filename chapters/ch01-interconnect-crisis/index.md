@@ -318,16 +318,16 @@ Table 1.2: Evolution of Silicon Landmark Network-on-Chip Processors
     </div>
   </div>
   <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-    <a href="../../interactive/wire/" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+    <a href="../../interactive/wire.md" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
       <span>Launch Wire Wizard Lab →</span>
     </a>
-    <a href="../../interactive/visualizer/" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+    <a href="../../interactive/visualizer.md" style="display: inline-flex; align-items: center; gap: 6px; background: #0284c7; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
       <span>2D Mesh Visualizer →</span>
     </a>
   </div>
 </div>
 
-To bridge physical wire equations with silicon microarchitecture, complete the following three hands-on laboratory challenges in the **[Wire Wizard Lab](../../interactive/wire/)**:
+To bridge physical wire equations with silicon microarchitecture, complete the following three hands-on laboratory challenges in the **[Wire Wizard Lab](../../interactive/wire.md)**:
 
 ### Challenge Mission 1.1: Nanoscale Wire Resistance & Electron Scattering Sweep
 - **Objective:** Measure the non-linear surge in copper resistivity $\rho(w)$ as technology nodes scale down from 180nm bulk CMOS to 3nm Gate-All-Around (GAA).
@@ -439,6 +439,13 @@ Test your mastery of Chapter 1 concepts against the official certification quest
 
 ---
 
+### Physics-Based Electromigration Reliability in Sub-10nm Interconnects
+<a id="electromigration-physics"></a>
+
+As wire geometries scale deep into sub-10~nm regimes, interconnect degradation driven by high current densities and thermo-mechanical stress becomes a primary limiting factor for chip longevity. Electromigration (EM) induces atomic momentum transfer from conducting electrons to metal lattice atoms, leading to void formation at cathode ends and hillocks/short-circuits at anode terminals. Traditional EM analysis relies on conservative empirical models (Black's equation) that lack spatial and dynamic granularity across full-chip network traces. Recent physics-based analytical techniques formulated by Wang et al.~[[Wang2021EM](#ref-wang2021em)] introduce efficient eigenfunction-based transient solutions for hydrostatic stress evolution in multi-branch interconnect trees. By decoupling boundary value problems into closed-form eigen-mode expansions, transient atomic drift and stress buildup can be evaluated orders of magnitude faster than conventional finite-element methods (FEM), enabling real-time reliability-aware routing and power-grid co-design in modern NoC fabrics.
+
+---
+
 ## References & Bibliography
 
 <a id="references"></a>
@@ -462,3 +469,4 @@ Test your mastery of Chapter 1 concepts against the official certification quest
 17. <a id="ref-gao2026"></a>**[Gao2026]** P. Gao et al., "HammerBlade in Silicon: A 12-nm 2048-Core RISC-V Manycore SoC With Ruche Networks," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 34, no. 7, pp. 2306–2310, July 2026. [DOI: 10.1109/TVLSI.2026.3684311](https://doi.org/10.1109/TVLSI.2026.3684311).
 18. <a id="ref-zhu2025"></a>**[Zhu2025]** J. Zhu et al., "Theseus: Exploring Efficient Wafer-Scale Chip Design for Large Language Models," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 44, no. 11, pp. 3810–3823, Nov. 2025. [DOI: 10.1109/TCAD.2024.3496321](https://doi.org/10.1109/TCAD.2024.3496321).
 19. <a id="ref-alalousi2026"></a>**[AlAlousi2026]** A. Al-Alousi, M. Li, and H. Meng, "Vendor-Independent Design Space Exploration and Resource Optimization Framework for 3-D Networks-on-Chip Using Hypergraph-Genetic Algorithm Integration," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 5, pp. 2236–2248, May 2026. [DOI: 10.1109/TCAD.2025.3616073](https://doi.org/10.1109/TCAD.2025.3616073).
+20. <a id="ref-wang2021em"></a>**[Wang2021EM]** Z. Wang, S. Zhang, and S. X.-D. Tan, "Fast Physics-Based Electromigration Analysis for Full-Chip Networks by Efficient Eigenfunction-Based Solution," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 40, no. 9, pp. 1885–1898, Sept. 2021. [DOI: 10.1109/TCAD.2020.3020641](https://doi.org/10.1109/TCAD.2020.3020641).
