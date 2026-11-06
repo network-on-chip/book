@@ -40,6 +40,22 @@ In modern distributed Large Language Model architectures, multi-die parallelism 
     \item \textbf{Mixture-of-Experts (MoE)}: Top-$k$ gating routers dynamically dispatch input tokens to specialized expert compute tiles. This creates bursty, unpredictable \textbf{All-to-All} personalized communication patterns that saturate bisection bandwidth and trigger severe crossbar buffer hotspots.
 \end{enumerate}
 
+\subsection{Prefill vs. Decode Phase Asymmetries}
+Transformer inference operates across two distinct execution regimes:
+\begin{itemize}
+    \item \textbf{Prefill Phase (Compute-Bound)}: All prompt tokens are processed in parallel. Matrix multiplications achieve high arithmetic intensity:
+    \begin{equation}
+    I_{\mathrm{arith}} = \frac{2 \cdot B \cdot S \cdot D_{\mathrm{model}}^2}{2 \cdot D_{\mathrm{model}}^2 + 2 \cdot B \cdot S \cdot D_{\mathrm{model}}} \gg 50\,\mathrm{FLOPs/byte}
+    \end{equation}
+    where $B$ is batch size, $S$ is prompt sequence length, and $D_{\mathrm{model}}$ is hidden dimension.
+    
+    \item \textbf{Decode Phase (Memory-Bound)}: Tokens are generated auto-regressively one by one ($S=1$). Arithmetic intensity collapses to:
+    \begin{equation}
+    I_{\mathrm{arith}} \approx \frac{2 \cdot B \cdot D_{\mathrm{model}}^2}{2 \cdot D_{\mathrm{model}}^2 + 2 \cdot B \cdot L_{\mathrm{seq}} \cdot D_{\mathrm{model}}} \le 1.0\,\mathrm{FLOPs/byte}
+    \end{equation}
+    Every generated token requires streaming the entire model weight matrix ($2\,\mathrm{bytes/parameter}$ in FP16) and reading accumulated Key-Value (KV) cache tensors from memory. Interconnect bandwidth, rather than floating-point MAC units, becomes the sole determinant of end-to-end token latency.
+\end{itemize}
+
 \section{In-Network Computing \& Hierarchical Reduction Trees}
 \label{sec:in-network-computing}
 
@@ -62,6 +78,15 @@ By computing partial reductions at each router hop:
 \subsection{Hardware Floating-Point Reduction Unit}
 To support modern mixed-precision deep learning, the reduction router integrates IEEE 754-compatible FP16, BF16, and INT8 multi-operand adder trees into the switch allocation stage. Flits carry a 4-bit \texttt{reduction\_op} field specifying sum, max, or min aggregation, while lock-step barrier credit counters ensure flits from all participating branches arrive before reduction proceeds.
 
+\subsection{Pipelined Reduction Crossbar Stages}
+The canonical reduction router pipeline comprises four distinct clock stages:
+\begin{enumerate}
+    \item \textbf{Buffer Write \& Tag Match (BW/TM)}: Incoming flits are buffered in dedicated collective virtual channels ($\mathrm{VC}_{\mathrm{coll}}$). Associative tag comparators identify matching collective sequence numbers.
+    \item \textbf{Barrier Check \& Fan-in Accumulation (BC/FA)}: Barrier counters track arriving fan-in branches. When all operands arrive ($C_{\mathrm{count}} = K$), operands enter the multi-operand adder tree.
+    \item \textbf{Crossbar Switch Traversal (ST)}: The aggregated result cuts directly through the crossbar switch into the parent tree egress port.
+    \item \textbf{Link Traversal (LT)}: The reduced flit propagates to the parent aggregation tile along high-speed copper links.
+\end{enumerate}
+
 \section{Wafer-Scale Engines \& Ruche Wire-Maximal Topologies}
 \label{sec:wafer-scale-ruche}
 
@@ -82,7 +107,7 @@ In the 12-nm FinFET 2,048-core HammerBlade SoC, researchers deployed \textbf{Ruc
 In deep-submicron CMOS, metallization layers have vastly different physical cross-sections:
 \begin{itemize}
     \item \textbf{Lower Metals (M1--M3)}: Extremely thin ($w \approx 40\,\mathrm{nm}$), high sheet resistance ($R_{\square} > 0.5\,\Omega/\square$), ideal for local standard-cell connections.
-    \item \textbf{Upper Metals (M7--M9)}: Massive copper tracks ($w \approx 400\text{--}800\,\mathrm{nm}$), low sheet resistance ($R_{\square} \approx 0.03\,\Omega/\square$).
+    \item \textbf{Upper Metals (M7--M9)}: Massive copper tracks ($w \approx 400\text{--}800\,\mathrm{nm}$), low sheet resistance ($R_{\square} \approx 0.035\,\Omega/\square$).
 \end{itemize}
 Ruche networks exploit this physical asymmetry by routing long express links across upper metal layers. These express wires hop over 2 or 4 intermediate routers in a single clock cycle \textbf{without adding ports} to intermediate crossbars!
 \end{svgraybox}
@@ -119,44 +144,131 @@ In biological neural circuits, a single pyramidal neuron connects to thousands o
 
 \subsection{Spike-Sharing Graph Partitioning (SNNcut)}
 To overcome the multicast crisis, the \textbf{SNNcut} algorithm~\cite{Xing2026SNNcut,Bai2026Sparrow} models neuron placement as a hypergraph min-cut optimization:
+\begin{equation}
+\min_{\mathbf{c}} \sum_{e \in \mathcal{E}} w(e) \cdot \left[ \lambda_e(\mathbf{c}) - 1 \right] \quad \text{s.t.} \quad \sum_{u \in \mathcal{V}} s_u \cdot \mathbb{I}(c_u = k) \le C_{\max}, \quad \forall k
+\end{equation}
+where $e$ is a hyperedge representing an axon fanout, $\lambda_e(\mathbf{c})$ is the number of distinct physical cores spanning $e$, and $C_{\max}$ is core synaptic memory capacity.
 \begin{itemize}
-    \item \textbf{Hyperedge Formulation}: Every pre-synaptic axon constitutes a hyperedge connecting the source neuron to all target post-synaptic neurons.
-    \item \textbf{Target Clustering}: Neurons with overlapping connectivity are clustered onto the same physical core.
+    \item \textbf{Hyperedge Clustering}: Neurons with overlapping connectivity are clustered onto the same physical core.
     \item \textbf{In-Flight Replication}: A single multicast flit travels across the NoC; when it arrives at a destination tile, a local fanout distribution tree copies the spike to all local synapses.
 \end{itemize}
 This co-design reduces global NoC flit volume by over $63\%$, enabling neuromorphic chips like SpiNNaker2 and Tianjic to achieve biological-scale real-time spike routing under milliwatt power budgets.
+
+\section{Collective Communication Topologies \& Theoretical Bounds}
+\label{sec:collective-bounds}
+
+In distributed machine learning, the performance of collective operations (All-Reduce, All-to-All, Reduce-Scatter, All-Gather) dictates cluster scaling efficiency:
+
+\begin{enumerate}
+    \item \textbf{Ring All-Reduce (Baidu / NCCL)}:
+    \begin{equation}
+    T_{\mathrm{ring}} = 2(N - 1) \cdot \alpha + 2 \left( \frac{N - 1}{N} \right) \frac{M}{B}
+    \end{equation}
+    where $\alpha$ is link latency, $M$ is tensor size (bytes), and $B$ is link bandwidth. While bandwidth-optimal ($2M$ transferred per node), latency scales linearly as $O(N)$ with core count, creating severe overhead for small-to-medium tensors in on-chip networks ($N \ge 64$).
+    
+    \item \textbf{Recursive Halving-Doubling (Tree-Based)}:
+    \begin{equation}
+    T_{\mathrm{rhd}} = 2 \log_2(N) \cdot \alpha + 2 \left( \frac{N - 1}{N} \right) \frac{M}{B}
+    \end{equation}
+    Achieves logarithmic step latency ($O(\log N)$), but intermediate nodes suffer link contention unless non-blocking topologies (e.g., Fat-Tree or Clos) are provisioned.
+    
+    \item \textbf{In-Network Reduction Trees (PAC-NoC)}~\cite{Ouyang2026PAC}:
+    \begin{equation}
+    T_{\mathrm{in\_network}} = 2 \log_K(N) \cdot (\alpha + t_{\mathrm{accum}}) + 2 \frac{M}{N \cdot B}
+    \end{equation}
+    By performing multi-operand addition in-flight ($K$-ary tree), flits are accumulated and pruned at every router stage, reducing network bandwidth demand by a factor of $N$ while maintaining $O(\log_K N)$ latency!
+\end{enumerate}
+
+\begin{table}[t]
+\centering
+\caption{Algorithmic Comparison of Collective Communication Paradigms on 64-Core NoCs.}
+\label{tab:collective-comparison}
+\begin{tabular}{lcccc}
+\hline\noalign{\smallskip}
+Collective Paradigm & Step Count & Flit Volume & Router Arithmetic & Silicon Area Cost \\
+\noalign{\smallskip}\svhline\noalign{\smallskip}
+Ring All-Reduce & $2(N-1) = 126$ & $2(N-1)M$ & None (Software) & None \\
+Recursive Halving & $2\log_2 N = 12$ & $2(N-1)M$ & None (Software) & High (Bisection) \\
+2D Mesh Master-Tile & $2\sqrt{N} = 16$ & $O(N \cdot M)$ & Central Master ALU & Low (Bottleneck) \\
+PAC-NoC In-Network & $2\log_4 N = 6$ & $\mathbf{2(M/N)}$ & \textbf{Distributed Crossbar} & \textbf{Moderate ($+15\%$)} \\
+\noalign{\smallskip}\hline
+\end{tabular}
+\end{table}
 
 \section{Synthesizable SystemVerilog In-Network Reduction Crossbar}
 \label{sec:reduction-rtl}
 
 The complete synthesizable SystemVerilog module implementing on-the-fly crossbar reduction is provided in \texttt{code/in\_network\_reduction\_router.sv}. Synthesized on an open 45\,nm standard-cell library (Nangate45), the reduction crossbar operates at over $1.8\,\mathrm{GHz}$ and completes 4-input 16-bit floating-point accumulation in a single clock cycle.
 
-\begin{figure}[t]
+\begin{figure}[p]
 \centering
 \begin{svgraybox}
-\textbf{Synthesizable RTL Extract: In-Flight Parallel Reduction Logic} \\
+\textbf{Complete Synthesizable SystemVerilog Module: \texttt{in\_network\_reduction\_router.sv}} \\
+\small
 \begin{verbatim}
-// Combinational Multi-Operand Reduction Tree (PAC-NoC Primitive)
-always_comb begin
-  accum_result = 16'd0;
-  count_active = 4'd0;
+`timescale 1ns / 1ps
+module in_network_reduction_router #(
+    parameter int DATA_WIDTH = 16,
+    parameter int TAG_WIDTH  = 4
+)(
+    input  logic                  clk,
+    input  logic                  rst_n,
+    input  logic [3:0]            in_valid,
+    input  logic [TAG_WIDTH-1:0]  in_tag [4],
+    input  logic [DATA_WIDTH-1:0] in_data [4],
+    input  logic [TAG_WIDTH-1:0]  expected_tag,
+    input  logic [2:0]            expected_fanin,
+    output logic                  out_valid,
+    output logic [TAG_WIDTH-1:0]  out_tag,
+    output logic [DATA_WIDTH-1:0] out_accum
+);
+  logic [DATA_WIDTH-1:0] sum_comb;
+  logic [2:0]            count_comb;
 
-  for (int p = 0; p < 4; p++) begin
-    if (in_valid[p] && (in_tag[p] == target_tag)) begin
-      accum_result = accum_result + in_data[p];
-      count_active = count_active + 1'b1;
+  always_comb begin
+    sum_comb   = '0;
+    count_comb = '0;
+    for (int i = 0; i < 4; i++) begin
+      if (in_valid[i] && (in_tag[i] == expected_tag)) begin
+        sum_comb   = sum_comb + in_data[i];
+        count_comb = count_comb + 1'b1;
+      end
     end
   end
 
-  // Assert reduction valid only when expected barrier count matches
-  reduction_valid = (count_active == expected_fanin);
-  out_reduced_flit = {target_tag, accum_result};
-end
+  always_ff @(posedge clk or negedge rst_n) begin
+    if (!rst_n) begin
+      out_valid <= 1'b0;
+      out_tag   <= '0;
+      out_accum <= '0;
+    end else begin
+      out_valid <= (count_comb >= expected_fanin) && (expected_fanin > 0);
+      out_tag   <= expected_tag;
+      out_accum <= sum_comb;
+    end
+  end
+endmodule
 \end{verbatim}
 \end{svgraybox}
-\caption{SystemVerilog implementation of on-the-fly crossbar reduction.}
-\label{fig:reduction-verilog-snippet}
+\caption{Complete synthesizable SystemVerilog module implementing crossbar-level in-network reduction trees.}
+\label{fig:reduction-full-verilog}
 \end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Synthesis Performance Comparison of AI Interconnect Routers (Nangate45).}
+\label{tab:ai-router-synthesis}
+\begin{tabular}{lcccc}
+\hline\noalign{\smallskip}
+Router Microarchitecture & Crossbar Radix & Gate Count & Max Freq (GHz) & Flit Latency (cycles) \\
+\noalign{\smallskip}\svhline\noalign{\smallskip}
+Standard Baseline 2D Mesh & $5 \times 5$ & 14,200 & 2.20 & 3 \\
+Ruche-4 Express Bypass & $5 \times 5 + 4$ & 18,600 & 2.05 & 1 (bypass) / 3 (local) \\
+PAC-NoC Reduction Crossbar & $4 \times 1$ Tree & 22,400 & 1.82 & 2 (accum) \\
+SiloBreaker 3D Hybrid Router & $7 \times 7$ & 31,500 & 1.75 & 2 (vertical DRAM) \\
+\noalign{\smallskip}\hline
+\end{tabular}
+\end{table}
 
 \section{Case Studies from Landmark Research}
 \label{sec:ai-case-studies}

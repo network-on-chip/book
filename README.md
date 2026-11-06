@@ -58,7 +58,7 @@ share/book/
 ├── svind.ist                 # Springer index formatting style
 ├── book.tex                  # Master root document (\documentclass[graybox,envcountchap,sectrefs]{svmono})
 ├── book.bib                  # Unified BibTeX bibliography (TVLSI, TCAD, JSSC, TCAS)
-├── book.pdf                  # Compiled 262-page camera-ready Springer monograph PDF
+├── book.pdf                  # Compiled 266-page camera-ready Springer monograph PDF
 ├── compile.sh                # 4-pass automated build pipeline (pdflatex + bibtex + makeindex)
 ├── Makefile                  # Build automation (make pdf, make clean)
 ├── frontmatter/              # Dedication, Preface, and List of Acronyms
