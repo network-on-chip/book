@@ -325,7 +325,7 @@ Advanced silicon interposers achieve a staggering **$4.88\times$** higher shorel
     </div>
   </div>
   <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-    <a href="../../interactive/chiplet.md" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
+    <a href="../../interactive/chiplet/" style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #ffffff; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none;">
       <span>Launch Chiplet Tycoon →</span>
     </a>
   </div>
@@ -455,10 +455,10 @@ Test your mastery of Chapter 9 concepts against the official certification quest
 <a id="hisim-dyvs"></a>
 
 The scaling of multi-chiplet computing has accelerated the development of dedicated design space exploration frameworks and routing protocols:
-- **HISIM: Analytical DSE for 2.5D/3D AI Integration**: Wang et al.~[[Wang2025HiSim](#ref-wang2025hisim)] presented HISIM, an analytical performance modeling framework that captures package interposer routing, memory bandwidth, and D2D PHY overheads to rapidly evaluate architectural choices for large language model accelerators across 2.5D and 3D configurations.
-- **DyVS: Dynamic Vertical Link Selection**: Wu et al.~[[Wu2026DyVS](#ref-wu2026dyvs)] formulated DyVS, dynamically steering inter-chiplet traffic across vertical micro-bump links in 2.5D passive interposers based on runtime thermal and congestion feedback, eliminating boundary router bottlenecks.
-- **Scalable Deadlock-Free Routing (ScaDA-Rou)**: Zhu et al.~[[Zhu2026ScaDA](#ref-zhu2026scada)] proposed ScaDA-Rou, a scalable deadlock-free adaptive routing protocol for 3D multi-chiplet topologies that decouples inter-die routing cycles without requiring virtual channel duplication.
-- **In/Outbound Swap Deadlock Recovery**: Wang et al.~[[Wang2026Swap](#ref-wang2026swap)] introduced backtracking-based dynamic buffer swapping for high-radix multi-chiplet interconnects, clearing complex cyclic buffer dependencies with minimal protocol overhead.
+- **HISIM: Analytical DSE for 2.5D/3D AI Integration**: Wang et al. [[Wang2025HiSim](#ref-wang2025hisim)] presented HISIM, an analytical performance modeling framework that captures package interposer routing, memory bandwidth, and D2D PHY overheads to rapidly evaluate architectural choices for large language model accelerators across 2.5D and 3D configurations.
+- **DyVS: Dynamic Vertical Link Selection**: Wu et al. [[Wu2026DyVS](#ref-wu2026dyvs)] formulated DyVS, dynamically steering inter-chiplet traffic across vertical micro-bump links in 2.5D passive interposers based on runtime thermal and congestion feedback, eliminating boundary router bottlenecks.
+- **Scalable Deadlock-Free Routing (ScaDA-Rou)**: Zhu et al. [[Zhu2026ScaDA](#ref-zhu2026scada)] proposed ScaDA-Rou, a scalable deadlock-free adaptive routing protocol for 3D multi-chiplet topologies that decouples inter-die routing cycles without requiring virtual channel duplication.
+- **In/Outbound Swap Deadlock Recovery**: Wang et al. [[Wang2026Swap](#ref-wang2026swap)] introduced backtracking-based dynamic buffer swapping for high-radix multi-chiplet interconnects, clearing complex cyclic buffer dependencies with minimal protocol overhead.
 
 ---
 
