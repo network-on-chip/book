@@ -28,7 +28,7 @@ Three-Dimensional Integrated Circuits (3D-ICs) break this planar barrier by vert
     
     \item \textbf{Heterogeneous Process Integration}: 3D stacking enables heterogeneous modularity: high-performance 3\,nm compute cores can be vertically bonded onto 14\,nm high-density eDRAM cache tiers, passive silicon interposers, or optical/RF transceiver tiers without compromise.
     
-    \item \textbf{Massive Vertical Bandwidth}: Vertical TSV arrays operating at multi-gigahertz frequencies deliver terabits-per-second inter-tier bandwidth with sub-100 picosecond propagation delays.
+    \item \textbf{Massive Vertical Bandwidth}: Vertical TSV arrays operating at multi-gigahertz frequencies deliver terabits-per-second inter-tier bandwidth with sub-100 picosecond propagation delays. To explore this complex multi-dimensional design space, Al-Alousi et al.~\cite{AlAlousi2026} developed a vendor-independent hypergraph-genetic algorithm framework for optimal 3D NoC resource allocation.
 \end{enumerate}
 
 \section{Through-Silicon Via (TSV) Physical Characteristics \& Parasitics}
@@ -312,7 +312,7 @@ To test TSVs before stacking, architectures integrate \textbf{Built-In Self-Test
 \end{enumerate}
 
 \subsection{Post-Bond IEEE 1500 Boundary-Scan Wrappers}
-Once tiers are permanently bonded, physical internal TSVs become completely inaccessible to external probe needles. Inter-tier test access is provided by \textbf{IEEE 1500 Standard Test Wrappers}:
+Once tiers are permanently bonded, physical internal TSVs become completely inaccessible to external probe needles. Inter-tier test access is provided by \textbf{IEEE 1500 Standard Test Wrappers}~\cite{IEEE1500}:
 \begin{itemize}
     \item Dedicated \textbf{Wrapper Instruction Registers (WIR)} and \textbf{Wrapper Boundary Cells (WBC)} are inserted at every vertical TSV driver and receiver.
     \item During test mode, test vectors are serially shifted through the boundary scan chain, applying at-speed pseudo-random patterns across the vertical link array to verify signal integrity and setup/hold timing margins across all tiers.
@@ -353,7 +353,7 @@ Because multi-core processor workloads generate bursty clock-gating current step
 \end{equation}
 If $\Delta V_{\mathrm{noise}}$ exceeds the noise margin ($\approx 5\%$ of $V_{dd}$), logic gates suffer setup violations or memory bit flips.
 
-To preserve power integrity, physical designers must enforce a strict \textbf{Target Impedance Constraint} across all frequencies up to the clock harmonics:
+To preserve power integrity, physical designers must enforce a strict \textbf{Target Impedance Constraint}~\cite{Smith1999} across all frequencies up to the clock harmonics:
 \begin{equation}
 Z_{\mathrm{PDN}}(f) \le Z_{\mathrm{target}} = \frac{V_{dd} \cdot \Delta V_{\mathrm{tolerance}}}{\Delta I_{\mathrm{step}}} \approx 10\text{ to }30\,\mathrm{m\Omega}
 \label{eq:ch8_ztarget}
@@ -364,6 +364,14 @@ Meeting this target impedance requires optimizing the ratio of power-ground TSV 
 \label{sec:ch8_summary}
 
 This chapter detailed the physical foundations, microarchitectural trade-offs, and thermal dynamics of Three-Dimensional Networks-on-Chip. Vertical TSVs eliminate long planar global wires, reducing average packet hops by over $35\%$. However, thermal trapping elevates top-tier temperatures significantly, while 7-port router crossbars expand silicon footprint. Arbitration-free vertical channels and spare TSV redundancy ensure scalable, high-yield 3D interconnect fabrics.
+
+\subsection{Deep RL Topology Optimization and Hybrid Wireless TSVs}
+\label{sec:ch8_drl_wireless}
+Recent innovations in vertical interconnects have explored machine learning optimization and hybrid signaling:
+\begin{itemize}
+    \item \textbf{Deep Reinforcement Learning (DRL) for 3D NoC Topology}: Deng et al.~\cite{Deng2026DRL} formulated 3D NoC topology synthesis as a sequential decision process, using deep RL to prune and regrow TSV vertical links for high-speed data acquisition systems, reducing average packet latency by $14.3\%$ and TSV area overhead by $33\%$.
+    \item \textbf{TSV-W: Wireless Hybrid Interconnects for 2.5D/3D Packaging}: Anim et al.~\cite{Anim2026TSVW} proposed TSV-W, integrating vertical through-silicon via pillars with near-field wireless antennas to circumvent high-frequency parasitic substrate loss and thermal bottlenecks in advanced multi-die stacks.
+\end{itemize}
 
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch8_interactive}
@@ -407,4 +415,8 @@ Explore the interactive 3D integration simulators on the \textbf{NoC Learning Hu
     \item \textbf{[More2018]} A.~More, V.~Pano, and B.~Taskin, ``Vertical Arbitration-Free 3-D NoCs,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~37, no.~9, pp.~1853--1866, 2018. \url{https://doi.org/10.1109/TCAD.2017.2768415}
     \item \textbf{[AlAlousi2026]} A.~Al-Alousi, M.~Li, and H.~Meng, ``Vendor-Independent Design Space Exploration and Resource Optimization Framework for 3-D Networks-on-Chip Using Hypergraph-Genetic Algorithm Integration,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~5, pp.~2236--2248, 2026. \url{https://doi.org/10.1109/TCAD.2025.3616073}
     \item \textbf{[Chao2013]} C.-H.~Chao, K.-C.~Chen, and A.-Y.~Wu, ``Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~21, no.~11, pp.~2118--2131, 2013. \url{https://doi.org/10.1109/TVLSI.2012.2227852}
+    \item \textbf{[IEEE1500]} IEEE, ``IEEE Standard Testability Method for Embedded Core-Based Integrated Circuits,'' \emph{IEEE Std 1500-2005}, 2005. \url{https://doi.org/10.1109/IEEESTD.2005.97445}
+    \item \textbf{[Smith1999]} L.~D.~Smith, R.~E.~Anderson, D.~W.~Forehand, T.~J.~Pelc, and T.~Roy, ``Power Distribution System Design Methodology and Capacitor Selection for Modern CMOS Technology,'' \emph{IEEE Transactions on Advanced Packaging}, vol.~22, no.~3, pp.~284--291, 1999. \url{https://doi.org/10.1109/6040.784478}
+    \item \textbf{[Deng2026DRL]} Y.~Deng et al., ``Topology Optimization of 3-D NoC for High-Speed Data Acquisition Systems via Deep Reinforcement Learning,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~7, pp.~2213--2226, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3690001}
+    \item \textbf{[Anim2026TSVW]} K.~Anim, B.~Taskin, A.~Ganguly, and K.~R.~Dandekar, ``TSV-W for 2.5-D IC Wireless Interconnects,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~6, pp.~1801--1812, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3671654}
 \end{enumerate}

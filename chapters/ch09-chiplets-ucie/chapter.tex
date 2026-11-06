@@ -21,7 +21,7 @@ Now imagine instead baking four personal-sized pizzas ($200\,\mathrm{mm^2}$ each
 The word \emph{monolithic} comes from the Greek words \emph{mono} (single) and \emph{lithos} (stone). In computer engineering, a monolithic chip is carved out of a single continuous crystal of silicon. For decades, following Moore's Law, engineers doubled transistor counts by shrinking transistor sizes on monolithic dies. However, in modern sub-3\,nm manufacturing nodes, this single-stone approach has run into three insurmountable walls:
 
 \begin{enumerate}
-    \item \textbf{The Optical Reticle Limit (The Camera Viewfinder)}: Chips are manufactured using photolithography machines, which shine ultraviolet light through a glass mask to project circuit patterns onto silicon. Just like a smartphone camera has a fixed rectangular viewfinder, the lithography machine has a maximum optical exposure area called the \textbf{reticle limit} (typically $26\,\mathrm{mm} \times 33\,\mathrm{mm} \approx 858\,\mathrm{mm^2}$). Modern AI processors (such as the NVIDIA Blackwell B200) require over $1000\text{--}1500\,\mathrm{mm^2}$ of silicon. They are simply too big to fit inside the machine's lens in a single shot!
+    \item \textbf{The Optical Reticle Limit (The Camera Viewfinder)}: Chips are manufactured using photolithography machines, which shine ultraviolet light through a glass mask to project circuit patterns onto silicon. Just like a smartphone camera has a fixed rectangular viewfinder, the lithography machine has a maximum optical exposure area called the \textbf{reticle limit}~\cite{Mack2007} (typically $26\,\mathrm{mm} \times 33\,\mathrm{mm} \approx 858\,\mathrm{mm^2}$). Modern AI processors (such as the NVIDIA Blackwell B200) require over $1000\text{--}1500\,\mathrm{mm^2}$ of silicon. They are simply too big to fit inside the machine's lens in a single shot!
     
     \item \textbf{Defect Density and Manufacturing Yield Models}: Silicon fabrication facilities (fabs) maintain ISO Class 1 cleanrooms, yet microscopic particulate contamination ($D_0$, measured in defect count per unit area) randomly precipitates onto wafers during chemical-mechanical planarization (CMP), photolithography, and plasma etching. A single killer defect striking an active gate or metal trace invalidates the entire die.
 
@@ -29,7 +29,7 @@ The word \emph{monolithic} comes from the Greek words \emph{mono} (single) and \
     \begin{align}
     \text{Poisson Yield Model:} \quad & Y_{\mathrm{Poisson}} = \exp(-A \cdot D_0) \label{eq:yield_poisson} \\
     \text{Seed's Yield Model:} \quad & Y_{\mathrm{Seed}} = \frac{1}{1 + A \cdot D_0} \label{eq:yield_seed} \\
-    \text{Murphy's Yield Model:} \quad & Y_{\mathrm{Murphy}} = \left( \frac{1 - \exp(-A \cdot D_0)}{A \cdot D_0} \right)^2 \label{eq:yield_murphy} \\
+    \text{Murphy's Yield Model~\cite{Murphy1964}:} \quad & Y_{\mathrm{Murphy}} = \left( \frac{1 - \exp(-A \cdot D_0)}{A \cdot D_0} \right)^2 \label{eq:yield_murphy} \\
     \text{Bose-Einstein / Negative Binomial:} \quad & Y_{\mathrm{BE}} = \frac{1}{(1 + A \cdot D_0 / \gamma)^\gamma} \label{eq:yield_bose}
     \end{align}
     where $\gamma \approx 1.5\text{--}2.5$ represents the defect clustering coefficient.
@@ -143,7 +143,7 @@ When a packet travels from Chiplet A to Chiplet B, how long does the journey tak
 \textbf{Architectural Intuition: Playing Catch with Baseballs} \\
 Imagine two friends playing catch across a football field. It takes 4 seconds for a thrown ball to fly across, and 4 seconds for your friend to throw a ball back. If you only own 1 baseball, you throw it, and then you have to stand with your hands in your pockets for 8 seconds waiting for the ball to return! 
 To keep throwing a ball every single second without ever stopping, how many balls do you need in your bucket? Exactly 8 balls!
-In computer networking, this is called \textbf{Little's Law}: you must have enough buffer space to hold all the data in flight during a complete round trip!
+In computer networking, this is called \textbf{Little's Law}~\cite{Little1961}: you must have enough buffer space to hold all the data in flight during a complete round trip!
 \end{svgraybox}
 
 In credit-based flow control, the sender cannot transmit a flit unless it has an available credit token from the receiver. When the receiver consumes a flit, it sends the credit token back across the bridge. The total time for a flit to travel forward and its credit to return is the \textbf{Round-Trip Time} ($\mathrm{RTT}_{\mathrm{credit}}$):
@@ -384,6 +384,9 @@ Vivet et al.~\cite{Vivet2021} fabricated the landmark \textbf{IntAct} processor 
     \item IntAct demonstrated that embedding routers directly into the active interposer reduces compute chiplet silicon area by $30\%$ and delivers $3\,\mathrm{Tbps/mm^2}$ bisection bandwidth with full dynamic voltage and frequency scaling across each chiplet.
 \end{itemize}
 
+\subsection{NVIDIA Simba: Scalable Multi-Chiplet Deep Learning Architecture}
+Zimmer et al.~\cite{Zimmer2020} demonstrated \textbf{Simba}, a 36-chiplet machine learning accelerator integrating 16\,nm compute chiplets across an organic packaging substrate with ground-referenced signaling (GRS). Simba demonstrated that modular multi-chiplet packaging achieves $0.11\,\mathrm{pJ/Op}$ energy efficiency and $0.32\text{--}1.28\,\mathrm{TOPS}$ performance scaling while eliminating the fatal defect yield traps of reticle-sized monolithic accelerators.
+
 \section{Simulation Model \& Quantitative Evaluation}
 \label{sec:chiplet-sim-results}
 
@@ -425,6 +428,16 @@ The simulation highlights the decisive advantage of 2.5D silicon interposers: wi
     \item \textbf{Deadlock Can Be Solved Intelligently}: When cross-die traffic jams occur, the In/Outbound Swap acts as a traffic cop, pulling one packet aside into a temporary driveway to clear the jam without dropping data.
 \end{itemize}
 
+\subsection{Analytical DSE Frameworks, Vertical Link Selection, and Multi-Chiplet Routing}
+\label{sec:ch9_hisim_dyvs}
+The scaling of multi-chiplet computing has accelerated the development of dedicated design space exploration frameworks and routing protocols:
+\begin{itemize}
+    \item \textbf{HISIM: Analytical DSE for 2.5D/3D AI Integration}: Wang et al.~\cite{Wang2025HiSim} presented HISIM, an analytical performance modeling framework that captures package interposer routing, memory bandwidth, and D2D PHY overheads to rapidly evaluate architectural choices for large language model accelerators across 2.5D and 3D configurations.
+    \item \textbf{DyVS: Dynamic Vertical Link Selection}: Wu et al.~\cite{Wu2026DyVS} formulated DyVS, dynamically steering inter-chiplet traffic across vertical micro-bump links in 2.5D passive interposers based on runtime thermal and congestion feedback, eliminating boundary router bottlenecks.
+    \item \textbf{Scalable Deadlock-Free Routing (ScaDA-Rou)}: Zhu et al.~\cite{Zhu2026ScaDA} proposed ScaDA-Rou, a scalable deadlock-free adaptive routing protocol for 3D multi-chiplet topologies that decouples inter-die routing cycles without requiring virtual channel duplication.
+    \item \textbf{In/Outbound Swap Deadlock Recovery}: Wang et al.~\cite{Wang2026Swap} introduced backtracking-based dynamic buffer swapping for high-radix multi-chiplet interconnects, clearing complex cyclic buffer dependencies with minimal protocol overhead.
+\end{itemize}
+
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch9_interactive}
 
@@ -461,9 +474,17 @@ Explore the interactive chiplet and flow-control simulators on the \textbf{NoC L
 \label{sec:ch9_references}
 
 \begin{enumerate}
+    \item \textbf{[Mack2007]} C.~Mack, \emph{Fundamental Principles of Optical Lithography: The Science of Microfabrication}, John Wiley \& Sons, Chichester, UK, 2007. \url{https://doi.org/10.1002/9780470723876}
+    \item \textbf{[Murphy1964]} B.~T.~Murphy, ``Cost-Size Optima of Monolithic Integrated Circuits,'' \emph{Proceedings of the IEEE}, vol.~52, no.~12, pp.~1537--1545, 1964. \url{https://doi.org/10.1109/PROC.1964.3442}
+    \item \textbf{[Little1961]} J.~D.~C.~Little, ``A Proof for the Queuing Formula: $L = \lambda W$,'' \emph{Operations Research}, vol.~9, no.~3, pp.~383--387, 1961. \url{https://doi.org/10.1287/opre.9.3.383}
+    \item \textbf{[Zimmer2020]} B.~Zimmer et al., ``A 0.11 pJ/Op, 0.32--1.28 TOPS, Scalable Multi-Chip-Module-Based Deep Neural Network Accelerator with Ground-Referenced Signaling in 16nm,'' \emph{IEEE Journal of Solid-State Circuits}, vol.~55, no.~4, pp.~920--932, 2020. \url{https://doi.org/10.1109/JSSC.2019.2960488}
     \item \textbf{[Vivet2021]} P.~Vivet et al., ``IntAct: A 96-Core Processor With Six Chiplets 3D-Stacked on an Active Interposer With Distributed Interconnects and Integrated Power Management,'' \emph{IEEE Journal of Solid-State Circuits}, vol.~56, no.~1, pp.~79--97, 2021. \url{https://doi.org/10.1109/JSSC.2020.3036341}
     \item \textbf{[Chen2026]} Z.~Chen et al., ``HiRe: A Hierarchical Reconfigurable Architecture for Large-Scale Multichiplet DNN Accelerators,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~4, pp.~880--893, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3676552}
     \item \textbf{[Wang2026]} P.~Wang, M.~Wang, Z.~Ye, T.~Lu, and Z.~Yu, ``In/Outbound Swap: A Backtracking-based Deadlock Recovery Mechanism for Multi-Chiplet Networks,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~5, pp.~2100--2114, 2026. \url{https://doi.org/10.1109/TCAD.2026.3688573}
     \item \textbf{[UCIe2023]} {UCIe Consortium}, ``Universal Chiplet Interconnect Express (UCIe) Specification Rev 1.1,'' Industry Standard Specification, Aug. 2023. \url{https://www.uciexpress.org}
     \item \textbf{[DallyPrinciples]} W.~J.~Dally and B.~Towles, \emph{Principles and Practices of Interconnection Networks}, Morgan Kaufmann Publishers, San Francisco, CA, 2004.
+    \item \textbf{[Wang2025HiSim]} T.~Wang et al., ``HISIM: Analytical Performance Modeling and Design Space Exploration of 2.5D/3D Integration for AI Computing,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~44, no.~12, pp.~4210--4223, 2025. \url{https://doi.org/10.1109/TCAD.2025.3531348}
+    \item \textbf{[Wu2026DyVS]} X.~Wu et al., ``DyVS: Dynamic Optimization of Vertical Link Selection for Routing in 2.5D Chiplet Networks,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~6, pp.~1950--1963, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3710644}
+    \item \textbf{[Zhu2026ScaDA]} L.~Zhu, H.~Gu, Y.~Tan, and G.~Zhang, ``ScaDA-Rou: A Scalable, Deadlock-Free, and Adaptive Routing for 3-D Multi-Chiplet System,'' \emph{IEEE Transactions on Circuits and Systems II: Express Briefs}, vol.~73, no.~5, pp.~1810--1814, 2026. \url{https://doi.org/10.1109/TCSII.2025.3618100}
+    \item \textbf{[Wang2026Swap]} P.~Wang et al., ``In/Outbound Swap: A Backtracking-based Deadlock Recovery Mechanism for Multi-Chiplet Networks,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~5, pp.~2100--2114, 2026. \url{https://doi.org/10.1109/TCAD.2026.3688573}
 \end{enumerate}

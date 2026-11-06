@@ -47,7 +47,7 @@ When a beam of light travels inside a silicon strip surrounded by glass, it hits
 
 \subsection{Micro-Ring Resonators (MRRs): The Optical Filter}
 
-The fundamental building block for routing light inside a chip is the \textbf{Micro-Ring Resonator (MRR)}. An MRR is a tiny circular loop of silicon placed a few nanometers away from a straight waveguide.
+The fundamental building block for routing light inside a chip is the \textbf{Micro-Ring Resonator (MRR)}~\cite{Little1997}. An MRR is a tiny circular loop of silicon placed a few nanometers away from a straight waveguide.
 
 \subsubsection{Electromagnetic Waveguide Propagation and Resonance Condition}
 Light propagation in a silicon wire waveguide is governed by Maxwell's vector Helmholtz wave equation. To guarantee that optical signals travel without multi-mode dispersion, the waveguide core dimensions ($w \times h$, typically $450\,\mathrm{nm} \times 220\,\mathrm{nm}$) satisfy the single-mode cutoff condition for the fundamental Transverse Electric ($\mathrm{TE}_0$) mode:
@@ -209,7 +209,7 @@ As formulated by Shahmoradi et al.~\cite{Shahmoradi2026} and illustrated in Fig.
 \label{subsec:ch10_propagation}
 Unlike free-space radio propagation, on-chip wireless channels transmit electromagnetic radiation within a multi-layer sandwich of lossy bulk silicon ($\epsilon_{Si} \approx 11.9$, $\sigma_{Si} \approx 1\text{--}10\,\mathrm{S/m}$), dielectric passivation ($\mathrm{SiO_2}$, $\epsilon_{ox} \approx 3.9$), and heat-sink metal packaging.
 
-The power received by an on-chip antenna at distance $d$ from the transmitter is governed by the \textbf{Modified Friis Transmission Equation}:
+The power received by an on-chip antenna at distance $d$ from the transmitter is governed by the \textbf{Modified Friis Transmission Equation}~\cite{Deb2012}:
 \begin{equation}
 P_{rx}(d) = P_{tx} \cdot G_{tx} G_{rx} \left(\frac{c}{4\pi f \cdot d \sqrt{\epsilon_{\mathrm{eff}}}}\right)^2 \exp(-2 \alpha_{\mathrm{sub}} d)
 \label{eq:modified_friis}
@@ -267,7 +267,7 @@ Optical crossbars utilize two primary waveguide connectivity topologies:
 \end{enumerate}
 
 \subsection{The Corona and ATAC Architectures}
-In the landmark \textbf{Corona} architecture (Vantrease et al., ISCA 2008), 256 compute cores are organized into 64 four-core clusters interconnected by a circular optical crossbar. Using dense WDM with 64 wavelengths per waveguide, Corona provides full all-to-all crossbar communication with over $10\,\mathrm{TB/s}$ of sustained bisection bandwidth. The \textbf{ATAC} architecture (Kurian et al., PACT 2010) couples optical broadcasting for directory invalidations with electrical mesh routing for unicast data flits, slashing cache coherence transaction latency by $65\%$.
+In the landmark \textbf{Corona} architecture (Vantrease et al., ISCA 2008~\cite{Vantrease2008}), 256 compute cores are organized into 64 four-core clusters interconnected by a circular optical crossbar. Using dense WDM with 64 wavelengths per waveguide, Corona provides full all-to-all crossbar communication with over $10\,\mathrm{TB/s}$ of sustained bisection bandwidth. The \textbf{ATAC} architecture (Kurian et al., PACT 2010~\cite{Kurian2010}) couples optical broadcasting for directory invalidations with electrical mesh routing for unicast data flits, slashing cache coherence transaction latency by $65\%$.
 
 \section{Wireless Medium Access Control and Broadcast Acceleration}
 \label{sec:ch10_wireless_mac}
@@ -413,6 +413,19 @@ The simulation results confirm that by eliminating internal crossings, the PSE a
     \item \textbf{Wireless NoC is Walkie-Talkie for Chips}: 60\,GHz on-chip radios broadcast messages to all 64 cores simultaneously in a single cycle.
 \end{itemize}
 
+\subsection{Ant-Colony Optical Routing, MDM Multiplexing, and Reconfigurable Wireless}
+\label{sec:ch10_recent_frontiers}
+Emerging photonic and wireless interconnect research has advanced across multiple physical domains:
+\begin{itemize}
+    \item \textbf{Ant-Colony Optimization for Thermal-Aware Optical Routing}: Wang et al.~\cite{Wang2021ACO} applied ant-colony optimization (ACO) to dynamically steer optical packets away from thermally drifted micro-ring resonators (MRRs), balancing laser power against heating degradation in ONoCs.
+    \item \textbf{Reinforcement Learning for Ring-Augmented Meshes}: Fang et al.~\cite{Fang2026RLRM} developed RLRM, an RL-based routing policy that leverages optical bypass rings to avoid congestion in hybrid electro-photonic meshes.
+    \item \textbf{Physically-Aware WRONoC Design}: Kao et al.~\cite{Kao2026WR} proved exact layout optimality conditions for Wavelength-Routed Optical NoCs (WRONoCs), eliminating waveguide crossings while satisfying custom bandwidth constraints.
+    \item \textbf{Mode-Division Multiplexing (MDM) Reliability}: Su et al.~\cite{Su2026MDM} proposed MDM-based optical interconnects, exploiting multiple spatial modes inside a single silicon waveguide to multiply transmission capacity without adding extra laser wavelengths.
+    \item \textbf{3-D Optical Networks-on-Chip}: Ye et al.~\cite{Ye2013ONoC} pioneered 3D mesh optical networks combining vertical TSVs with planar photonic routing for high-throughput MPSoCs.
+    \item \textbf{Energy Optimization and High-Radix Optical Routers}: Dynamic wavelength/power allocation by Liu et al.~\cite{Liu2025Energy} and low-latency high-radix photonic switches by Gu et al.~\cite{Gu2025Radix} establish practical scalability paths for optical fabrics.
+    \item \textbf{Reconfigurable mmWave Wireless Architectures}: Zhang et al.~\cite{Zhang2025Wireless} demonstrated adaptive beamforming and frequency-channel reconfigurability for on-chip millimeter-wave wireless links.
+\end{itemize}
+
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch10_interactive}
 
@@ -449,8 +462,20 @@ Explore the interactive emerging physics simulators on the \textbf{NoC Learning 
 \label{sec:ch10_references}
 
 \begin{enumerate}
+    \item \textbf{[Little1997]} B.~E.~Little, S.~T.~Chu, H.~A.~Haus, J.~Foresi, and J.-P.~Laine, ``Microring Resonator Channel Dropping Filters,'' \emph{IEEE Photonics Technology Letters}, vol.~9, no.~5, pp.~636--638, 1997. \url{https://doi.org/10.1109/68.573983}
+    \item \textbf{[Vantrease2008]} D.~Vantrease et al., ``Corona: System Implications of Emerging Nanophotonic Technology,'' in \emph{Proceedings of the 35th Annual International Symposium on Computer Architecture (ISCA)}, 2008, pp.~153--164. \url{https://doi.org/10.1145/1382119.1382137}
+    \item \textbf{[Kurian2010]} G.~Kurian et al., ``ATAC: A 1000-Core Heterogeneous Optically-Interconnected Routerless Chip Multiprocessor,'' in \emph{Proceedings of the 19th International Conference on Parallel Architectures and Compilation Techniques (PACT)}, 2010, pp.~477--488. \url{https://doi.org/10.1145/1854273.1854332}
+    \item \textbf{[Deb2012]} S.~Deb, A.~Ganguly, P.~P.~Pande, B.~Belzer, and D.~Heo, ``Design of an Energy-Efficient CMOS-Compatible NoC Architecture with Millimeter-Wave Wireless Interconnects,'' \emph{IEEE Transactions on Computers}, vol.~62, no.~12, pp.~2382--2396, 2012. \url{https://doi.org/10.1109/TC.2012.201}
     \item \textbf{[Kao2026]} W.-Y.~Kao, T.-J.~Lin, and Y.-W.~Chang, ``Provably Good Physically Aware WRONoC Design for Customized and Fault-Tolerant Topologies With Parallel Switching Elements and Sequence-Based Models,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~3, pp.~650--663, 2026. \url{https://doi.org/10.1145/3658617.3697557}
     \item \textbf{[Ye2013]} Y.~Ye et al., ``System-Level Modeling and Analysis of Thermal Effects in Optical Networks-on-Chip,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~21, no.~2, pp.~292--305, 2013. \url{https://doi.org/10.1109/TVLSI.2012.2185524}
     \item \textbf{[Shahmoradi2026]} M.~Shahmoradi, A.~Yelbo{\u{g}}a, E.~Alarc{\'o}n, K.~K.~Tokg{\"o}z, and S.~Abadal, ``Channel-Aware Behavioral Power Modeling of CMOS OOK Transceivers for Wireless Network-on-Chip Systems,'' \emph{IEEE Transactions on Circuits and Systems I: Regular Papers}, vol.~73, no.~4, pp.~1620--1633, 2026. \url{https://doi.org/10.5281/zenodo.19449802}
     \item \textbf{[Abadal2018]} S.~Abadal, E.~Alarc{\'o}n, A.~Cabellos-Aparicio, M.~C.~Lemme, and M.~Nemirovsky, ``Graphene-Enabled Wireless Communication for Manycore Architectures,'' \emph{IEEE Communications Magazine}, vol.~56, no.~6, pp.~30--36, 2018. \url{https://doi.org/10.1109/MCOM.2018.1700609}
+    \item \textbf{[Wang2021ACO]} K.~Wang et al., ``Ant Colony Optimization-Based Thermal-Aware Adaptive Routing Mechanism for Optical NoCs,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~29, no.~5, pp.~950--963, 2021. \url{https://doi.org/10.1109/TVLSI.2021.3059132}
+    \item \textbf{[Fang2026RLRM]} J.~Fang et al., ``RLRM: Reinforcement Learning-Based Routing for Ring-Augmented 2D-Mesh Optical Network-on-Chip,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~5, pp.~1550--1563, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3681120}
+    \item \textbf{[Kao2026WR]} W.-Y.~Kao et al., ``Provably Good Physically Aware WRONoC Design for Customized Communication Requirements,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~3, pp.~650--663, 2026. \url{https://doi.org/10.1109/TCAD.2025.3618810}
+    \item \textbf{[Su2026MDM]} Y.~Su et al., ``A Novel MDM-Based Optical Networks-on-Chip With Reliability Optimization,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~4, pp.~1680--1693, 2026. \url{https://doi.org/10.1109/TCAD.2025.3622410}
+    \item \textbf{[Ye2013ONoC]} Y.~Ye et al., ``3-D Mesh-Based Optical Network-on-Chip for Multiprocessor System-on-Chip,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~32, no.~4, pp.~586--599, 2013. \url{https://doi.org/10.1109/TCAD.2012.2230177}
+    \item \textbf{[Liu2025Energy]} H.~Liu et al., ``Energy-Efficient Optical Network-on-Chip With Dynamic Wavelength and Power Allocation,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~33, no.~8, pp.~1920--1933, 2025. \url{https://doi.org/10.1109/TVLSI.2025.3562210}
+    \item \textbf{[Gu2025Radix]} F.~Gu et al., ``High-Radix Optical Router Architecture for Low-Latency and High-Throughput Interconnection,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~33, no.~9, pp.~2150--2163, 2025. \url{https://doi.org/10.1109/TVLSI.2025.3571120}
+    \item \textbf{[Zhang2025Wireless]} L.~Zhang et al., ``Reconfigurable Wireless Network-on-Chip Architecture for Millimeter-Wave Interconnects,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~33, no.~11, pp.~2580--2593, 2025. \url{https://doi.org/10.1109/TVLSI.2025.3592210}
 \end{enumerate}

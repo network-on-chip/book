@@ -26,7 +26,7 @@ In traditional distributed computer networks and local-area networks (governed b
 
 On a monolithic silicon die or multi-die 2.5D/3D package, these physical trade-offs invert completely:
 \begin{enumerate}
-    \item \textbf{Buffer Area and Leakage Scarcity}: On-chip router buffers---implemented with dual-ported SRAM macros or D-flip-flop register files---consume between 35\% and 65\% of the total router silicon area and static leakage power~\cite{Dally2001,Fischer2025}. Dedicating tens of kilobytes of buffer storage per input port would severely cannibalize silicon budget from processing cores, vector units, and cache arrays.
+    \item \textbf{Buffer Area and Leakage Scarcity}: On-chip router buffers---implemented with dual-ported SRAM macros or D-flip-flop register files---consume between 35\% and 65\% of the total router silicon area and static leakage power~\cite{Wang2002,Kahng2009,Peh2001}. Dedicating tens of kilobytes of buffer storage per input port would severely cannibalize silicon budget from processing cores, vector units, and cache arrays.
     \item \textbf{Abundant On-Chip Wiring Density}: Modern deep-submicron and FinFET/GAAFET process nodes provide 10 to 16 back-end-of-line (BEOL) metal layers. While off-chip package pins remain tightly constrained, on-chip routers can deploy wide parallel buses (32 to 512 physical wires) across intermediate metal layers (M4--M6) with zero packaging penalty.
     \item \textbf{Sub-Nanosecond Single-Cycle Pipelining}: Packet switching, credit processing, virtual channel allocation, and crossbar traversal must execute in 1 to 2 clock cycles (300~ps to 1~ns), strictly precluding dynamic software intervention, complex variable-length frame reassembly, or multi-cycle header decoding.
 \end{enumerate}
@@ -248,7 +248,7 @@ As demonstrated in \textbf{FlooNoC}~\cite{Fischer2025}, modern high-performance 
 The switching technique dictates when and how an incoming flit is forwarded from an input port to an output port. We analyze three classical switching paradigms across path length $H$ (in hops), packet length $L$ (in flits), physical link bandwidth $W$ (bits/cycle), and router pipeline latency $t_r$ (cycles/hop).
 
 \subsection{Store-and-Forward (SAF) Switching}
-In Store-and-Forward switching, a router must receive, buffer, and verify the \emph{entire packet} before forwarding its first flit to the downstream router:
+In Store-and-Forward switching, introduced by Baran~\cite{Baran1964}, a router must receive, buffer, and verify the \emph{entire packet} before forwarding its first flit to the downstream router:
 \begin{equation}
 t_{serial} = \frac{L}{W}, \qquad T_{SAF} = H \cdot \left( t_r + \frac{L}{W} + t_{link} \right)
 \label{eq:saf_latency}
@@ -330,7 +330,7 @@ N_{avg} = \sum_{k=0}^{B} k \cdot p_k = \frac{\rho}{1 - \rho} - \frac{(B + 1) \cd
 \label{eq:ch2_navg}
 \end{equation}
 
-By Little's Law ($N_{avg} = \lambda_{eff} \cdot W_{queue}$), the average waiting time spent in the router buffer before crossbar traversal is:
+By Little's Law~\cite{Little1961} ($N_{avg} = \lambda_{eff} \cdot W_{queue}$), the average waiting time spent in the router buffer before crossbar traversal is:
 \begin{equation}
 W_{queue} = \frac{N_{avg}}{\lambda \cdot (1 - P_{stall})} = \frac{1}{\mu(1 - \rho)} - \frac{B \cdot \rho^B}{\mu (1 - \rho^B)}
 \label{eq:ch2_wqueue}
@@ -430,7 +430,7 @@ RTT = 1 + 1 + 1 + 1 = 4\text{ cycles}
 \end{equation}
 
 \begin{svgraybox}
-\textbf{The Fundamental Throughput Theorem}: To sustain 100\% wire-rate throughput without pipeline stall bubbles, the downstream buffer depth $B$ must satisfy:
+\textbf{The Fundamental Throughput Theorem}: To sustain 100\% wire-rate throughput without pipeline stall bubbles, the downstream buffer depth $B$ must satisfy Little's Law~\cite{Little1961,DallyPrinciples}:
 \begin{equation}
 B_{min} \ge RTT \times \text{Peak Injection Rate} = RTT\text{ flits}
 \label{eq:bmin_theorem}
@@ -520,6 +520,16 @@ Key innovations of the SWIFT architecture include:
     \item \textbf{Swing-Reduced Interconnects}: Reduced-swing transceivers on physical links substantially diminish dynamic energy dissipation.
 \end{enumerate}
 
+\subsection{Advanced Buffer Allocation, Flow Regulation, and Distributed Sharing}
+\label{sec:ch2_advanced_buffering}
+Buffer memory accounts for over $60\%$ of router leakage power and silicon footprint. Consequently, optimizing buffer utilization across non-uniform workloads is a vital design imperative:
+\begin{itemize}
+    \item \textbf{Buffer Optimization Through Flow Regulation}: Jafari et al.~\cite{Jafari2010} established that injecting traffic according to regulated flow profiles substantially reduces buffer queue depths while maintaining wire saturation throughput, eliminating transient overflow without requiring oversized per-port FIFOs.
+    \item \textbf{Distributed Shared-Buffer Routers}: Ramanujam et al.~\cite{Ramanujam2011} proposed distributed shared-buffer architectures where dynamic pool allocation allows heavily loaded input channels to borrow empty flit slots from neighboring idle ports, boosting effective saturation throughput by up to $35\%$ under bursty synthetic workloads.
+    \item \textbf{Application-Specific Buffer Sizing}: Early system-level buffer allocation frameworks developed by Hu and Marculescu~\cite{Hu2006Buffer} showed that non-uniform buffer sizing mapped to specific application communication graphs saves up to $48\%$ of total buffer memory compared to symmetric allocations.
+    \item \textbf{Congestion-Aware Dynamic VC Allocation}: Contemporary research by Xu et al.~\cite{Xu2025VC} demonstrates that runtime dynamic VC reallocation based on downstream backpressure metrics prevents head-of-line blocking while reducing active buffer leakage in high-performance CMPs.
+\end{itemize}
+
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch2_interactive}
 
@@ -543,11 +553,21 @@ Explore the interactive flow-control simulators on the \textbf{NoC Learning Hub}
 \label{sec:ch2_references}
 
 \begin{enumerate}
+    \item \textbf{[Baran1964]} P.~Baran, ``On Distributed Communications Networks,'' \emph{IEEE Transactions on Communications Systems}, vol.~12, no.~1, pp.~1--9, 1964. \url{https://doi.org/10.1109/TCOM.1964.1088883}
     \item \textbf{[Kermani1979]} P.~Kermani and L.~Kleinrock, ``Virtual Cut-Through: A New Computer Communication Switching Technique,'' \emph{Computer Networks}, vol.~3, no.~4, pp.~267--286, 1979. \url{https://doi.org/10.1016/0376-5075(79)90034-7}
     \item \textbf{[Dally1987]} W.~J.~Dally and C.~L.~Seitz, ``Deadlock-Free Message Routing in Multiprocessor Interconnection Networks,'' \emph{IEEE Transactions on Computers}, vol.~C-36, no.~5, pp.~547--553, 1987. \url{https://doi.org/10.1109/TC.1987.1676939}
+    \item \textbf{[Dally1992]} W.~J.~Dally, ``Virtual-Channel Flow Control,'' \emph{IEEE Transactions on Parallel and Distributed Systems}, vol.~3, no.~2, pp.~194--205, 1992. \url{https://doi.org/10.1109/71.127260}
+    \item \textbf{[Little1961]} J.~D.~C.~Little, ``A Proof for the Queuing Formula: $L = \lambda W$,'' \emph{Operations Research}, vol.~9, no.~3, pp.~383--387, 1961. \url{https://doi.org/10.1287/opre.9.3.383}
+    \item \textbf{[Wang2002]} H.-S.~Wang, X.~Zhu, L.-S.~Peh, and S.~Malik, ``Orion: A Power-Performance Simulator for Interconnection Networks,'' in \emph{Proceedings of the 35th Annual IEEE/ACM International Symposium on Microarchitecture (MICRO)}, 2002, pp.~294--305. \url{https://doi.org/10.1109/MICRO.2002.1176258}
+    \item \textbf{[Kahng2009]} A.~B.~Kahng, B.~Lin, and S.~Nath, ``ORION 2.0: A Fast and Accurate NoC Power and Area Model for Early-Stage Design Space Exploration,'' in \emph{Proceedings of the Conference on Design, Automation and Test in Europe (DATE)}, 2009, pp.~423--428. \url{https://doi.org/10.1109/DATE.2009.5090708}
     \item \textbf{[Peh2001]} L.-S.~Peh and W.~J.~Dally, ``A Delay Model and Speculative Architecture for Pipelined Routers,'' in \emph{Proceedings of the 7th International Symposium on High-Performance Computer Architecture (HPCA)}, 2001, pp.~255--266. \url{https://doi.org/10.1109/HPCA.2001.903268}
     \item \textbf{[Postman2013]} J.~Postman, T.~Krishna, C.~Edmonds, L.-S.~Peh, and P.~Chiang, ``SWIFT: A Low-Power Network-On-Chip Implementing the Token Flow Control Router Architecture With Swing-Reduced Interconnects,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~21, no.~8, pp.~1432--1446, 2013. \url{https://doi.org/10.1109/TVLSI.2012.2211904}
     \item \textbf{[Fischer2025]} T.~Fischer, M.~Rogenmoser, T.~Benz, F.~K.~G{\"{u}}rkaynak, and L.~Benini, ``FlooNoC: A 645-Gb/s/link 0.15-pJ/B/hop Open-Source NoC With Wide Physical Links and End-to-End AXI4 Parallel Multistream Support,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~33, no.~4, pp.~1094--1107, 2025. \url{https://doi.org/10.1109/TVLSI.2025.3527225}
     \item \textbf{[Chao2013]} C.-H.~Chao, K.-C.~Chen, and A.-Y.~Wu, ``Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~21, no.~11, pp.~2118--2131, 2013. \url{https://doi.org/10.1109/TVLSI.2012.2227852}
     \item \textbf{[Dally2001]} W.~J.~Dally and B.~Towles, ``Route Packets, Not Wires: On-Chip Interconnection Networks,'' in \emph{Proceedings of the 38th Annual Design Automation Conference (DAC)}, 2001, pp.~684--689. \url{https://doi.org/10.1145/378239.379048}
+    \item \textbf{[DallyPrinciples]} W.~J.~Dally and B.~Towles, \emph{Principles and Practices of Interconnection Networks}, San Francisco, CA: Morgan Kaufmann, 2004.
+    \item \textbf{[Jafari2010]} F.~Jafari, A.~Khosravi, and M.~Saniee, ``Buffer Optimization in Network-on-Chip Through Flow Regulation,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~29, no.~12, pp.~1973--1986, 2010. \url{https://doi.org/10.1109/TCAD.2010.2063130}
+    \item \textbf{[Ramanujam2011]} R.~S.~Ramanujam and B.~Lin, ``Extending the Effective Throughput of NoCs With Distributed Shared-Buffer Routers,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~30, no.~4, pp.~584--597, 2011. \url{https://doi.org/10.1109/TCAD.2010.2100550}
+    \item \textbf{[Hu2006Buffer]} J.~Hu and R.~Marculescu, ``System-Level Buffer Allocation for Application-Specific Networks-on-Chip Router Design,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~25, no.~2, pp.~291--304, 2006. \url{https://doi.org/10.1109/TCAD.2005.855938}
+    \item \textbf{[Xu2025VC]} H.~Xu, L.~Shen, and K.~Wang, ``Congestion-Aware Dynamic Virtual Channel Allocation for Multi-Core NoC,'' \emph{IEEE Transactions on Circuits and Systems I: Regular Papers}, vol.~72, no.~3, pp.~1120--1132, 2025. \url{https://doi.org/10.1109/TCSI.2024.3482110}
 \end{enumerate}

@@ -25,7 +25,7 @@ This chapter provides a rigorous, end-to-end exploration of data transport and b
 - **Analyze Silicon Network Interfaces**: Understand how the Network Interface (NI) bridges standard core protocols (AXI4, TileLink) to on-chip packet formats with zero data loss.
 - **Derive Mathematical Switching Latencies**: Formulate and contrast the zero-load latency models of Store-and-Forward ($H \cdot L$), Virtual Cut-Through ($H + L$), and Wormhole switching ($H + L$).
 - **Quantify Credit Turnaround Timing**: Derive the credit Round-Trip Time ($RTT$) loop and prove the minimum downstream buffer depth theorem ($B_{min} \ge RTT$) required for $100\%$ wire-rate link utilization.
-- **Evaluate Alternative Flow Control Paradigms**: Compare credit-based flow control with on/off hysteresis signaling and token flow control (SWIFT TVLSI 2013).
+- **Evaluate Alternative Flow Control Paradigms**: Compare credit-based flow control with on/off hysteresis signaling and token flow control (SWIFT [[Postman2013](#ref-postman2013)]).
 
 ### Chapter Roadmap & Interactive Modules
 - **Section 2.1**: The Data Granularity Hierarchy: Messages, Packets, Flits & Phits.
@@ -93,14 +93,14 @@ In macro-scale wide-area and local-area networks (governed by the classical OSI 
 On a monolithic silicon die or multi-die 2.5D/3D package, these physical constraints invert completely:
 
 - **Buffer Area and Static Leakage Scarcity**:
-  - On-chip router buffers (implemented with dual-ported SRAM macros or D-flip-flop register files) consume **35% to 65% of total router silicon area and static leakage power**.
-  - Dedicating tens of kilobytes of buffer storage per input port severely cannibalizes silicon budget from compute cores, vector units, and cache arrays.
+    - On-chip router buffers (implemented with dual-ported SRAM macros or D-flip-flop register files) consume **35% to 65% of total router silicon area and static leakage power** [[Wang2002](#ref-wang2002), [Kahng2009](#ref-kahng2009), [Peh2001](#ref-peh2001)].
+    - Dedicating tens of kilobytes of buffer storage per input port severely cannibalizes silicon budget from compute cores, vector units, and cache arrays.
 - **Abundant On-Chip Wiring Density**:
-  - Modern deep-submicron and FinFET/GAAFET process nodes provide 10 to 16 back-end-of-line (BEOL) metal layers.
-  - While off-chip package pins are tightly bounded, on-chip routers can deploy wide parallel buses (32 to 512 physical wires) across intermediate metal layers (M4–M6) with zero packaging penalty.
+    - Modern deep-submicron and FinFET/GAAFET process nodes provide 10 to 16 back-end-of-line (BEOL) metal layers.
+    - While off-chip package pins are tightly bounded, on-chip routers can deploy wide parallel buses (32 to 512 physical wires) across intermediate metal layers (M4–M6) with zero packaging penalty.
 - **Sub-Nanosecond Single-Cycle Timing Invariants**:
-  - Packet switching, credit processing, virtual channel allocation, and crossbar traversal must execute in 1 to 2 clock cycles (300 ps to 1 ns).
-  - This strict timing ceiling precludes dynamic software intervention, complex variable-length frame reassembly, or multi-cycle header decoding.
+    - Packet switching, credit processing, virtual channel allocation, and crossbar traversal must execute in 1 to 2 clock cycles (300 ps to 1 ns).
+    - This strict timing ceiling precludes dynamic software intervention, complex variable-length frame reassembly, or multi-cycle header decoding.
 
 To reconcile these physical realities, Network-on-Chip (NoC) architectures partition data transmission across four distinct hierarchical boundaries, as summarized in the comparison matrix below.
 
@@ -143,19 +143,19 @@ A packet is segmented into a sequenced stream of **Flow Control Units (Flits)**.
 Router input buffers, virtual channels (VCs), and credit counters track resources exclusively in integer multiples of flits. Flits are partitioned into four distinct microarchitectural types:
 
 - **Head Flit (`Flit_Type = 2'b01`)**:
-  - The opening flit of a multi-flit packet.
-  - Encapsulates routing header coordinates ($H_{\text{meta}}$), destination address, and priority tags.
-  - Arbitrates for downstream Virtual Channels during the Virtual Channel Allocation (VA) pipeline stage and reserves router channel state.
+    - The opening flit of a multi-flit packet.
+    - Encapsulates routing header coordinates ($H_{\text{meta}}$), destination address, and priority tags.
+    - Arbitrates for downstream Virtual Channels during the Virtual Channel Allocation (VA) pipeline stage and reserves router channel state.
 - **Body Flits (`Flit_Type = 2'b00`)**:
-  - Intermediate flits carrying pure data payload bytes.
-  - Do not contain destination coordinates; they stream through established crossbar connections following the reservation made by their Head flit.
-  - Conserves dynamic switching power and eliminates redundant routing lookups.
+    - Intermediate flits carrying pure data payload bytes.
+    - Do not contain destination coordinates; they stream through established crossbar connections following the reservation made by their Head flit.
+    - Conserves dynamic switching power and eliminates redundant routing lookups.
 - **Tail Flit (`Flit_Type = 2'b10`)**:
-  - The terminal flit of a multi-flit packet carrying final payload fragments and optional checksum bits ($T_{\text{check}}$).
-  - Crucially, as the Tail flit traverses the crossbar and departs, it triggers control logic to **deallocate the Virtual Channel**, returning the VC state to `IDLE`.
+    - The terminal flit of a multi-flit packet carrying final payload fragments and optional checksum bits ($T_{\text{check}}$).
+    - Crucially, as the Tail flit traverses the crossbar and departs, it triggers control logic to **deallocate the Virtual Channel**, returning the VC state to `IDLE`.
 - **Head-Tail Flit (`Flit_Type = 2'b11`)**:
-  - An atomic single-flit packet ($L = 1$) combining header metadata, payload, and termination markers within a single cycle.
-  - Essential for ultra-short coherence transactions (invalidations, acknowledgments, credit returns), avoiding multi-flit serialization overhead.
+    - An atomic single-flit packet ($L = 1$) combining header metadata, payload, and termination markers within a single cycle.
+    - Essential for ultra-short coherence transactions (invalidations, acknowledgments, credit returns), avoiding multi-flit serialization overhead.
 
 Let $W_{\text{flit}}$ denote total flit width, $W_{\text{ctrl}}$ denote flit-type and VCID overhead, and $W_{\text{flit\_payload}} = W_{\text{flit}} - W_{\text{ctrl}}$ denote payload capacity per body flit. If the Head flit allocates $W_{\text{head\_hdr}}$ bits for addressing, leaving $W_{\text{head\_payload}} = W_{\text{flit\_payload}} - W_{\text{head\_hdr}}$ for data, the total packet length $L$ in flits is:
 
@@ -224,10 +224,19 @@ Key microarchitectural fields include:
 
 To concretize how the four abstraction tiers interact, consider an L1 data cache miss on Core $(0, 0)$ requesting a 64-byte ($512\text{ bits}$) cache line from an L2 cache bank at tile $(3, 3)$ across a 2D mesh:
 
-1. **Message Tier**: The L2 controller generates a 64-byte Read Response message containing the 512-bit cache line and a 32-bit transaction status header ($544\text{ bits}$ total).
-2. **Packet Tier**: The Network Interface encapsulates the message into a Response Packet. It prepends a 32-bit routing header ($H_{\text{meta}}$: destination $(0,0)$, source $(3,3)$, $VN = \text{Response}$, TransID $= 42$) and appends a 16-bit CRC checksum ($T_{\text{check}}$). Total packet size $B_{\text{pkt}} = 32 + 512 + 16 = 560\text{ bits}$. The framing efficiency is $\eta_{\text{pkt}} = \frac{512}{560} = 91.4\%$.
-3. **Flit Tier**: The packet is segmented into flits according to the microarchitecture's flit width $W_{\text{flit}}$. The table below compares three standard NoC design points.
-4. **Phit Tier**: Flits are clocked onto physical wire links. Under a balanced 128-bit NoC, each 128-bit flit constitutes 1 phit ($S = 1$). The 5-flit packet traverses each inter-router link in 5 clock cycles, requiring a minimum downstream buffer depth of $B \ge 5$ flits to prevent cut-through stalling.
+- **Message Tier**:
+    - The L2 controller generates a 64-byte Read Response message containing the 512-bit cache line payload and a 32-bit transaction status header ($544\text{ bits}$ total).
+- **Packet Tier**:
+    - The Network Interface encapsulates the message into a Response Packet.
+    - It prepends a 32-bit routing header ($H_{\text{meta}}$: destination $(0,0)$, source $(3,3)$, $VN = \text{Response}$, TransID $= 42$) and appends a 16-bit CRC checksum ($T_{\text{check}}$).
+    - Total packet size $B_{\text{pkt}} = 32 + 512 + 16 = 560\text{ bits}$, achieving a framing efficiency of $\eta_{\text{pkt}} = \frac{512}{560} = 91.4\%$.
+- **Flit Tier**:
+    - The packet is segmented into flits according to the microarchitecture's flit width $W_{\text{flit}}$.
+    - The table below compares three standard NoC design points (narrow 64-bit, balanced 128-bit, and wide 512-bit).
+- **Phit Tier**:
+    - Flits are clocked onto physical wire links.
+    - Under a balanced 128-bit NoC, each 128-bit flit constitutes 1 phit ($S = 1$).
+    - The 5-flit packet traverses each inter-router link in 5 clock cycles, requiring a minimum downstream buffer depth of $B \ge 5$ flits to prevent cut-through stalling.
 
 | Metric / Parameter | Config A (Narrow 64-bit) | Config B (Balanced 128-bit) | Config C (Wide 512-bit FlooNoC) |
 | :--- | :--- | :--- | :--- |
@@ -246,18 +255,24 @@ To concretize how the four abstraction tiers interact, consider an L1 data cache
 
 Choosing the boundary between flit width $W_{\text{flit}}$ and link width $W_{\text{link}}$ represents one of the most critical trade-offs in on-chip interconnection design:
 
-1. **Routing Congestion and Metal Layer Stack**:
-   A 512-bit bidirectional physical link requires $2 \times 512 = 1,024$ physical wires. With an intermediate metal pitch (M4–M6) of $80\,\mathrm{nm}$, routing 1,024 wires consumes $\approx 82\,\mu\mathrm{m}$ of silicon routing width per router tile. If wire pitch cannot accommodate this density, designers must either insert multiplexed narrow links ($S > 1$) or dedicate upper global metal layers (M7–M9) with relaxed pitches and thick low-resistance copper traces.
-2. **Crosstalk and Dynamic Wire Energy**:
-   Running hundreds of parallel wires in close proximity creates severe inter-wire coupling capacitance ($C_c$). When adjacent lines toggle in opposite directions, the effective Miller capacitance doubles ($C_{\text{eff}} = C_g + 2C_c$), inducing signal delay jitter. To preserve signal integrity at gigahertz clock rates, wide links often interleave ground shield wires (`GND-Signal-Signal-GND`), increasing effective wire track consumption by 30% to 50%.
-3. **Crossbar Switch Complexity**:
-   The silicon area of a $P$-port crossbar switch scales quadratically with port count $P$ and linearly with flit width $W_{\text{flit}}$:
+- **Routing Congestion and Metal Layer Stack**:
+    - A 512-bit bidirectional physical link requires $2 \times 512 = 1,024$ physical wires.
+    - With an intermediate metal pitch (M4–M6) of $80\,\mathrm{nm}$, routing 1,024 wires consumes $\approx 82\,\mu\mathrm{m}$ of silicon routing width per router tile.
+    - If wire pitch cannot accommodate this density, designers must either insert multiplexed narrow links ($S > 1$) or dedicate upper global metal layers (M7–M9) with relaxed pitches and thick low-resistance copper traces.
+- **Crosstalk and Dynamic Wire Energy**:
+    - Running hundreds of parallel wires in close proximity creates severe inter-wire coupling capacitance ($C_c$).
+    - When adjacent lines toggle in opposite directions, the effective Miller capacitance doubles ($C_{\text{eff}} = C_g + 2C_c$), inducing signal delay jitter.
+    - To preserve signal integrity at gigahertz clock rates, wide links often interleave ground shield wires (`GND-Signal-Signal-GND`), increasing effective wire track consumption by 30% to 50%.
+- **Crossbar Switch Complexity**:
+    - The silicon area of a $P$-port crossbar switch scales quadratically with port count $P$ and linearly with flit width $W_{\text{flit}}$:
    
    $$\text{Area}_{\text{xbar}} \approx P^2 \cdot W_{\text{flit}} \cdot A_{\text{crosspoint}}$$
    
    where $A_{\text{crosspoint}}$ is the standard-cell area of a single multiplexer bit-cell. Doubling flit width doubles crossbar area and input buffer registers, but halves packet length $L$, reducing channel occupancy time and queuing contention.
-4. **Wire Energy Efficiency**:
-   Counterintuitively, wide parallel links often deliver superior energy efficiency compared to high-frequency serialized links. A wide 512-bit link operating at a conservative $1.0\,\mathrm{GHz}$ eliminates power-dense phase-locked loops (PLLs) and serializer/deserializer (SerDes) transceivers, achieving energy consumption as low as **0.15 pJ/Byte/hop (0.019 pJ/bit/hop)** in modern FinFET processes (Fischer et al., *IEEE TVLSI 2025*).
+- **Wire Energy Efficiency**:
+    - Counterintuitively, wide parallel links often deliver superior energy efficiency compared to high-frequency serialized links.
+    - A wide 512-bit link operating at a conservative $1.0\,\mathrm{GHz}$ eliminates power-dense phase-locked loops (PLLs) and serializer/deserializer (SerDes) transceivers.
+    - Achieves energy consumption as low as **0.15 pJ/Byte/hop (0.019 pJ/bit/hop)** in modern FinFET processes (Fischer et al., *IEEE TVLSI 2025*).
 
 ---
 
@@ -292,7 +307,7 @@ Node 2:             [Tail][Body][Head] --->
 ```
 
 ### 2.3.1 Store-and-Forward (SAF) Switching
-In Store-and-Forward switching, a router must receive, buffer, and verify the **entire packet** before forwarding its first flit to the downstream router.
+In Store-and-Forward switching, introduced by Baran [[Baran1964](#ref-baran1964)], a router must receive, buffer, and verify the **entire packet** before forwarding its first flit to the downstream router.
 
 $$\text{Serialization Latency per Hop: } t_{serial} = \frac{L}{W}$$
 
@@ -302,12 +317,12 @@ If $t_r + t_{link} \ll \frac{L}{W}$, the latency scales as:
 
 $$T_{SAF} \approx H \cdot \frac{L}{W} \propto H \cdot L$$
 
-**Critical Drawbacks**:
-1. **Multiplicative Latency Penalty**: Latency is proportional to the product of network distance $H$ and packet length $L$.
-2. **Massive SRAM Buffer Area**: Every intermediate router must provide at least $L$ flits of buffer storage per input port. For 64-byte packets with 32-bit links ($L = 16$ flits), buffer area dominates router silicon footprint.
+- **Multiplicative Latency Penalty ($H \cdot L$)**: Total network latency scales with the product of network hop distance $H$ and packet length $L$. Every intermediate router completely halts forwarding until the terminal tail flit is written into memory.
+- **Massive SRAM Silicon Overhead**: Intermediate routers must provision buffer depth for at least $L$ flits per port. For 64-byte cache lines with 32-bit links ($L = 16$ flits), input queue SRAMs monopolize the router die area.
+- **Underutilized Downstream Bandwidth**: Downstream transmission links sit completely idle while upstream nodes accumulate flits, causing severe throughput collapse under bursty traffic.
 
 ### 2.3.2 Virtual Cut-Through (VCT) Switching
-Introduced by Kermani & Kleinrock (1979), Virtual Cut-Through permits a router to forward the Head flit to the next hop **immediately** after route computation and arbitration, without awaiting the remainder of the packet, provided the downstream router has sufficient buffer space.
+Introduced by Kermani & Kleinrock (1979) [[Kermani1979](#ref-kermani1979)], Virtual Cut-Through permits a router to forward the Head flit to the next hop **immediately** after route computation and arbitration, without awaiting the remainder of the packet, provided the downstream router has sufficient buffer space.
 
 $$\text{Head Flit Arrival Time at Destination: } t_{head} = H \cdot (t_r + t_{link})$$
 
@@ -315,19 +330,24 @@ $$\text{Remaining Tail Flit Serialization: } t_{tail} = \frac{L - 1}{W}$$
 
 $$\text{Total Zero-Load Latency: } T_{VCT} = H \cdot (t_r + t_{link}) + \frac{L - 1}{W}$$
 
-Notice that distance $H$ and packet length $L$ are now **additive** rather than multiplicative ($H + L$ instead of $H \cdot L$).
-
-**Limitation**: Although latency under low load is drastically reduced, VCT flow control still mandates that the receiver allocate an **entire packet's worth of buffer space** ($B \ge L$) before granting admission. If downstream buffers fill, the entire packet is buffered at the current node.
+- **Additive Latency Scaling ($H + L$)**: Forwarding begins as soon as the Head flit is decoded and granted access, decoupling network diameter $H$ from packet length $L$.
+- **Full-Packet Buffer Allocation Constraint**: Even though transmission cuts through without waiting, the downstream router must still pre-allocate a full packet's worth of buffer storage ($B \ge L$) before granting admission.
+- **Congestion Fallback to Store-and-Forward**: If downstream buffers become temporarily congested, cut-through is aborted and the entire packet stalls in local memory, degenerating to SAF latency.
 
 ### 2.3.3 Wormhole Switching: The Area-Efficient Silicon Standard
-Proposed by William Dally and Charles Seitz (1987), **Wormhole Switching** revolutionized silicon interconnect design by decoupling the flow control unit from the packet size:
+Proposed by William Dally and Charles Seitz (1987) [[Dally1987](#ref-dally1987)], **Wormhole Switching** revolutionized silicon interconnect design by decoupling the flow control unit from the packet size:
 
 > **The Wormhole Principle**: The router buffers operate at the granularity of individual **flits**, rather than entire packets. Buffer depth per input virtual channel can be as small as **1 to 4 flits**, completely independent of packet length $L$.
 
 The packet behaves like a train (or worm) winding across multiple physical router links simultaneously:
-- **Head Flit**: Allocates router routing state and output virtual channels along the path.
-- **Body Flits**: Stream pipelined behind the head flit across established crossbar connections.
-- **Tail Flit**: Deallocates channel reservations, freeing the router ports for subsequent packets.
+
+- **Decoupled Buffer Storage Granularity**: Router buffers operate exclusively on individual flits (1 to 4 flits per VC), completely decoupled from packet size $L$.
+- **Pipelined Flit Streaming (The Train Metaphor)**:
+    - **Head Flit**: Allocates router routing state and output virtual channels along the path.
+    - **Body Flits**: Stream pipelined behind the head flit across established crossbar connections.
+    - **Tail Flit**: Deallocates channel reservations, freeing the router ports for subsequent packets.
+- **Additive Zero-Load Latency**: Delivers identical zero-load latency to VCT ($T_{WH} = H \cdot (t_r + t_{link}) + \frac{L - 1}{W}$) while slashing router buffer area by $75\%$ to $90\%$.
+- **Link Contention & Head-of-Line Blocking**: When a Head flit blocks on downstream congestion, trailing body flits freeze in place across upstream links, tying up channel resources. This vulnerability directly motivates the invention of Virtual Channels (explored in Chapter 3).
 
 $$\text{Zero-Load Latency: } T_{WH} = H \cdot (t_r + t_{link}) + \frac{L - 1}{W}$$
 
@@ -406,7 +426,7 @@ Where:
 $$\text{Nominal RTT for Adjacent Routers: } RTT = 1 + 1 + 1 + 1 = 4\text{ cycles}$$
 
 #### The Fundamental Throughput Theorem:
-To sustain **100% wire-rate throughput** (injecting 1 flit every clock cycle without pipeline bubbles), the downstream buffer depth $B$ must satisfy:
+To sustain **100% wire-rate throughput** (injecting 1 flit every clock cycle without pipeline bubbles), the downstream buffer depth $B$ must satisfy Little's Law [[Little1961](#ref-little1961), [DallyPrinciples](#ref-dallyprinciples)]:
 
 $$B_{min} \ge RTT \times \text{Peak Injection Rate} = RTT \text{ flits}$$
 
@@ -437,9 +457,9 @@ Instead of transmitting credit pulses for every flit, **On/Off Flow Control** tr
 - Sends an `ON` signal when free buffer space recovers above a lower threshold $T_{on}$.
 - **Hysteresis Constraint**: To prevent buffer overflow during signal flight, the threshold must satisfy $T_{off} \ge t_{flight\_fwd} + t_{flight\_signal}$.
 
-### 2.5.2 Token Flow Control: The SWIFT NoC (TVLSI 2013)
+### 2.5.2 Token Flow Control: The SWIFT NoC [[Postman2013](#ref-postman2013)]
 
-A major advance in low-power flow control is **Token Flow Control**, introduced in the **SWIFT NoC** by Postman, Krishna, Edmonds, Peh, and Chiang (*IEEE TVLSI 2013*).
+A major advance in low-power flow control is **Token Flow Control**, introduced in the **SWIFT NoC** by Postman et al. [[Postman2013](#ref-postman2013)].
 
 ![Figure 2.3: SWIFT NoC Overview versus Baseline NoC](figures/swift_fig01_overview.png)
 *Figure 2.3: Overview of SWIFT NoC versus a baseline NoC and ideal communication: (a) Ideal single-cycle communication, (b) Baseline multi-stage NoC, and (c) SWIFT NoC with token-based flit buffer bypassing. [Reproduced from: J. Postman, T. Krishna, C. Edmonds, L.-S. Peh, and P. Chiang, "SWIFT: A Low-Power Network-On-Chip Implementing the Token Flow Control Router Architecture With Swing-Reduced Interconnects," IEEE Transactions on Very Large Scale Integration (VLSI) Systems, vol. 21, no. 8, pp. 1432–1446, Aug. 2013, DOI: 10.1109/TVLSI.2012.2211904. © 2013 IEEE]*
@@ -448,9 +468,9 @@ A major advance in low-power flow control is **Token Flow Control**, introduced 
 *Figure 2.4: SWIFT NoC microarchitecture: (a) Routing using tokens, (b) Token distribution, (c) Bypass flow-control using lookahead signals, and (d) 1-cycle router + 1-cycle link traversal. [Reproduced from: J. Postman et al., IEEE TVLSI, Aug. 2013, DOI: 10.1109/TVLSI.2012.2211904. © 2013 IEEE]*
 
 #### Key Architectural Innovations in SWIFT:
-1. **Flit Buffer Bypassing**: Tokens travel ahead of flits. If an output port is granted via a token, incoming flits bypass the input FIFO buffers entirely, slicing directly into the crossbar.
-2. **Buffer Power Reduction**: Because flits rarely write into SRAM cells under low-to-medium loads, dynamic buffer write energy is slashed by **38% at saturation and 25% at low load**.
-3. **Swing-Reduced Interconnects**: Integrates reduced-swing transceivers on the physical link wires to further cut datapath energy dissipation.
+- **Flit Buffer Bypassing**: Tokens travel ahead of payload flits. If an output port is granted via a token, incoming flits bypass the input FIFO buffers entirely, slicing directly into the crossbar.
+- **Buffer Dynamic Power Reduction**: Because flits rarely write into SRAM cells under low-to-medium loads, dynamic buffer write energy is slashed by **38% at saturation and 25% at low load**.
+- **Swing-Reduced Interconnect Links**: Integrates low-voltage differential/reduced-swing transceivers on the physical link wires to further cut datapath dynamic capacitive energy dissipation.
 
 ---
 
@@ -458,65 +478,109 @@ A major advance in low-power flow control is **Token Flow Control**, introduced 
 
 Deepen your understanding of flow control dynamics on the **Companion Learning Platform**:
 
-1. 🎮 **[Credit Commander: Flow Control](https://network-on-chip.github.io/learning/interactive/credits/)**:
-   - Manually tune buffer depth $B$ and link latency $t_{flight}$ to balance credit loop stability against silicon area.
-   - Trigger credit underflow stalls and observe pipeline bubbles in real time.
-2. 🧩 **[Packet Master: Routing Puzzle](https://network-on-chip.github.io/learning/interactive/puzzle/)**:
-   - Solve multi-hop routing puzzles by coordinating Head, Body, and Tail flit movements across congested wormhole channels.
+- 🎮 **[Credit Commander: Flow Control](https://network-on-chip.github.io/learning/interactive/credits/)**:
+    - Manually tune buffer depth $B$ and link latency $t_{flight}$ to balance credit loop stability against silicon area.
+    - Trigger credit underflow stalls and observe pipeline bubbles in real time.
+- 🧩 **[Packet Master: Routing Puzzle](https://network-on-chip.github.io/learning/interactive/puzzle/)**:
+    - Solve multi-hop routing puzzles by coordinating Head, Body, and Tail flit movements across congested wormhole channels.
 
 ---
 
-## 2.7 Checkpoint Assessment
+## 2.8 Checkpoint Assessment
 
-Test your understanding against the 3-Tier Exam Engine in [`quiz.md`](../../quiz.md):
+Test your mastery of Chapter 2 concepts against the official certification questions (mirroring the 3-Tier Exam Engine in [`quiz.md`](../../quiz.md)):
 
 #### Question 2.1 (Tier 1: Fundamental)
-*What is the critical hardware advantage of Wormhole Switching compared to Store-and-Forward and Virtual Cut-Through?*
+*Which of the following statements correctly describe the architectural advantages of Wormhole Switching over Store-and-Forward (SAF) and Virtual Cut-Through (VCT)? (Select all that apply)*
 
-- **A)** Wormhole switching allows routers to operate without clock signals.
-- **B)** Wormhole switching decouples the buffer allocation unit (flit) from packet size, allowing router buffers to be as small as 1 to 4 flits, slashing SRAM buffer area by 75% to 90%.
-- **C)** Wormhole switching eliminates the need for physical wire traces.
-- **D)** Wormhole switching converts packets directly into optical pulses.
+- **A)** Wormhole switching decouples buffer allocation from packet size by allocating buffers at the granularity of small flits rather than entire packets.
+- **B)** Router input buffer SRAM area can be reduced by 75% to 90%, requiring only 1 to 4 flits of storage per Virtual Channel.
+- **C)** Wormhole flits can begin traversing downstream routers as soon as the Head flit is forwarded, without waiting for trailing body flits to arrive.
+- **D)** Wormhole switching completely eliminates the possibility of network deadlocks without needing virtual channels.
 
-??? success "Reveal Answer & Explanation"
-    **Correct Answer: B**
+??? success "Reveal Answer & Full Solution"
+    **Correct Answer: Option A, B, C**
 
-    By allocating buffer space at the flit level, Wormhole routers eliminate the requirement to buffer an entire packet before forwarding.
+    **1. Step-by-Step Architectural & Mathematical Derivation:**
+    In Store-and-Forward (SAF) switching, a router must receive and store the entire packet before examining the header and forwarding flits. This causes latency to scale as t_SAF = H * (t_router + L_packet / BW), where H is hop count, and mandates huge router buffers equal to maximum packet size. Virtual Cut-Through (VCT) improves latency by forwarding flits immediately if downstream buffers are free, but still allocates buffer space in full packet quanta. Wormhole switching decouples the buffer allocation unit (the flit) from the transmission/routing unit (the packet). Flits stream pipelined across the network like a snake: when the Head flit clears a router, trailing Body and Tail flits immediately follow in subsequent cycles. Router buffers only need to be deep enough to cover credit round-trip latency (typically 2–4 flits per VC), slashing router SRAM area by up to 90%. However, when a Head flit is blocked, trailing flits stall in place across multiple routers, holding buffer resources and potentially creating cyclic deadlock dependencies if routing is not constrained.
+
+    **2. Option-by-Option Breakdown & Distractor Analysis:**
+    - **Option A (Correct):** True. Wormhole flow control allocates buffer slots per flit, eliminating the requirement to hold full multi-kilobyte packets.
+    - **Option B (Correct):** True. Decoupling packet size from buffer size slashes input buffer SRAM footprints from hundreds of flits to just 2–4 flits per VC.
+    - **Option C (Correct):** True. Flits pipeline across hops simultaneously, drastically cutting zero-load latency to t_WH = H * t_hop + (L_packet / BW).
+    - **Option D (Incorrect Distractor):** False. In fact, wormhole switching exacerbates deadlock susceptibility because a blocked packet straddles multiple intermediate routers; routing constraints or virtual channels are required to prevent deadlocks.
+
+    **3. Silicon Architect's Takeaway:**
+    Wormhole switching enables ultra-compact router buffers and low pipelined latency, but requires strict deadlock-free routing algorithms.
+
+    *(Reference: W. J. Dally and C. L. Seitz, 'Deadlock-Free Message Routing in Multiprocessor Interconnection Networks,' IEEE Transactions on Computers, Vol. C-36, No. 5, pp. 547–553, May 1987. DOI: 10.1109/TC.1987.1676939.)*
 
 #### Question 2.2 (Tier 2: Core Engineering)
-*In credit-based flow control, if link flight takes 1 cycle, receiver buffer write/read takes 1 cycle, and credit return takes 1 cycle, what occurs if the receiver buffer capacity is only 2 flits?*
+*In credit-based flow control, what is the exact physical condition for the input buffer depth B to guarantee 100% sustained link throughput without incurring stall bubbles?*
 
-- **A)** The link achieves 100% throughput because credits travel instantaneously.
-- **B)** The upstream transmitter exhausts its credits on cycle 2 and must stall on cycle 3 awaiting credit feedback, throttling link throughput to approximately 40%–50%.
-- **C)** The receiver drops excess flits and generates parity error interrupts.
-- **D)** The router suffers immediate physical electromigration failure.
+- **A)** B >= 1 flit, regardless of link distance or router clock frequency.
+- **B)** B >= RTT * BW, where RTT is the total credit round-trip latency (in cycles) and BW is link bandwidth (1 flit/cycle).
+- **C)** B must equal the total number of cores in the processor.
+- **D)** B must be an odd prime number to prevent harmonic resonance.
 
-??? success "Reveal Answer & Explanation"
-    **Correct Answer: B**
+??? success "Reveal Answer & Full Solution"
+    **Correct Answer: Option B**
 
-    Because the round-trip time is $RTT = 1 + 1 + 1 + 1 = 4\text{ cycles}$, a buffer of depth $B = 2 < RTT$ induces periodic pipeline stall bubbles.
+    **1. Step-by-Step Architectural & Mathematical Derivation:**
+    Credit flow control operates in a closed loop: when the upstream transmitter sends a flit, it decrements its local credit counter. When the downstream receiver reads that flit out of its buffer and forwards it to the crossbar, it transmits a credit back to the sender, which increments its counter. The total round-trip time RTT consists of: RTT = t_forward_link + t_rx_read_credit + t_credit_link + t_tx_process. To sustain a continuous throughput of 1 flit per cycle without the transmitter stalling due to zero credits, the transmitter must have enough initial credits to keep sending while waiting for the first credit to return. By Little's Law, the required buffer depth is B_min = RTT * BW = RTT * (1 flit/cycle) = RTT flits. Any buffer capacity B < RTT will inevitably force the transmitter to stall once B flits are sent, introducing periodic pipeline bubbles and capping sustained throughput to B / RTT < 100%.
+
+    **2. Option-by-Option Breakdown & Distractor Analysis:**
+    - **Option A (Incorrect Distractor):** B=1 stalls immediately on cycle 2 if RTT > 1, capping throughput to 1/RTT.
+    - **Option B (Correct):** B >= RTT * BW guarantees that the first returned credit arrives before the sender exhausts its buffer credits, preserving 100% throughput.
+    - **Option C (Incorrect Distractor):** Core count N determines end-to-end network addressing, but local flow control buffer sizing depends strictly on link round-trip time.
+    - **Option D (Incorrect Distractor):** Prime buffer depths have no relationship to harmonic resonance; digital FIFOs are typically sized as powers of 2 for circular pointer math.
+
+    **3. Silicon Architect's Takeaway:**
+    Always design credit buffers with depth B >= RTT = t_fwd + t_rx + t_credit + t_tx to prevent credit exhaustion stall bubbles.
+
+    *(Reference: T. Fischer et al., 'FlooNoC: A 645-Gb/s/link 0.15-pJ/B/hop Open-Source NoC,' IEEE TVLSI, Vol. 33, No. 4, pp. 1094–1107, Apr. 2025. DOI: 10.1109/TVLSI.2025.3527225.)*
 
 #### Question 2.3 (Tier 3: Silicon Mastery)
-*How does Token Flow Control in the SWIFT NoC (Peh et al., TVLSI 2013) achieve up to 38% power reduction compared to canonical wormhole routers?*
+*How does Token Flow Control in the SWIFT NoC architecture [[Postman2013](#ref-postman2013)] achieve up to 38% power reduction compared to canonical wormhole routers?*
 
-- **A)** By lowering the clock frequency to 10 MHz.
-- **B)** By routing tokens ahead of data flits, allowing flits to bypass input FIFO buffers entirely and cut directly through the crossbar into the link when tokens are granted.
-- **C)** By eliminating all virtual channels and using single-wire buses.
-- **D)** By running all routers on liquid nitrogen cooling.
+- **A)** By lowering router clock frequency to 10 MHz.
+- **B)** By transmitting lightweight tokens ahead of data flits, allowing flits to bypass input FIFO buffers entirely and cut directly through the crossbar into the link when tokens are granted.
+- **C)** By eliminating all virtual channels and replacing crossbars with single-bit shift registers.
+- **D)** By converting electrical wires to liquid-cooled carbon nanotubes.
 
-??? success "Reveal Answer & Explanation"
-    **Correct Answer: B**
+??? success "Reveal Answer & Full Solution"
+    **Correct Answer: Option B**
 
-    Token flow control enables flit buffer bypassing, eliminating dynamic SRAM buffer read/write power for the majority of in-flight flits.
+    **1. Step-by-Step Architectural & Mathematical Derivation:**
+    In a canonical wormhole router, dynamic power is dominated by input buffer SRAM read/write cycles (often accounting for 30–50% of total router dynamic energy), because every flit must be written into an input FIFO and later read out to traverse the crossbar. The SWIFT architecture (Postman, Krishna, Peh et al.) introduces Token Flow Control. Instead of flits driving arbitration upon arrival, lightweight control tokens (single-bit or narrow reservation flits) are launched ahead of data flits. These tokens arbitrate for crossbar switch traversal and downstream buffer reservations in advance. When the actual data flit arrives at the router, its crossbar path is already configured and validated. Consequently, the data flit completely bypasses the input buffer flip-flops/SRAM, streaming directly through the crossbar into the output link latch. This eliminates ~80% of buffer read/write operations under low-to-medium loads, yielding an aggregate 38% router power reduction while simultaneously shaving per-hop latency down to a single cycle.
+
+    **2. Option-by-Option Breakdown & Distractor Analysis:**
+    - **Option A (Incorrect Distractor):** SWIFT maintains high clock frequencies (~1 GHz) and low latency; it does not throttle clock frequency to 10 MHz.
+    - **Option B (Correct):** Forward reservation tokens allow data flits to bypass input buffer SRAM arrays directly into the crossbar, slashing dynamic buffer energy.
+    - **Option C (Incorrect Distractor):** SWIFT preserves virtual channels and full crossbar switches; it does not degrade to 1-bit shift registers.
+    - **Option D (Incorrect Distractor):** SWIFT was fabricated and proven on standard 45nm bulk CMOS, not exotic carbon nanotubes.
+
+    **3. Silicon Architect's Takeaway:**
+    Bypassing input buffers via advance token reservation eliminates the largest component of dynamic router power (SRAM read/writes) under low and moderate traffic.
+
+    *(Reference: [[Postman2013](#ref-postman2013)] J. Postman, T. Krishna, C. Edmonds, L.-S. Peh, and P. Chiang, "SWIFT: A Low-Power Network-On-Chip Implementing Token Flow Control," IEEE TVLSI, Vol. 21, No. 8, pp. 1432–1446, Aug. 2013. DOI: 10.1109/TVLSI.2012.2211904.)*
 
 ---
 
 ## References & Bibliography
 
-1. **[Kermani1979]** P. Kermani and L. Kleinrock, "Virtual Cut-Through: A New Computer Communication Switching Technique," *Computer Networks*, vol. 3, no. 4, pp. 267–286, 1979. [DOI: 10.1016/0376-5075(79)90034-7](https://doi.org/10.1016/0376-5075(79)90034-7).
-2. **[Dally1987]** W. J. Dally and C. L. Seitz, "Deadlock-Free Message Routing in Multiprocessor Interconnection Networks," *IEEE Transactions on Computers*, vol. C-36, no. 5, pp. 547–553, May 1987. [DOI: 10.1109/TC.1987.1676939](https://doi.org/10.1109/TC.1987.1676939).
-3. **[Peh2001]** L.-S. Peh and W. J. Dally, "A Delay Model and Speculative Architecture for Pipelined Routers," in *Proceedings of the 7th International Symposium on High-Performance Computer Architecture (HPCA)*, 2001, pp. 255–266. [DOI: 10.1109/HPCA.2001.903268](https://doi.org/10.1109/HPCA.2001.903268).
-4. **[Postman2013]** J. Postman, T. Krishna, C. Edmonds, L.-S. Peh, and P. Chiang, "SWIFT: A Low-Power Network-On-Chip Implementing the Token Flow Control Router Architecture With Swing-Reduced Interconnects," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 8, pp. 1432–1446, Aug. 2013. [DOI: 10.1109/TVLSI.2012.2211904](https://doi.org/10.1109/TVLSI.2012.2211904).
-5. **[Fischer2025]** T. Fischer, M. Rogenmoser, T. Benz, F. K. Gürkaynak, and L. Benini, "FlooNoC: A 645-Gb/s/link 0.15-pJ/B/hop Open-Source NoC With Wide Physical Links and End-to-End AXI4 Parallel Multistream Support," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 33, no. 4, pp. 1094–1107, Apr. 2025. [DOI: 10.1109/TVLSI.2025.3527225](https://doi.org/10.1109/TVLSI.2025.3527225).
-6. **[Chao2013]** C.-H. Chao, K.-C. Chen, and A.-Y. Wu, "Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 11, pp. 2118–2131, Nov. 2013. [DOI: 10.1109/TVLSI.2012.2227852](https://doi.org/10.1109/TVLSI.2012.2227852).
-7. **[Dally2001]** W. J. Dally and B. Towles, "Route Packets, Not Wires: On-Chip Interconnection Networks," in *Proceedings of the 38th Annual Design Automation Conference (DAC)*, 2001, pp. 684–689. [DOI: 10.1145/378239.379048](https://doi.org/10.1145/378239.379048).
+<a id="references"></a>
+
+1. <a id="ref-baran1964"></a>**[Baran1964]** P. Baran, "On Distributed Communications Networks," *IEEE Transactions on Communications Systems*, vol. 12, no. 1, pp. 1–9, Mar. 1964. [DOI: 10.1109/TCOM.1964.1088883](https://doi.org/10.1109/TCOM.1964.1088883).
+2. <a id="ref-kermani1979"></a>**[Kermani1979]** P. Kermani and L. Kleinrock, "Virtual Cut-Through: A New Computer Communication Switching Technique," *Computer Networks*, vol. 3, no. 4, pp. 267–286, 1979. [DOI: 10.1016/0376-5075(79)90034-7](https://doi.org/10.1016/0376-5075(79)90034-7).
+3. <a id="ref-dally1987"></a>**[Dally1987]** W. J. Dally and C. L. Seitz, "Deadlock-Free Message Routing in Multiprocessor Interconnection Networks," *IEEE Transactions on Computers*, vol. C-36, no. 5, pp. 547–553, May 1987. [DOI: 10.1109/TC.1987.1676939](https://doi.org/10.1109/TC.1987.1676939).
+4. <a id="ref-dally1992"></a>**[Dally1992]** W. J. Dally, "Virtual-Channel Flow Control," *IEEE Transactions on Parallel and Distributed Systems*, vol. 3, no. 2, pp. 194–205, Mar. 1992. [DOI: 10.1109/71.127260](https://doi.org/10.1109/71.127260).
+5. <a id="ref-little1961"></a>**[Little1961]** J. D. C. Little, "A Proof for the Queuing Formula: $L = \lambda W$," *Operations Research*, vol. 9, no. 3, pp. 383–387, June 1961. [DOI: 10.1287/opre.9.3.383](https://doi.org/10.1287/opre.9.3.383).
+6. <a id="ref-wang2002"></a>**[Wang2002]** H.-S. Wang, X. Zhu, L.-S. Peh, and S. Malik, "Orion: A Power-Performance Simulator for Interconnection Networks," in *Proceedings of the 35th Annual IEEE/ACM International Symposium on Microarchitecture (MICRO)*, 2002, pp. 294–305. [DOI: 10.1109/MICRO.2002.1176258](https://doi.org/10.1109/MICRO.2002.1176258).
+7. <a id="ref-kahng2009"></a>**[Kahng2009]** A. B. Kahng, B. Lin, and S. Nath, "ORION 2.0: A Fast and Accurate NoC Power and Area Model for Early-Stage Design Space Exploration," in *Proceedings of the Conference on Design, Automation and Test in Europe (DATE)*, 2009, pp. 423–428. [DOI: 10.1109/DATE.2009.5090708](https://doi.org/10.1109/DATE.2009.5090708).
+8. <a id="ref-peh2001"></a>**[Peh2001]** L.-S. Peh and W. J. Dally, "A Delay Model and Speculative Architecture for Pipelined Routers," in *Proceedings of the 7th International Symposium on High-Performance Computer Architecture (HPCA)*, 2001, pp. 255–266. [DOI: 10.1109/HPCA.2001.903268](https://doi.org/10.1109/HPCA.2001.903268).
+9. <a id="ref-postman2013"></a>**[Postman2013]** J. Postman, T. Krishna, C. Edmonds, L.-S. Peh, and P. Chiang, "SWIFT: A Low-Power Network-On-Chip Implementing the Token Flow Control Router Architecture With Swing-Reduced Interconnects," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 8, pp. 1432–1446, Aug. 2013. [DOI: 10.1109/TVLSI.2012.2211904](https://doi.org/10.1109/TVLSI.2012.2211904).
+10. <a id="ref-fischer2025"></a>**[Fischer2025]** T. Fischer, M. Rogenmoser, T. Benz, F. K. Gürkaynak, and L. Benini, "FlooNoC: A 645-Gb/s/link 0.15-pJ/B/hop Open-Source NoC With Wide Physical Links and End-to-End AXI4 Parallel Multistream Support," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 33, no. 4, pp. 1094–1107, Apr. 2025. [DOI: 10.1109/TVLSI.2025.3527225](https://doi.org/10.1109/TVLSI.2025.3527225).
+11. <a id="ref-chao2013"></a>**[Chao2013]** C.-H. Chao, K.-C. Chen, and A.-Y. Wu, "Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 11, pp. 2118–2131, Nov. 2013. [DOI: 10.1109/TVLSI.2012.2227852](https://doi.org/10.1109/TVLSI.2012.2227852).
+12. <a id="ref-dally2001"></a>**[Dally2001]** W. J. Dally and B. Towles, "Route Packets, Not Wires: On-Chip Interconnection Networks," in *Proceedings of the 38th Annual Design Automation Conference (DAC)*, 2001, pp. 684–689. [DOI: 10.1145/378239.379048](https://doi.org/10.1145/378239.379048).
+13. <a id="ref-dallyprinciples"></a>**[DallyPrinciples]** W. J. Dally and B. Towles, *Principles and Practices of Interconnection Networks*, San Francisco, CA: Morgan Kaufmann, 2004. ISBN: 978-0122007514.

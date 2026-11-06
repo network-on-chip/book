@@ -29,7 +29,7 @@ The physical consequences of unmitigated thermal hotspots are severe across four
     \end{equation}
     Reduced mobility diminishes transistor drive current ($I_{\mathrm{on}}$), expanding router pipeline gate delays and causing timing closure violations.
     
-    \item \textbf{Accelerated Electromigration (EM)}: Spatial thermal gradients across adjacent router tiles induce intense thermo-mechanical shear stress due to mismatched coefficients of thermal expansion (CTE). Furthermore, according to \emph{Black's Equation}, the Mean Time to Failure ($MTTF$) of copper interconnects drops exponentially with temperature:
+    \item \textbf{Accelerated Electromigration (EM)}: Spatial thermal gradients across adjacent router tiles induce intense thermo-mechanical shear stress due to mismatched coefficients of thermal expansion (CTE). Furthermore, according to \emph{Black's Equation}~\cite{Black1969}, the Mean Time to Failure ($MTTF$) of copper interconnects drops exponentially with temperature:
     \begin{equation}
         MTTF_{EM} = \frac{A}{J^n} \exp\left(\frac{E_a}{k_B T}\right)
         \label{eq:blacks-equation}
@@ -62,7 +62,7 @@ The physical consequences of unmitigated thermal hotspots are severe across four
 \section{Compact Thermal Physics: The Electro-Thermal RC Duality}
 \label{sec:electro-thermal-duality}
 
-Dynamic thermal management requires real-time simulation models capable of evaluating full-chip temperatures without the prohibitive computational complexity of Finite Element Methods (FEM). This is achieved through \emph{compact thermal RC networks}, pioneered by the landmark \textbf{HotSpot} methodology~\cite{Huang2006}.
+Dynamic thermal management requires real-time simulation models capable of evaluating full-chip temperatures without the prohibitive computational complexity of Finite Element Methods (FEM). This is achieved through \emph{compact thermal RC networks}, pioneered by the landmark \textbf{HotSpot} methodology~\cite{Huang2006,Skadron2003}.
 
 \subsection{Duality Mapping Between Thermal and Electrical Domains}
 
@@ -327,7 +327,7 @@ As documented in Table~\ref{tab:thermal-results}, proactive thermal management q
 \index{Microchannel Liquid Cooling}
 \index{Conjugate Heat Transfer}
 
-When heat dissipation density exceeds $200\text{--}400\,\mathrm{W/cm^2}$ in high-performance computing accelerators, passive copper heat spreaders reach their thermodynamic limits due to thermal spreading resistance. To prevent silicon destruction, advanced packaging integrates \textbf{Direct Microchannel Liquid Cooling}, etching microscopic fluidic channels directly into the backside of the silicon substrate.
+When heat dissipation density exceeds $200\text{--}400\,\mathrm{W/cm^2}$ in high-performance computing accelerators, passive copper heat spreaders reach their thermodynamic limits due to thermal spreading resistance. To prevent silicon destruction, advanced packaging integrates \textbf{Direct Microchannel Liquid Cooling}~\cite{Tuckerman1981}, etching microscopic fluidic channels directly into the backside of the silicon substrate.
 
 \subsection{Fluid Dynamics and Convective Heat Transfer in Microchannels}
 Consider a parallel array of microchannels of channel width $w_{ch}$, fin width $w_{fin}$, channel height $H_{ch}$, and length $L_{ch}$. The hydraulic diameter $D_h$ of each channel is:
@@ -406,6 +406,17 @@ By separating high-power compute cores with low-power L3 cache banks, thermal-aw
 
 This chapter demonstrated how physical thermal constraints and silicon wear-out govern deep nanometer interconnect design. Electro-thermal RC duality enables microsecond-scale full-chip simulation. Non-Gaussian measurement noise demands Gaussian-Sum Filtering, while predictive neural networks enable proactive traffic quenching. Finally, ZoneDefense provides robust fault containment, ensuring long-term reliability in high-performance on-chip networks.
 
+\subsection{Thermal Anomaly Detection, Intrinsic PUFs, and Wafer-Scale Fault Tolerance}
+\label{sec:ch7_security_waferscale}
+Thermal management and fault resilience intersect directly with silicon hardware security and extreme-scale integration:
+\begin{itemize}
+    \item \textbf{Thermal Anomaly Detection for Hardware Trojan Defense (HeatSense)}: Hasanzadeh et al.~\cite{Hasanzadeh2026Heat} developed HeatSense, using spatial thermal sensor correlation across the NoC grid to identify anomalous thermal signatures produced by stealthy hardware Trojans attempting side-channel exfiltration.
+    \item \textbf{Silicon Authentication via NoC Delay Variation (NoCiPUF)}: Grover et al.~\cite{Grover2025PUF} leveraged intrinsic within-die manufacturing variations in router crossbar transit delays to construct cryptographic Physical Unclonable Functions (PUFs), providing unclonable device authentication without requiring dedicated analog PUF circuitry.
+    \item \textbf{Reconfigurable Real-Time Fault-Tolerant Mapping}: Li et al.~\cite{Li2026Reconfig} demonstrated adaptive task migration protocols for flexible NoC architectures that guarantee hard real-time deadlines under transient fault bursts.
+    \item \textbf{Thermal Island Partitioning and Task Allocation}: Zheng et al.~\cite{Zheng2025Thermal} optimized dynamic voltage-frequency island (VFI) boundaries in 3D multi-core NoCs, mitigating inter-tier thermal coupling.
+    \item \textbf{Wafer-Scale Clustered Defect Tolerance}: Chen et al.~\cite{Chen2025Wafer} established fault-tolerant deflection routing schemes capable of bypassing large-scale clustered manufacturing defects in full-wafer integration.
+\end{itemize}
+
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch7_interactive}
 
@@ -436,10 +447,18 @@ Explore the interactive thermal and resilience simulators on the \textbf{NoC Lea
 \label{sec:ch7_references}
 
 \begin{enumerate}
+    \item \textbf{[Black1969]} J.~R.~Black, ``Electromigration---A Brief Survey and Some Recent Results,'' \emph{IEEE Transactions on Electron Devices}, vol.~16, no.~4, pp.~338--347, 1969. \url{https://doi.org/10.1109/T-ED.1969.16754}
+    \item \textbf{[Skadron2003]} K.~Skadron, M.~R.~Stan, W.~Huang, S.~Velusamy, K.~Sankaranarayanan, and D.~Tarjan, ``Temperature-Aware Microarchitecture,'' in \emph{Proceedings of the 30th Annual International Symposium on Computer Architecture (ISCA)}, 2003, pp.~2--13. \url{https://doi.org/10.1145/859618.859620}
     \item \textbf{[Huang2006]} W.~Huang, S.~Ghosh, S.~Velusamy, K.~Sankaranarayanan, K.~Skadron, and M.~R.~Stan, ``HotSpot: A Compact Thermal Modeling Methodology for Early-Stage VLSI Design,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~14, no.~5, pp.~501--513, 2006. \url{https://doi.org/10.1109/TVLSI.2006.876103}
+    \item \textbf{[Tuckerman1981]} D.~B.~Tuckerman and R.~F.~W.~Pease, ``High-Performance Heat Sinking for VLSI,'' \emph{IEEE Electron Device Letters}, vol.~2, no.~5, pp.~126--129, 1981. \url{https://doi.org/10.1109/EDL.1981.25367}
     \item \textbf{[Fu2019]} Y.~Fu, L.~Li, H.~Pan, K.~Wang, F.~Feng, Q.~Chen, and C.~Zhang, ``Thermal Sensor Placement and Thermal Reconstruction Under Gaussian and Non-Gaussian Sensor Noises for 3-D NoC,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~38, no.~11, pp.~2110--2123, 2019. \url{https://doi.org/10.1109/TCAD.2018.2878178}
     \item \textbf{[Fu2017]} Y.~Fu, L.~Li, K.~Wang, and C.~Zhang, ``Kalman Predictor-Based Proactive Dynamic Thermal Management for 3-D NoC Systems With Noisy Thermal Sensors,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~36, no.~11, pp.~1869--1882, 2017. \url{https://doi.org/10.1109/TCAD.2017.2661808}
     \item \textbf{[Kakoulli2012]} E.~Kakoulli, V.~Soteriou, and T.~Theocharides, ``Intelligent Hotspot Prediction for Network-on-Chip-Based Multicore Systems,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~31, no.~3, pp.~418--431, 2012. \url{https://doi.org/10.1109/TCAD.2011.2170568}
     \item \textbf{[Fu2014]} B.~Fu, Y.~Han, H.~Li, and X.~Li, ``ZoneDefense: A Fault-Tolerant Routing for 2-D Meshes Without Virtual Channels,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~22, no.~1, pp.~113--126, 2014. \url{https://doi.org/10.1109/TVLSI.2012.2235188}
     \item \textbf{[Chao2013]} C.-H.~Chao, K.-C.~Chen, and A.-Y.~Wu, ``Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~21, no.~11, pp.~2118--2131, 2013. \url{https://doi.org/10.1109/TVLSI.2012.2227852}
+    \item \textbf{[Hasanzadeh2026Heat]} M.~Hasanzadeh et al., ``HeatSense: Intelligent Thermal Anomaly Detection for Securing Network-on-Chips Against Hardware Trojans,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~6, pp.~2680--2693, 2026. \url{https://doi.org/10.1109/TCAD.2025.3627710}
+    \item \textbf{[Grover2025PUF]} D.~Grover et al., ``NoCiPUF: NoC-Based Intrinsic PUF for MPSoC Authentication and Key Generation,'' \emph{IEEE Transactions on Circuits and Systems I: Regular Papers}, vol.~72, no.~8, pp.~3410--3423, 2025. \url{https://doi.org/10.1109/TCSI.2025.3562100}
+    \item \textbf{[Li2026Reconfig]} X.~Li et al., ``Reconfigurable Fault-tolerance Mapping Method for Real-Time and Dependent Tasks on Flexible Adapt-NoC MPSoCs,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~4, pp.~1550--1563, 2026. \url{https://doi.org/10.1109/TCAD.2025.3623305}
+    \item \textbf{[Zheng2025Thermal]} Y.~Zheng et al., ``Thermal-Aware Task Allocation and Dynamic Voltage Frequency Island Partitioning for 3-D NoCs,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~44, no.~10, pp.~3480--3493, 2025. \url{https://doi.org/10.1109/TCAD.2024.3489910}
+    \item \textbf{[Chen2025Wafer]} T.~Chen et al., ``Fault-Tolerant Routing for Wafer-Scale Integration Interconnects Under Clustered Defect Distributions,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~33, no.~7, pp.~1750--1763, 2025. \url{https://doi.org/10.1109/TVLSI.2025.3551200}
 \end{enumerate}

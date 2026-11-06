@@ -17,7 +17,7 @@
 \section{The Breakdown of Dennard Scaling and the Multi-Core Pivot}
 \label{sec:ch1_dennard}
 
-For over three decades, the semiconductor industry advanced along the dual trajectories of \textbf{Moore's Law} (transistor density doubling approximately every 18--24 months) and \textbf{Dennard Scaling}~\cite{Dennard1974} (constant power density through proportional scaling of supply voltage $V_{dd}$, threshold voltage $V_{th}$, and physical oxide thickness $t_{ox}$). Under classical Dennard scaling:
+For over three decades, the semiconductor industry advanced along the dual trajectories of \textbf{Moore's Law}~\cite{Moore1965} (transistor density doubling approximately every 18--24 months) and \textbf{Dennard Scaling}~\cite{Dennard1974} (constant power density through proportional scaling of supply voltage $V_{dd}$, threshold voltage $V_{th}$, and physical oxide thickness $t_{ox}$). Under classical Dennard scaling:
 \begin{equation}
 \text{Power Density} = \frac{P_{active}}{\text{Area}} \propto \frac{C \cdot V_{dd}^2 \cdot f}{1 / s^2} \approx \text{Constant}
 \label{eq:dennard_power}
@@ -34,7 +34,7 @@ At the same time, sub-threshold leakage current $I_{sub}$ prevented further aggr
 I_{sub} = \mu_0 C_{ox} \frac{W}{L} (m-1) V_T^2 \exp\left(\frac{V_{gs} - V_{th}}{m V_T}\right) \left(1 - \exp\left(-\frac{V_{ds}}{V_T}\right)\right)
 \label{eq:subthreshold}
 \end{equation}
-where $V_T = \frac{k_B T}{q} \approx 26$~mV at 300~K, and $m$ is the sub-threshold swing factor ($m \approx 1.1$--$1.4$). Consequently, chip architects struck the unyielding \textbf{Power Wall} ($\approx 100$--$130\text{ W/cm}^2$ for air-cooled packaging). Increasing the clock frequency beyond 3.5--4.0~GHz became thermally untenable.
+where $V_T = \frac{k_B T}{q} \approx 26$~mV at 300~K, and $m$ is the sub-threshold swing factor ($m \approx 1.1$--$1.4$). Consequently, chip architects struck the unyielding \textbf{Power Wall}~\cite{Borkar1999} ($\approx 100$--$130\text{ W/cm}^2$ for air-cooled packaging). Increasing the clock frequency beyond 3.5--4.0~GHz became thermally untenable.
 
 To maintain compute throughput growth, processor design executed a historic pivot from \emph{frequency scaling} to \emph{spatial concurrency}: multi-core processors, Chip Multiprocessors (CMPs), and Multi-Processor Systems-on-Chip (MPSoCs). However, scaling the number of processing elements from dual-core to tens, hundreds, and thousands of cores immediately triggered an existential crisis in \textbf{on-chip interconnect physical design}.
 
@@ -112,7 +112,7 @@ The physical crisis of global wiring is exacerbated by the physics of deep-submi
 
 In bulk copper at room temperature, the electron mean free path is $\lambda_0 \approx 39.0$~nm. When the physical width $w$ of an on-chip metal wire shrinks below $2 \lambda_0 \approx 80$~nm, two scattering mechanisms cause the effective resistivity $\rho_{eff}$ to surge dramatically above the bulk value ($\rho_{bulk} \approx 1.68 \times 10^{-8}\ \Omega\cdot\text{m}$):
 \begin{enumerate}
-    \item \textbf{Surface Scattering (Fuchs-Sondheimer Model)}: Electrons reflect diffusely off the outer interfaces of the wire:
+    \item \textbf{Surface Scattering (Fuchs-Sondheimer Model)}~\cite{Fuchs1938,Sondheimer1952}: Electrons reflect diffusely off the outer interfaces of the wire:
     \begin{equation}
     \frac{\rho_{FS}}{\rho_{bulk}} = 1 + \frac{3}{8 \kappa} (1 - p)
     \label{eq:fuchs_sondheimer}
@@ -139,7 +139,7 @@ At the 3~nm node ($w \approx 10$~nm), the effective copper resistivity exceeds $
 \index{RibbonFET}
 \index{CFET}
 
-As silicon dimensions scale into the sub-3nm regime, conventional FinFETs encounter severe short-channel degradation and sub-threshold leakage due to quantum confinement limits and corner parasitic leakage. Semiconductor foundries have transitioned to \textbf{Gate-All-Around Field-Effect Transistors (GAAFETs)} (termed \emph{RibbonFET} by Intel and \emph{MBCFET} by Samsung):
+As silicon dimensions scale into the sub-3nm regime, conventional FinFETs encounter severe short-channel degradation and sub-threshold leakage due to quantum confinement limits and corner parasitic leakage. Semiconductor foundries have transitioned to \textbf{Gate-All-Around Field-Effect Transistors (GAAFETs)}~\cite{IntelPowerVia2023} (termed \emph{RibbonFET} by Intel and \emph{MBCFET} by Samsung):
 \begin{enumerate}
     \item \textbf{Nanosheet Architecture}: Rather than a vertical 3D silicon fin gated on three sides, a GAAFET comprises multiple horizontally stacked silicon nanosheet ribbons (typically 3 to 4 sheets of thickness $t_{sheet} \approx 5\text{--}6\,\mathrm{nm}$ and width $w_{sheet} \approx 15\text{--}40\,\mathrm{nm}$) completely wrapped by the high-$\kappa$ metal gate dielectric ($HfO_2/TiN$).
     \item \textbf{Sub-Threshold Swing and Electrostatic Control}: Enclosing the channel on all four sides maximizes gate capacitive coupling, driving the sub-threshold swing $S_S$ down to $\approx 64\text{--}67\,\mathrm{mV/decade}$ (near the theoretical thermodynamic limit of $60\,\mathrm{mV/decade}$ at $300\,\mathrm{K}$) and suppressing Drain-Induced Barrier Lowering (DIBL $\le 30\,\mathrm{mV/V}$).
@@ -153,7 +153,7 @@ As silicon dimensions scale into the sub-3nm regime, conventional FinFETs encoun
 
 In classical Front-End-of-Line / Back-End-of-Line (FEOL/BEOL) manufacturing, both low-voltage logic signal wires and high-current power distribution rails ($V_{dd}, V_{ss}$) compete for the same frontside metal tracks (M0 through M15). Power routing consumes up to 30\% of intermediate metal tracks, exacerbating routing congestion and inducing severe resistive voltage drop ($IR$-drop).
 
-To overcome this interconnect bottleneck, modern sub-2nm nodes introduce the \textbf{Backside Power Delivery Network (BSPDN)} (such as Intel PowerVia and TSMC A16):
+To overcome this interconnect bottleneck, modern sub-2nm nodes introduce the \textbf{Backside Power Delivery Network (BSPDN)}~\cite{IntelPowerVia2023} (such as Intel PowerVia and TSMC A16):
 \begin{itemize}
     \item The wafer is thinned from the backside down to a thickness of $\le 500\,\mathrm{nm}$.
     \item Power delivery networks ($V_{dd}$ and ground grids) are fabricated entirely on the wafer \textbf{backside} using thick, ultra-low-resistance copper layers.
@@ -169,7 +169,7 @@ To overcome this interconnect bottleneck, modern sub-2nm nodes introduce the \te
 
 Because copper requires high-resistivity diffusion barrier liners (Ta/TaN) that do not scale below $1.0\text{--}1.5\,\mathrm{nm}$, the effective copper conductor area in sub-12nm trenches collapses, triggering catastrophic resistivity surges (Eq.~\ref{eq:barrier_liner}).
 
-To solve this physical scaling wall, semiconductor manufacturers are transitioning the lowest metal levels (M0, M1, M2) from copper to \textbf{linerless refractory and platinum-group metals}:
+To solve this physical scaling wall, semiconductor manufacturers are transitioning the lowest metal levels (M0, M1, M2) from copper to \textbf{linerless refractory and platinum-group metals}~\cite{Adelmann2018}:
 \begin{itemize}
     \item \textbf{Ruthenium ($Ru$)}: Ruthenium is a semi-noble metal with high cohesive energy that resists electromigration without requiring any diffusion barrier liner. Crucially, the bulk electron mean free path of ruthenium is only $\lambda_0(Ru) \approx 4.9\,\mathrm{nm}$—nearly \textbf{$8\times$ shorter than copper} ($\lambda_0(Cu) \approx 39.0\,\mathrm{nm}$). Consequently, size-effect grain boundary scattering in ruthenium is drastically attenuated at sub-10nm line widths.
     \item \textbf{Molybdenum ($Mo$) and Cobalt ($Co$)}: Molybdenum exhibits an electron mean free path of $\lambda_0(Mo) \approx 10.0\,\mathrm{nm}$ and low bulk resistivity ($5.3\,\mu\Omega\cdot\mathrm{cm}$), providing superior aspect-ratio fill characteristics without voiding.
@@ -211,7 +211,7 @@ As documented in Table~\ref{tab:ch1_history}, while gate delay dropped by over \
 \section{High-Frequency Transmission Line Effects and Inductive Peaking}
 \label{sec:ch1_transmission_lines}
 
-As clock frequencies exceed $2\text{--}4\,\mathrm{GHz}$ and signal rise times $t_r$ compress below $30\text{--}50\,\mathrm{ps}$, on-chip global wires cease to behave as purely diffusive distributed $RC$ circuits and transition into distributed $RLC$ transmission lines. When the signal transition time $t_r$ is comparable to the electromagnetic time of flight $t_f = L \sqrt{\mathcal{L} \cdot \mathcal{C}}$, inductive reactance $\omega \mathcal{L}$ rivals series resistance $\mathcal{R}$, inducing reflection ringing, inductive crosstalk, and signal overshoot.
+As clock frequencies exceed $2\text{--}4\,\mathrm{GHz}$ and signal rise times $t_r$ compress below $30\text{--}50\,\mathrm{ps}$, on-chip global wires cease to behave as purely diffusive distributed $RC$ circuits and transition into distributed $RLC$ transmission lines~\cite{DallyPoulton1998}. When the signal transition time $t_r$ is comparable to the electromagnetic time of flight $t_f = L \sqrt{\mathcal{L} \cdot \mathcal{C}}$, inductive reactance $\omega \mathcal{L}$ rivals series resistance $\mathcal{R}$, inducing reflection ringing, inductive crosstalk, and signal overshoot.
 
 \subsection{The Telegrapher's Equations and the Wave Equation}
 \label{subsec:ch1_telegraphers}
@@ -257,7 +257,7 @@ Together, skin-effect attenuation and dielectric absorption severely attenuate t
 \section{The Monolithic Crossbar and Its Quadratic Area Explosion}
 \label{sec:ch1_crossbar}
 
-To avoid the serialized contention of a single shared bus, architects initially considered a full centralized crossbar switch connecting $N$ masters directly to $M$ slaves. While a crossbar allows non-interfering parallel communication between disjoint pairs of masters and slaves, its hardware complexity scales quadratically:
+To avoid the serialized contention of a single shared bus, architects initially considered a full centralized crossbar switch connecting $N$ masters directly to $M$ slaves~\cite{Passas2012}. While a crossbar allows non-interfering parallel communication between disjoint pairs of masters and slaves, its hardware complexity scales quadratically:
 \begin{equation}
 \text{Crosspoints} = N \times M \approx O(N^2), \qquad \text{Wiring Tracks} = (N + M) \times W_{data\_width} \approx O(N)
 \label{eq:crossbar_complexity}
@@ -267,14 +267,14 @@ For an MPSoC with $N = 64$ cores, a full crossbar requires $64 \times 64 = 4,096
 \section{Optimal Repeater Insertion Theory (Bakoglu's Formulation)}
 \label{sec:ch1_repeaters}
 
-To counteract the quadratic delay growth of long $RC$ lines ($\tau \propto L^2$), designers segment wires by inserting CMOS inverters or non-inverting buffers (repeaters) at regular intervals. By partitioning a line of length $L$ into $k$ equal segments of length $l = L/k$, each driven by a buffer sized $h$ times the minimum-sized inverter, the delay transforms from quadratic to linear in total length:
+To counteract the quadratic delay growth of long $RC$ lines ($\tau \propto L^2$), designers segment wires by inserting CMOS inverters or non-inverting buffers (repeaters) at regular intervals~\cite{Bakoglu1990}. By partitioning a line of length $L$ into $k$ equal segments of length $l = L/k$, each driven by a buffer sized $h$ times the minimum-sized inverter, the delay transforms from quadratic to linear in total length:
 \begin{equation}
 \tau_{total} = k \cdot \tau_{segment} = \frac{L}{l} \cdot \left[ R_0 \cdot \left( \frac{\mathcal{C} \cdot l}{h} + C_0 \right) + \frac{\mathcal{R} \cdot l}{h} \cdot C_0 + \frac{1}{2} \mathcal{R}\mathcal{C} \cdot l^2 \right]
 \label{eq:ch1_repeater_delay}
 \end{equation}
 where $R_0$ and $C_0$ are the output drive resistance and input gate capacitance of a minimum-sized inverter ($h=1$), and $\mathcal{R}, \mathcal{C}$ are the per-unit-length wire resistance and capacitance.
 
-By setting the partial derivatives $\frac{\partial \tau_{total}}{\partial l} = 0$ and $\frac{\partial \tau_{total}}{\partial h} = 0$, Bakoglu derived the closed-form optimal repeater spacing $l_{opt}$ and buffer sizing factor $h_{opt}$:
+By setting the partial derivatives $\frac{\partial \tau_{total}}{\partial l} = 0$ and $\frac{\partial \tau_{total}}{\partial h} = 0$, Bakoglu~\cite{Bakoglu1990} derived the closed-form optimal repeater spacing $l_{opt}$ and buffer sizing factor $h_{opt}$:
 \begin{align}
 l_{opt} &= \sqrt{\frac{2 R_0 C_0}{\mathcal{R} \cdot \mathcal{C}}} \label{eq:ch1_l_opt} \\
 h_{opt} &= \sqrt{\frac{R_0 \cdot \mathcal{C}}{\mathcal{R} \cdot C_0}} \label{eq:ch1_h_opt}
@@ -323,12 +323,12 @@ To examine the real-world execution of NoC architecture in modern silicon, we an
 \subsection{The Intel TeraFLOPS 80-Core Processor (65nm CMOS)}
 \label{subsec:ch1_intel_80core}
 
-Fabricated by Intel in 2007 (Vangal et al., ISSCC), the TeraFLOPS processor represented the world's first microprocessor to achieve $1.0\,\mathrm{TFLOPS}$ double-precision floating-point performance on a single chip. It featured an $8 \times 10$ 2D mesh of compute tiles running at $4.0\,\mathrm{GHz}$ at $1.2\,\mathrm{V}$ ($62\,\mathrm{W}$). Each tile contained a 5-port 5-stage pipelined packet-switched router with crossbar switch bandwidth of $80\,\mathrm{GB/s}$ per node, providing an unprecedented $1.6\,\mathrm{Tb/s}$ of bisection bandwidth across short, regular $1.2\,\mathrm{mm}$ point-to-point links.
+Fabricated by Intel in 2007 (Vangal et al., ISSCC)~\cite{Vangal2008}, the TeraFLOPS processor represented the world's first microprocessor to achieve $1.0\,\mathrm{TFLOPS}$ double-precision floating-point performance on a single chip. It featured an $8 \times 10$ 2D mesh of compute tiles running at $4.0\,\mathrm{GHz}$ at $1.2\,\mathrm{V}$ ($62\,\mathrm{W}$). Each tile contained a 5-port 5-stage pipelined packet-switched router with crossbar switch bandwidth of $80\,\mathrm{GB/s}$ per node, providing an unprecedented $1.6\,\mathrm{Tb/s}$ of bisection bandwidth across short, regular $1.2\,\mathrm{mm}$ point-to-point links.
 
 \subsection{The Tilera TILE64 Manycore Processor (90nm CMOS)}
 \label{subsec:ch1_tilera64}
 
-The Tilera TILE64 architecture departed from traditional single-mesh NoCs by implementing \textbf{five independent, concurrent physical 2D mesh networks} on the same silicon die:
+The Tilera TILE64 architecture departed from traditional single-mesh NoCs by implementing \textbf{five independent, concurrent physical 2D mesh networks} on the same silicon die~\cite{Wentzlaff2007}:
 \begin{enumerate}
     \item \textbf{UDI (User Dynamic Interconnect)}: Zero-overhead streaming user-level message passing between processor cores.
     \item \textbf{IDN (I/O Dynamic Interconnect)}: Dedicated DMA transfers from PCIe and 10GbE network interfaces to on-chip tile SRAM caches.
@@ -341,7 +341,7 @@ By separating traffic into independent physical networks, the TILE64 completely 
 \subsection{The Cerebras Wafer-Scale Engine (WSE-2 \& WSE-3)}
 \label{subsec:ch1_cerebras}
 
-The Cerebras Wafer-Scale Engine represents the extreme physical limit of monolithic Network-on-Chip scaling. Rather than cutting wafers into individual dies, Cerebras fabricates an entire $300\,\mathrm{mm}$ silicon wafer as a single contiguous compute system:
+The Cerebras Wafer-Scale Engine represents the extreme physical limit of monolithic Network-on-Chip scaling~\cite{Lie2022}. Rather than cutting wafers into individual dies, Cerebras fabricates an entire $300\,\mathrm{mm}$ silicon wafer as a single contiguous compute system:
 \begin{itemize}
     \item \textbf{Core Count}: $850,000$ AI-optimized tensor processing cores (WSE-2) and $900,000$ cores in 5nm (WSE-3).
     \item \textbf{Wafer-Scale Interconnect}: The chip-cutting boundary (scribe lines) is bridged using dedicated high-density lithographic cross-reticle metal lines, creating a seamless 2D mesh fabric spanning $46,225\,\mathrm{mm^2}$.
@@ -387,14 +387,19 @@ Key architectural and physical metrics of the HammerBlade processor include:
 \hline\noalign{\smallskip}
 Architecture & Year / Venue & Process Node & Tile Array / Cores & Peak Bisection BW & Interconnect Topology \\
 \noalign{\smallskip}\svhline\noalign{\smallskip}
-Intel TeraFLOPS & 2007 JSSC~\cite{Dennard1974} & 65nm Bulk & $8\times 10$ (80) & 1.6 Tb/s & 2D Mesh (5-port) \\
+Intel TeraFLOPS & 2008 JSSC~\cite{Vangal2008} & 65nm Bulk & $8\times 10$ (80) & 1.6 Tb/s & 2D Mesh (5-port) \\
 Intel 48-Core SCC & 2011 JSSC~\cite{Howard2011} & 45nm Bulk & $6\times 4$ (48) & 256 Gb/s & 2D Mesh (e-cube) \\
+Kalray MPPA-256 & 2013 HPEC~\cite{Dinechin2013} & 28nm CMOS & 16 Clusters & 384 Gb/s & 2D Torus \\
 Theseus WSC & 2025 TCAD~\cite{Zhu2025} & Wafer-Scale & Wafer Grid & 100+ Tb/s & 2D Torus Wafer NoC \\
 FlooNoC (Benini) & 2025 TVLSI~\cite{Fischer2025} & 12nm FinFET & $8\times 4$ (288) & 103 Tb/s & Wide AXI4 2D Mesh \\
 HammerBlade (Gao)& 2026 TVLSI~\cite{Gao2026} & 12nm FinFET & $64\times 32$ (2,048) & 53.2 Tb/s & Ruche Multi-Hop NoC \\
 \noalign{\smallskip}\hline\noalign{\smallskip}
 \end{tabular}
 \end{table}
+
+\subsection{Physics-Based Electromigration Reliability in Sub-10nm Interconnects}
+\label{sec:ch1_electromigration}
+As wire geometries scale deep into sub-10~nm regimes, interconnect degradation driven by high current densities and thermo-mechanical stress becomes a primary limiting factor for chip longevity. Electromigration (EM) induces atomic momentum transfer from conducting electrons to metal lattice atoms, leading to void formation at cathode ends and hillocks/short-circuits at anode terminals. Traditional EM analysis relies on conservative empirical models (Black's equation) that lack spatial and dynamic granularity across full-chip network traces. Recent physics-based analytical techniques formulated by Wang et al.~\cite{Wang2021EM} introduce efficient eigenfunction-based transient solutions for hydrostatic stress evolution in multi-branch interconnect trees. By decoupling boundary value problems into closed-form eigen-mode expansions, transient atomic drift and stress buildup can be evaluated orders of magnitude faster than conventional finite-element methods (FEM), enabling real-time reliability-aware routing and power-grid co-design in modern NoC fabrics.
 
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch1_interactive}
@@ -420,15 +425,27 @@ To build an experimental understanding of interconnect trade-offs, explore the c
 \label{sec:ch1_references}
 
 \begin{enumerate}
+    \item \textbf{[Moore1965]} G.~E.~Moore, ``Cramming More Components Onto Integrated Circuits,'' \emph{Electronics}, vol.~38, no.~8, pp.~114--117, 1965. \url{https://doi.org/10.1109/JPROC.1998.658762}
     \item \textbf{[Dennard1974]} R.~H.~Dennard, F.~H.~Gaensslen, H.-N.~Yu, V.~L.~Rideout, E.~Bassous, and A.~R.~LeBlanc, ``Design of Ion-Implanted MOSFET's with Very Small Physical Dimensions,'' \emph{IEEE Journal of Solid-State Circuits}, vol.~SC-9, no.~5, pp.~256--268, 1974. \url{https://doi.org/10.1109/JSSC.1974.1052523}
+    \item \textbf{[Borkar1999]} S.~Borkar, ``Design Challenges of Technology Scaling,'' \emph{IEEE Micro}, vol.~19, no.~4, pp.~23--29, 1999. \url{https://doi.org/10.1109/40.782564}
     \item \textbf{[Ho2001]} R.~Ho, K.~W.~Mai, and M.~A.~Horowitz, ``The Future of Wires,'' \emph{Proceedings of the IEEE}, vol.~89, no.~4, pp.~490--504, 2001. \url{https://doi.org/10.1109/5.920580}
     \item \textbf{[Mayadas1970]} A.~F.~Mayadas and M.~Shatzkes, ``Electrical-Resistivity Model for Polycrystalline Films: The Case of Arbitrary Reflection at External Surfaces,'' \emph{Physical Review B}, vol.~1, no.~4, pp.~1382--1389, 1970. \url{https://doi.org/10.1103/PhysRevB.1.1382}
+    \item \textbf{[Fuchs1938]} K.~Fuchs, ``The Conductivity of Thin Metallic Films According to the Electron Theory of Metals,'' \emph{Mathematical Proceedings of the Cambridge Philosophical Society}, vol.~34, no.~1, pp.~100--108, 1938. \url{https://doi.org/10.1017/S0305004100019952}
+    \item \textbf{[Sondheimer1952]} E.~H.~Sondheimer, ``The Mean Free Path of Electrons in Metals,'' \emph{Advances in Physics}, vol.~1, no.~1, pp.~1--42, 1952. \url{https://doi.org/10.1080/00018735200101151}
     \item \textbf{[Elmore1948]} W.~C.~Elmore, ``The Transient Response of Damped Linear Networks with Particular Regard to Wideband Amplifiers,'' \emph{Journal of Applied Physics}, vol.~19, no.~1, pp.~55--63, 1948. \url{https://doi.org/10.1063/1.1697872}
+    \item \textbf{[Bakoglu1990]} H.~B.~Bakoglu, \emph{Circuits, Interconnections, and Packaging for VLSI}, Reading, MA: Addison-Wesley, 1990.
+    \item \textbf{[DallyPoulton1998]} W.~J.~Dally and J.~W.~Poulton, \emph{Digital Systems Engineering}, Cambridge: Cambridge University Press, 1998. \url{https://doi.org/10.1017/CBO9780511805172}
+    \item \textbf{[Passas2012]} G.~Passas, M.~Katevenis, and D.~Pnevmatikatos, ``Crossbar NoCs Are Scalable Beyond 100 Nodes,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~31, no.~4, pp.~573--585, 2012. \url{https://doi.org/10.1109/TCAD.2011.2176730}
     \item \textbf{[Dally2001]} W.~J.~Dally and B.~Towles, ``Route Packets, Not Wires: On-Chip Interconnection Networks,'' in \emph{Proceedings of the 38th Annual Design Automation Conference (DAC)}, 2001, pp.~684--689. \url{https://doi.org/10.1145/378239.379048}
     \item \textbf{[Benini2002]} L.~Benini and G.~De Micheli, ``Networks on Chips: A New SoC Paradigm,'' \emph{IEEE Computer}, vol.~35, no.~1, pp.~70--78, 2002. \url{https://doi.org/10.1109/2.976921}
+    \item \textbf{[Vangal2008]} S.~R.~Vangal et al., ``An 80-Tile Sub-100-W TeraFLOPS Processor in 65-nm CMOS,'' \emph{IEEE Journal of Solid-State Circuits}, vol.~43, no.~1, pp.~29--41, 2008. \url{https://doi.org/10.1109/JSSC.2007.910957}
+    \item \textbf{[Wentzlaff2007]} D.~Wentzlaff et al., ``On-Chip Interconnection Architecture of the Tile Processor,'' \emph{IEEE Micro}, vol.~27, no.~5, pp.~15--31, 2007. \url{https://doi.org/10.1109/MM.2007.89}
     \item \textbf{[Howard2011]} J.~Howard et al., ``A 48-Core IA-32 Message-Passing Processor with DVFS in 45nm CMOS,'' \emph{IEEE Journal of Solid-State Circuits}, vol.~46, no.~1, pp.~173--183, 2011. \url{https://doi.org/10.1109/JSSC.2010.2079496}
+    \item \textbf{[Dinechin2013]} B.~D.~de Dinechin et al., ``A Distributed Run-Time Environment for the Kalray MPPA-256 Manycore Processor,'' in \emph{Proceedings of the IEEE High Performance Extreme Computing Conference (HPEC)}, 2013, pp.~1--6. \url{https://doi.org/10.1109/HPEC.2013.6670342}
+    \item \textbf{[Lie2022]} S.~Lie, ``Cerebras Architecture Deep Dive: First-Principles Wafer-Scale AI Acceleration,'' \emph{IEEE Micro}, vol.~43, no.~3, pp.~18--30, 2023. \url{https://doi.org/10.1109/MM.2023.3259837}
     \item \textbf{[Fischer2025]} T.~Fischer, M.~Rogenmoser, T.~Benz, F.~K.~G{\"{u}}rkaynak, and L.~Benini, ``FlooNoC: A 645-Gb/s/link 0.15-pJ/B/hop Open-Source NoC With Wide Physical Links and End-to-End AXI4 Parallel Multistream Support,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~33, no.~4, pp.~1094--1107, 2025. \url{https://doi.org/10.1109/TVLSI.2025.3527225}
     \item \textbf{[Gao2026]} P.~Gao et al., ``HammerBlade in Silicon: A 12-nm 2048-Core RISC-V Manycore SoC With Ruche Networks,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~7, pp.~2306--2310, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3684311}
     \item \textbf{[Zhu2025]} J.~Zhu et al., ``Theseus: Exploring Efficient Wafer-Scale Chip Design for Large Language Models,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~44, no.~11, pp.~3810--3823, 2025. \url{https://doi.org/10.1109/TCAD.2024.3496321}
     \item \textbf{[AlAlousi2026]} A.~Al-Alousi, M.~Li, and H.~Meng, ``Vendor-Independent Design Space Exploration and Resource Optimization Framework for 3-D Networks-on-Chip Using Hypergraph-Genetic Algorithm Integration,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~5, pp.~2236--2248, 2026. \url{https://doi.org/10.1109/TCAD.2025.3616073}
+    \item \textbf{[Wang2021EM]} Z.~Wang, S.~Zhang, and S.~X.-D.~Tan, ``Fast Physics-Based Electromigration Analysis for Full-Chip Networks by Efficient Eigenfunction-Based Solution,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~40, no.~9, pp.~1885--1898, 2021. \url{https://doi.org/10.1109/TCAD.2020.3020641}
 \end{enumerate}

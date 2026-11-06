@@ -332,7 +332,7 @@ D_{SF} = 2, \quad k_{radix} = \frac{3q - \delta}{2} \approx \frac{3}{2} \sqrt{\f
 where $\delta \in \{1, 3\}$. Slim Fly reaches \textbf{nearly 50\% of the theoretical Moore bound for diameter 2}, outperforming both the Flattened Butterfly and Dragonfly by reducing total router count by 25\% and network cabling costs by over 30\% at identical bisection capacity.
 
 \subsubsection{PolarFly: Non-Bipartite Polarity Graphs}
-To eliminate the bipartite constraint of Slim Fly and enable arbitrary node cardinalities, modern research has synthesized \textbf{PolarFly}, built upon \textbf{Erd\H{o}s-R\'enyi polarity graphs} from projective geometry $PG(2, q)$. In PolarFly, every router corresponds to a 1-dimensional subspace (point) in $\mathbb{F}_q^3$, and links correspond to orthogonal points with respect to a non-degenerate symmetric bilinear form (quadric). PolarFly achieves diameter 2 with zero quadrangle cycles, yielding exceptional resilience against multi-link failures and unprecedented algebraic connectivity $\lambda_2$.
+To eliminate the bipartite constraint of Slim Fly and enable arbitrary node cardinalities, Besta et al.~\cite{Besta2022} synthesized \textbf{PolarFly}, built upon \textbf{Erd\H{o}s-R\'enyi polarity graphs} from projective geometry $PG(2, q)$. In PolarFly, every router corresponds to a 1-dimensional subspace (point) in $\mathbb{F}_q^3$, and links correspond to orthogonal points with respect to a non-degenerate symmetric bilinear form (quadric). PolarFly achieves diameter 2 with zero quadrangle cycles, yielding exceptional resilience against multi-link failures and unprecedented algebraic connectivity $\lambda_2$.
 
 \section{Physical Packaging Hierarchy and Multi-Die Interconnects}
 \label{sec:ch4_packaging}
@@ -378,7 +378,7 @@ To bridge theoretical topology formulations with industrial silicon realization,
 \subsection{Case Study 1: NVIDIA NVSwitch Fabric}
 In massive distributed deep learning workloads, multi-GPU communication patterns are dominated by collective primitives such as \texttt{AllReduce}, \texttt{AllGather}, and \texttt{ReduceScatter}. Traditional PCI Express topologies create severe bisection bottlenecks, limiting scaling efficiency.
 
-To eliminate this bottleneck, NVIDIA developed the \textbf{NVSwitch} architecture. An HGX baseboard integrates multiple dedicated high-radix crossbar ASICs:
+To eliminate this bottleneck, NVIDIA developed the \textbf{NVSwitch} and NVLink architecture~\cite{Foley2023}. An HGX baseboard integrates multiple dedicated high-radix crossbar ASICs:
 \begin{itemize}
     \item \textbf{NVSwitch 1 (Volta)}: 18-port crossbar router delivering 900~GB/s bidirectional bandwidth per switch across 16 V100 GPUs.
     \item \textbf{NVSwitch 2 (Ampere)}: 36-port crossbar router in 7~nm TSMC CMOS, providing 7.2~Tb/s aggregate switching bandwidth with hardware-accelerated SHARP (Scalable Hierarchical Aggregation and Reduction Protocol) reduction engines embedded directly inside the crossbar datapaths.
@@ -485,6 +485,17 @@ Full Crossbar ($64 \times 64$) & 64  & 1  & 1.00  & 2048& 5.00  & 64.000 \\
 \end{tabular}
 \end{table}
 
+\subsection{Application-Specific Topology Synthesis and Intelligent Mapping}
+\label{sec:ch4_synthesis_mapping}
+While regular topologies (Mesh, Torus, Fat-Tree) dominate general-purpose CMPs, specialized SoCs and AI inference engines demand application-specific custom interconnects:
+\begin{itemize}
+    \item \textbf{Automated Full-Chip Custom NoC Generation (CusNoC)}: Li~\cite{Li2013CusNoC} developed CusNoC, an automated synthesis framework that maps irregular task communication graphs into floorplan-aware, minimum-power custom NoC topologies in linear runtime. Automated synthesis methodologies established by Chatha et al.~\cite{Chatha2008} further proved that tailoring router radix and link capacities to bandwidth requirements cuts router area by $40\%$ compared to regular 2D meshes.
+    \item \textbf{Discrete Particle Swarm Optimization (PSO) Mapping}: Sahu et al.~\cite{Sahu2014} demonstrated that discrete PSO meta-heuristics map IP cores onto mesh nodes with minimal communication energy, outperforming simulated annealing and genetic algorithms in convergence speed and quality.
+    \item \textbf{Fine-Grain Task Scheduling in MPSoCs}: Yang et al.~\cite{Yang2016} combined communication-aware task scheduling with voltage scaling, optimizing both communication latency and task makespan in multi-core SoCs.
+    \item \textbf{Multicast Routing Architectures}: Custom architectures with hardware multicast routing by Yan et al.~\cite{Yan2009Multicast} replicate flits inside switch nodes, cutting broadcast traffic energy by over $50\%$.
+    \item \textbf{Spike-Sharing Partitions and Robotics Heterogeneity}: Recent breakthroughs including SNNcut by Xing et al.~\cite{Xing2026SNNcut}, analytical SNN topology modeling by Yan et al.~\cite{Yan2026SNN}, and the 19-core MAVERIC robotics SoC by Kim et al.~\cite{Kim2026Mav} illustrate how application-aware interconnect co-design enables ultra-dense edge intelligence.
+\end{itemize}
+
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch4_interactive}
 
@@ -514,8 +525,18 @@ Explore the interactive topology visualizers on the \textbf{NoC Learning Hub} (\
     \item \textbf{[Kim2007]} J.~Kim, J.~Balfour, and W.~J.~Dally, ``Flattened Butterfly Topology for On-Chip Networks,'' in \emph{Proceedings of the 40th Annual IEEE/ACM International Symposium on Microarchitecture (MICRO)}, 2007, pp.~172--182. \url{https://doi.org/10.1109/MICRO.2007.28}
     \item \textbf{[Kim2008]} J.~Kim, W.~J.~Dally, S.~Scott, and D.~Abts, ``Technology-Driven, Highly-Scalable Dragonfly Topology,'' in \emph{Proceedings of the 35th Annual International Symposium on Computer Architecture (ISCA)}, 2008, pp.~77--88. \url{https://doi.org/10.1109/ISCA.2008.19}
     \item \textbf{[Besta2014]} M.~Besta and T.~Hoefler, ``Slim Fly: A Low-Diameter Network for High-Performance Computing,'' in \emph{Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC)}, 2014, pp.~343--354. \url{https://doi.org/10.1109/SC.2014.34}
+    \item \textbf{[Besta2022]} M.~Besta, E.~Peter, R.~Kanakagiri, R.~B.~H., L.~John, and T.~Hoefler, ``PolarFly: A Cost-Effective and Scalable Low-Diameter Topology,'' in \emph{Proceedings of the 49th Annual International Symposium on Computer Architecture (ISCA)}, 2022, pp.~709--724. \url{https://doi.org/10.1145/3470496.3527415}
     \item \textbf{[Passas2012]} G.~Passas, M.~Katevenis, and D.~Pnevmatikatos, ``Crossbar NoCs Are Scalable Beyond 100 Nodes,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~31, no.~4, pp.~573--585, 2012. \url{https://doi.org/10.1109/TCAD.2011.2176730}
     \item \textbf{[Jun2009]} M.~Jun, S.~Yoo, and E.-Y.~Chung, ``Topology Synthesis of Cascaded Crossbar Switches,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~28, no.~6, pp.~926--930, 2009. \url{https://doi.org/10.1109/TCAD.2009.2017079}
     \item \textbf{[Dumitriu2009]} V.~Dumitriu and G.~N.~Khan, ``Throughput-Oriented NoC Topology Generation and Analysis for High Performance SoCs,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~17, no.~10, pp.~1433--1446, 2009. \url{https://doi.org/10.1109/TVLSI.2008.2006798}
+    \item \textbf{[Foley2023]} D.~Foley, B.~Khailany, and J.~Dally, ``Ultra-High-Speed NVLink Interconnects for Modern Scalable GPU Computing,'' \emph{IEEE Micro}, vol.~43, no.~4, pp.~45--54, 2023. \url{https://doi.org/10.1109/MM.2023.3275811}
     \item \textbf{[DallyPrinciples]} W.~J.~Dally and B.~Towles, \emph{Principles and Practices of Interconnection Networks}, Morgan Kaufmann, San Francisco, CA, 2004.
+    \item \textbf{[Li2013CusNoC]} K.~S.-M.~Li, ``CusNoC: Fast Full-Chip Custom NoC Generation,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~21, no.~4, pp.~692--705, 2013. \url{https://doi.org/10.1109/TVLSI.2012.2195688}
+    \item \textbf{[Chatha2008]} K.~S.~Chatha et al., ``Automated Techniques for Synthesis of Application-Specific Network-on-Chip Architectures,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~27, no.~8, pp.~1425--1438, 2008. \url{https://doi.org/10.1109/TCAD.2008.925775}
+    \item \textbf{[Sahu2014]} P.~K.~Sahu et al., ``Application Mapping Onto Mesh-Based Network-on-Chip Using Discrete Particle Swarm Optimization,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~22, no.~2, pp.~300--312, 2014. \url{https://doi.org/10.1109/TVLSI.2013.2240708}
+    \item \textbf{[Yang2016]} Y.~Yang et al., ``Application Mapping and Scheduling for Network-on-Chip-Based Multiprocessor System-on-Chip With Fine-Grain Communication Optimization,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~24, no.~8, pp.~2650--2662, 2016. \url{https://doi.org/10.1109/TVLSI.2016.2535359}
+    \item \textbf{[Yan2009Multicast]} S.~Yan et al., ``Custom Networks-on-Chip Architectures With Multicast Routing,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~28, no.~8, pp.~1225--1238, 2009. \url{https://doi.org/10.1109/TCAD.2009.2021124}
+    \item \textbf{[Xing2026SNNcut]} Q.~Xing et al., ``SNNcut: An Efficient Partitioning Method for Large-Scale Spiking Neural Networks Using Spike-Sharing,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~4, pp.~1420--1433, 2026. \url{https://doi.org/10.1109/TCAD.2025.3621105}
+    \item \textbf{[Yan2026SNN]} Z.~Yan et al., ``Reconsidering the Energy Efficiency of Spiking Neural Networks Inference from Analytical Perspectives,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~5, pp.~1910--1923, 2026. \url{https://doi.org/10.1109/TCAD.2025.3619902}
+    \item \textbf{[Kim2026Mav]} S.~Kim et al., ``MAVERIC: A Heterogeneous Robotics SoC With 4 CPU Cores and 15 Accelerator Cores in 28-nm CMOS,'' \emph{IEEE Journal of Solid-State Circuits}, vol.~61, no.~4, pp.~1010--1023, 2026. \url{https://doi.org/10.1109/JSSC.2025.3620015}
 \end{enumerate}

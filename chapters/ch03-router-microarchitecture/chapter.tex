@@ -60,7 +60,7 @@ In modern 7nm and 5nm nodes, $t_{ST} \approx 180\text{--}250\,\mathrm{ps}$, allo
 \section{Wavefront and Wrapped Wavefront Allocators (WFA \& WWFA)}
 \label{sec:ch3_wavefront}
 
-To escape the scalability limits of separable arbiters without paying the full area cost of iterative matching algorithms, high-throughput architectures employ \textbf{Wavefront Allocation (WFA)}. Pioneered for high-radix switches and deployed in the Intel Single-Chip Cloud Computer (SCC) 48-core processor~\cite{Howard2011}, WFA resolves an $N \times N$ bipartite matching problem simultaneously across a two-dimensional systolic array of arbitration cells.
+To escape the scalability limits of separable arbiters without paying the full area cost of iterative matching algorithms, high-throughput architectures employ \textbf{Wavefront Allocation (WFA)}~\cite{Tamir1993}. Pioneered for high-radix switches and deployed in the Intel Single-Chip Cloud Computer (SCC) 48-core processor~\cite{Howard2011}, WFA resolves an $N \times N$ bipartite matching problem simultaneously across a two-dimensional systolic array of arbitration cells.
 
 \subsection{Systolic Token Ripple Allocation}
 \label{subsec:ch3_wfa_array}
@@ -305,6 +305,17 @@ P(t+1) = \begin{cases} 0, & \text{if } G_0 = 1 \\ 1, & \text{if } G_1 = 1 \\ P(t
 \end{equation}
 By cascading 2-input ping-pong cells in a binary tree hierarchy, an $N$-input arbiter achieves logarithmic latency ($O(\log N)$ gate levels) with minimal standard-cell silicon area.
 
+\subsection{Modern Router Innovations: Asynchrony, WRR Bounds, and In-Network Compute}
+\label{sec:ch3_modern_innovations}
+Recent microarchitectural research has expanded router functionality beyond conventional packet forwarding:
+\begin{itemize}
+    \item \textbf{Weighted Round-Robin (WRR) Delay Optimization}: To guarantee strict quality-of-service (QoS) in heterogeneous SoCs, Jafari et al.~\cite{Jafari2016WRR} and Mandal et al.~\cite{Mandal2023WRR} formalized analytical configurations for WRR arbiters, deriving tight upper bounds on worst-case packet latency and enabling predictable network performance for mission-critical flows.
+    \item \textbf{Asynchronous Hybrid Pipelines}: Saranya et al.~\cite{Saranya2026HyPA} introduced HyPA, a low-latency hybrid pipeline asynchronous router for Globally Asynchronous Locally Synchronous (GALS) SoCs, combining bundled-data clockless crossbars with speculative reservation to achieve single-cycle zero-load traversal.
+    \item \textbf{Synchronization-Aware Crossbar Arbitration}: Addressing tail latency in parallel barrier primitives, Fan et al.~\cite{Fan2024Sync} proposed synchronization-aware arbitration policies that prioritize flits from straggler threads, improving multi-threaded speedups by up to $22\%$.
+    \item \textbf{Power-Aware Built-In Self-Test (BIST)}: Scalable test-delivery architectures by Xiang et al.~\cite{Xiang2011Test} and Agrawal et al.~\cite{Agrawal2014Test} utilize unicast-based multicast routing mechanisms across the NoC to distribute manufacturing test patterns to embedded IP cores without exceeding peak chip thermal limits.
+    \item \textbf{In-Network Neuromorphic Processing}: Li et al.~\cite{Li2024Neuro} demonstrated partial-sum routers for Spiking Neural Networks (SNNs), performing in-flight synaptic weight reductions inside router crossbars to achieve an ultra-low energy footprint of $1.63\text{ pJ/SOP}$.
+\end{itemize}
+
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch3_interactive}
 
@@ -329,9 +340,17 @@ Explore the interactive microarchitecture simulators on the \textbf{NoC Learning
 
 \begin{enumerate}
     \item \textbf{[McKeown1999]} N.~McKeown, ``The iSLIP Scheduling Algorithm for Input-Queued Switches,'' \emph{IEEE/ACM Transactions on Networking}, vol.~7, no.~2, pp.~188--201, 1999. \url{https://doi.org/10.1109/90.769767}
+    \item \textbf{[Tamir1993]} Y.~Tamir and H.-C.~Chi, ``Symmetric Banyan Networks for High-Performance Packet Switches,'' \emph{IEEE Transactions on Computers}, vol.~42, no.~8, pp.~933--947, 1993. \url{https://doi.org/10.1109/12.238484}
     \item \textbf{[Peh2001]} L.-S.~Peh and W.~J.~Dally, ``A Delay Model and Speculative Architecture for Pipelined Routers,'' in \emph{Proceedings of the 7th International Symposium on High-Performance Computer Architecture (HPCA)}, 2001, pp.~255--266. \url{https://doi.org/10.1109/HPCA.2001.903268}
     \item \textbf{[Krishna2013]} T.~Krishna, C.-H.~O.~Chen, W.~C.~Kwon, and L.-S.~Peh, ``Single-Cycle Multi-Hop Asynchronous Repeated Traversal: A Case for Asynchronous Logic in On-Chip Networks,'' in \emph{Proceedings of the 46th Annual IEEE/ACM International Symposium on Microarchitecture (MICRO)}, 2013, pp.~336--348. \url{https://doi.org/10.1145/2540708.2540737}
     \item \textbf{[Liu2026]} Z.~Liu, X.~Wu, and Y.~Ye, ``BuffeRS: A Buffer Reservation Scheduling Strategy for Router Bypassing in NoCs and Multichiplet Networks,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~6, pp.~2635--2648, 2026. \url{https://doi.org/10.1109/TCAD.2025.3624677}
     \item \textbf{[Saranya2026]} M.~N.~Saranya, C.~T.~Avinash, and R.~Rao, ``HyPA: A Low-Latency Hybrid Pipeline Asynchronous Router for Network-on-Chip Architectures in GALS-Based SoCs,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3716692}
     \item \textbf{[Howard2011]} J.~Howard et al., ``A 48-Core IA-32 Message-Passing Processor with DVFS in 45nm CMOS,'' \emph{IEEE Journal of Solid-State Circuits}, vol.~46, no.~1, pp.~173--183, 2011. \url{https://doi.org/10.1109/JSSC.2010.2079496}
+    \item \textbf{[Jafari2016WRR]} F.~Jafari, M.~Daneshtalab, and A.~Jantsch, ``Weighted Round Robin Configuration for Worst-Case Delay Optimization in Network-on-Chip,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~24, no.~5, pp.~1915--1928, 2016. \url{https://doi.org/10.1109/TVLSI.2015.2477810}
+    \item \textbf{[Mandal2023WRR]} S.~K.~Mandal et al., ``Fast Performance Analysis for NoCs With Weighted Round-Robin Arbitration,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~31, no.~8, pp.~1180--1193, 2023. \url{https://doi.org/10.1109/TVLSI.2023.3281050}
+    \item \textbf{[Saranya2026HyPA]} M.~N.~Saranya, C.~T.~Avinash, and R.~Rao, ``HyPA: A Low-Latency Hybrid Pipeline Asynchronous Router for Network-on-Chip,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~3, pp.~750--763, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3716692}
+    \item \textbf{[Fan2024Sync]} W.~Fan et al., ``Communication Synchronization-Aware Arbitration Policy in NoC for Heterogeneous Computing Systems,'' \emph{IEEE Transactions on Circuits and Systems II: Express Briefs}, vol.~71, no.~6, pp.~3105--3109, 2024. \url{https://doi.org/10.1109/TCSII.2024.3361205}
+    \item \textbf{[Xiang2011Test]} D.~Xiang et al., ``Cost-Effective Power-Aware Core Testing in NoCs Based on a New Unicast-Based Multicast Scheme,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~30, no.~9, pp.~1373--1386, 2011. \url{https://doi.org/10.1109/TCAD.2011.2147785}
+    \item \textbf{[Agrawal2014Test]} P.~Agrawal et al., ``Test-Delivery Optimization in Manycore SOCs,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~33, no.~4, pp.~600--613, 2014. \url{https://doi.org/10.1109/TCAD.2013.2294110}
+    \item \textbf{[Li2024Neuro]} D.~Li, M.~M.~Wong, and L.-S.~Peh, ``A 1.63-pJ/SOP Neuromorphic Processor With Integrated Partial Sum Routers for In-Network Computing,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~32, no.~11, pp.~2080--2093, 2024. \url{https://doi.org/10.1109/TVLSI.2024.3411200}
 \end{enumerate}

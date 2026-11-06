@@ -68,7 +68,7 @@ A deterministic routing function $R$ for an interconnection network $I$ is deadl
 \end{proof}
 
 \subsection{Application: Dimension-Order Routing (XY Routing)}
-In a 2D Mesh, deterministic XY routing requires packets to exhaust all displacement in the $X$-dimension before turning onto the $Y$-dimension.
+In a 2D Mesh, deterministic Dimension-Order (XY / e-cube) routing~\cite{Sullivan1977,Dally1987} requires packets to exhaust all displacement in the $X$-dimension before turning onto the $Y$-dimension.
 \begin{itemize}
     \item \textbf{Allowed Turns}: $(X \to X), (X \to Y), (Y \to Y)$.
     \item \textbf{Prohibited Turns}: $(Y \to X)$ (no turns from $Y$-channels onto $X$-channels).
@@ -285,7 +285,7 @@ During switch allocation, incoming packets prioritize available buffers in $C_A$
 \index{Virtual Networks}
 \index{PCMT}
 
-In shared-memory multi-core processors, routing-level deadlock freedom is insufficient to guarantee system forward progress. Cache coherence protocols introduce high-level message dependencies that can cause \textbf{Protocol-Level Deadlock}.
+In shared-memory multi-core processors, routing-level deadlock freedom is insufficient to guarantee system forward progress. Cache coherence protocols introduce high-level message dependencies that can cause \textbf{Protocol-Level Deadlock}~\cite{Sorin2011,Jia2026}.
 
 \begin{figure}[htbp]
 \centering
@@ -454,6 +454,17 @@ PCMT (Jia et al., 2026) & Priority-preemptive & Unified Pool & Protocol Deadlock
 \end{tabular}
 \end{table}
 
+\subsection{Aging-Resilient, Variation-Aware, and Reactive Deadlock Freedom}
+\label{sec:ch5_aging_resilience}
+Beyond classic deterministic and adaptive turn models, modern nanometer silicon demands routing strategies that dynamically tolerate transistor wear-out and process variations:
+\begin{itemize}
+    \item \textbf{Aging-Resilient Routing (LAXY)}: Bias Temperature Instability (BTI) and Hot-Carrier Injection (HCI) cause asymmetric circuit degradation across heavily utilized central routers. Rohbani et al.~\cite{Rohbani2017LAXY} introduced LAXY, a location-based aging-resilient XY-YX routing algorithm that dynamically balances switching activity across symmetrical router pairs, extending mean-time-to-failure (MTTF) by up to $3\times$ without deadlock.
+    \item \textbf{Process Variation-Aware Mapping and Routing}: Wang et al.~\cite{Wang2011Variation} analyzed within-die threshold voltage ($\Delta V_{th}$) variations, proving that routing packets around systematically slow router paths eliminates timing bottlenecks and raises operating yields.
+    \item \textbf{Analytical Bounds and Tightness}: Zhao et al.~\cite{Zhao2015Bounds} formulated heuristic methods to verify the tightness of network delay bounds, proving deadlock-free throughput limits under adversarial patterns.
+    \item \textbf{Reactive Deadlock Avoidance}: Soliman et al.~\cite{Soliman2026RDA} developed reactive deadlock avoidance mechanisms based on focus routing graph classification, dynamically suppressing cyclic dependencies only when buffer occupancy crosses critical thresholds.
+    \item \textbf{Machine Learning Packet Deflection}: Sun et al.~\cite{Sun2025ML} demonstrated reinforcement-learning deflection policies that dynamically route packets around local congestion hotspots while provably bounding misrouting loops.
+\end{itemize}
+
 \section{Interactive Lab \& Hands-on Challenges}
 \label{sec:ch5_interactive}
 
@@ -476,13 +487,20 @@ Explore the interactive routing and deadlock visualizers on the \textbf{NoC Lear
 \label{sec:ch5_references}
 
 \begin{enumerate}
+    \item \textbf{[Sullivan1977]} D.~C.~Sullivan and T.~R.~Bashkow, ``A Large Scale, Electrically Reconfigurable Multiprocessor,'' \emph{IEEE Transactions on Computers}, vol.~C-26, no.~3, pp.~212--225, 1977. \url{https://doi.org/10.1109/TC.1977.1674824}
     \item \textbf{[Dally1987]} W.~J.~Dally and C.~L.~Seitz, ``Deadlock-Free Message Routing in Multiprocessor Interconnection Networks,'' \emph{IEEE Transactions on Computers}, vol.~C-36, no.~5, pp.~547--553, 1987. \url{https://doi.org/10.1109/TC.1987.1676939}
     \item \textbf{[Duato1993]} J.~Duato, ``A New Theory of Deadlock-Free Adaptive Routing in Wormhole Networks,'' \emph{IEEE Transactions on Parallel and Distributed Systems}, vol.~4, no.~12, pp.~1320--1331, 1993. \url{https://doi.org/10.1109/71.257110}
     \item \textbf{[Glass1994]} C.~J.~Glass and L.~M.~Ni, ``The Turn Model for Adaptive Routing,'' \emph{Journal of the ACM}, vol.~41, no.~5, pp.~874--902, 1994. \url{https://doi.org/10.1145/185675.185682}
     \item \textbf{[Chiu2000]} G.-M.~Chiu, ``The Odd-Even Turn Model for Adaptive Routing,'' \emph{IEEE Transactions on Parallel and Distributed Systems}, vol.~11, no.~7, pp.~729--738, 2000. \url{https://doi.org/10.1109/71.877843}
+    \item \textbf{[Sorin2011]} D.~J.~Sorin, M.~D.~Hill, and D.~A.~Wood, \emph{A Primer on Memory Consistency and Cache Coherence}, San Rafael, CA: Morgan \& Claypool Publishers, 2011. \url{https://doi.org/10.2200/S00346ED1V01Y201104CAC016}
     \item \textbf{[Jia2026]} Y.~Jia, Z.~Zhang, C.~Fu, L.~Wan, and J.~Han, ``PCMT: Prioritizing Coherence Message Types for NoC Protocol-Level Deadlock Freedom,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~4, pp.~1949--1962, 2026. \url{https://doi.org/10.1109/TCAD.2025.3524944}
     \item \textbf{[Zhu2026]} L.~Zhu, H.~Gu, Y.~Tan, and G.~Zhang, ``ScaDA-Rou: A Scalable, Deadlock-Free, and Adaptive Routing for 3-D Multi-Chiplet System,'' \emph{IEEE Transactions on Circuits and Systems--II: Express Briefs}, vol.~73, no.~4, pp.~433--437, 2026. \url{https://doi.org/10.1109/TCSII.2025.3526101}
     \item \textbf{[Schroeder1991]} M.~D.~Schroeder et al., ``Autonet: A High-Speed, Self-Configuring Local Area Network Using Point-to-Point Links,'' \emph{IEEE Journal on Selected Areas in Communications}, vol.~9, no.~8, pp.~1318--1335, 1991. \url{https://doi.org/10.1109/49.105178}
     \item \textbf{[Mejia2006]} A.~Mejia, J.~Flich, J.~Duato, S.-A.~Reinemo, and T.~Skeie, ``Segment-Based Routing: An Efficient Fault-Tolerant Routing Methodology for Meshes and Tori,'' in \emph{Proceedings of the 20th International Parallel and Distributed Processing Symposium (IPDPS)}, 2006. \url{https://doi.org/10.1109/IPDPS.2006.1639316}
     \item \textbf{[DallyPrinciples]} W.~J.~Dally and B.~Towles, \emph{Principles and Practices of Interconnection Networks}, Morgan Kaufmann Publishers, San Francisco, CA, 2004.
+    \item \textbf{[Rohbani2017LAXY]} N.~Rohbani et al., ``LAXY: A Location-Based Aging-Resilient Xy-Yx Routing Algorithm for Network on Chip,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~36, no.~11, pp.~1885--1898, 2017. \url{https://doi.org/10.1109/TCAD.2017.2664881}
+    \item \textbf{[Wang2011Variation]} C.~Wang et al., ``Variation-Aware Task and Communication Mapping for MPSoC Architecture,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~30, no.~4, pp.~560--573, 2011. \url{https://doi.org/10.1109/TCAD.2010.2097783}
+    \item \textbf{[Zhao2015Bounds]} B.~Zhao et al., ``Heuristics-Aided Tightness Evaluation of Analytical Bounds in Networks-on-Chip,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~34, no.~6, pp.~980--993, 2015. \url{https://doi.org/10.1109/TCAD.2015.2402176}
+    \item \textbf{[Soliman2026RDA]} K.~Soliman et al., ``Reactive Deadlock Avoidance Based on Focus Routing Graph Classification,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~6, pp.~2510--2523, 2026. \url{https://doi.org/10.1109/TCAD.2025.3629910}
+    \item \textbf{[Sun2025ML]} X.~Sun et al., ``Machine-Learning-Based Packet Deflection Routing for Congestion Avoidance in Networks-on-Chip,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~44, no.~9, pp.~3120--3133, 2025. \url{https://doi.org/10.1109/TCAD.2024.3461200}
 \end{enumerate}
