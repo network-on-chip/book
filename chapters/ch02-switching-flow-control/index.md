@@ -266,7 +266,7 @@ Deepen your understanding of flow control dynamics on the **Companion Learning P
 
 ## 2.7 Checkpoint Assessment
 
-Test your understanding against the 3-Tier Exam Engine in [`share/learning/quiz.md`](https://network-on-chip.github.io/learning/quiz/):
+Test your understanding against the 3-Tier Exam Engine in [`quiz.md`](https://network-on-chip.github.io/learning/quiz/):
 
 #### Question 2.1 (Tier 1: Fundamental)
 *What is the critical hardware advantage of Wormhole Switching compared to Store-and-Forward and Virtual Cut-Through?*

@@ -277,7 +277,7 @@ To build an intuitive and experimental understanding of interconnect trade-offs,
 
 ## 1.8 Checkpoint Assessment
 
-Test your mastery of Chapter 1 concepts. (These questions mirror the 3-Tier Exam Engine in [`share/learning/quiz.md`](https://network-on-chip.github.io/learning/quiz/)):
+Test your mastery of Chapter 1 concepts. (These questions mirror the 3-Tier Exam Engine in [`quiz.md`](https://network-on-chip.github.io/learning/quiz/)):
 
 #### Question 1.1 (Tier 1: Fundamental)
 *Why does the propagation delay of a shared multi-drop bus grow as $O(N^{3/2})$ to $O(N^2)$ as core count $N$ scales, rather than remaining constant?*
