@@ -1,0 +1,96 @@
+%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Chapter 11: Hardware Security & Trust in On-Chip Networks
+% Springer Nature Monograph svmono format
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Hardware Security \& Trust in On-Chip Networks}
+\label{chap:noc-security}
+
+\abstract*{As multi-core microprocessors expand into multi-tenant cloud servers and heterogeneously packaged 2.5D/3D chiplet architectures, the Network-on-Chip (NoC) is no longer an isolated private communication bus—it is a shared, multi-user communication highway. In modern heterogeneous Systems-on-Chip (SoCs), untrusted third-party intellectual property (3P-IP) cores, accelerator chiplets, and virtualized guest operating systems share identical router crossbars, virtual-channel buffers, and physical link wires. This convergence introduces severe zero-trust hardware vulnerabilities: malicious Hardware Trojans that manipulate Dynamic Thermal Management (DTM) loops to burn silicon, timing covert channels that exfiltrate cryptographic AES keys via buffer contention jitter, and Denial-of-Service (DoS) buffer flooding. In this chapter, we explore how architects secure on-chip networks at the physical and microarchitectural layers without incurring the multi-cycle latency of software packet encryption, featuring in-situ Weighted Moving Average (WMA) anomaly detection, intrinsic Physical Unclonable Functions (PUFs) derived from sub-nanosecond wire delay variation, and synthesizable SystemVerilog security monitors.}
+
+\section{The Zero-Trust Silicon Frontier}
+\label{sec:noc-security-intro}
+
+\begin{svgraybox}
+\textbf{Architectural Intuition: The Multi-Tenant Airport Highway} \\
+Imagine an on-chip network as a highway connecting different office buildings inside an airport:
+\begin{itemize}
+    \item In traditional single-core or single-tenant computers, every vehicle on the road belongs to the same trusted company.
+    \item In modern cloud SoCs and multi-chiplet processors, untrusted commercial rental cars, third-party delivery vans, and secret government couriers all share the \textbf{exact same physical lanes and intersections} (router crossbars).
+    \item Even if the courier's cargo is locked in an armored box (software payload encryption), an eavesdropper sitting at the intersection can measure \textbf{when} the courier arrives, \textbf{how long} it waits at red lights (timing covert channels), or deliberately cause traffic jams (Denial-of-Service and thermal meltdowns) without ever opening the box!
+\end{itemize}
+\end{svgraybox}
+
+In conventional computer architecture, security was long relegated to software operating systems and cryptographic accelerators. However, the physical reality of deep-submicron CMOS and multi-die modular packaging has invalidated the assumption of a trusted hardware substrate. Modern high-performance SoCs integrate intellectual property (IP) blocks from dozens of external design houses, fabricated across international supply chains and assembled via multi-chiplet packaging (e.g., UCIe, silicon interposers).
+
+When untrusted IP blocks share on-chip router buffers and physical link wires, attackers can bypass memory access permissions entirely. By exploiting microscopic physical interactions—such as thermal hotspots, power supply droop, and packet queuing delay variance—malicious hardware can extract private encryption keys, degrade quality of service, or induce physical silicon wearout~\cite{Hasanzadeh2026Heat,Jaster2025Trust}.
+
+\section{Threat Models \& Attack Vectors on Interconnects}
+\label{sec:threat-models}
+
+Interconnect-level security threats fall into three primary architectural categories:
+
+\begin{enumerate}
+    \item \textbf{Thermal Hardware Trojans (HTs)}: Rather than attempting to alter packet data payloads, a stealthy thermal Trojan repeatedly transmits bursts of dummy packets through a targeted victim router. The dynamic switching energy ($P_{\mathrm{dyn}} = \alpha C V^2 f$) elevates the local junction temperature ($T_j > 105^\circ\mathrm{C}$), triggering Dynamic Thermal Management (DTM) throttling and starving co-located critical threads of throughput~\cite{Hasanzadeh2026Heat}.
+    
+    \item \textbf{Timing Covert Channels}: Two unprivileged, isolated processes communicate across security boundaries by modulating router queuing contention. A Trojan transmitter modulates inter-flit arrival delays $\Delta t$, while an external receiver measures delay jitter across a shared output port to decode secret cryptographic keys~\cite{Jaster2025Trust}.
+    
+    \item \textbf{Denial-of-Service (DoS) and Protocol Deadlocks}: Rogue or defective cores inject circular packet sequences or spoof credit tokens, inducing severe buffer exhaustion knots in the Channel Dependency Graph (CDG) and freezing network-wide communication.
+\end{enumerate}
+
+\section{Weighted Moving Average (WMA) Thermal Anomaly Detection}
+\label{sec:wma-detection}
+
+To defend against thermal Hardware Trojans without heavy floating-point digital signal processors, modern architectures deploy lightweight in-situ anomaly detection at each router~\cite{Hasanzadeh2026Heat}.
+
+\subsection{Mathematical Formulation}
+Let $T_t$ represent the digitized temperature reading at sample epoch $t$. The Exponentially Weighted Moving Average (EWMA) baseline mean $\mu_t$ and mean absolute deviation $D_t$ evolve according to:
+
+\begin{equation}
+\mu_t = \alpha T_t + (1 - \alpha)\mu_{t-1} = \mu_{t-1} + \alpha(T_t - \mu_{t-1})
+\label{eq:ewma-mean}
+\end{equation}
+
+\begin{equation}
+D_t = \alpha |T_t - \mu_{t-1}| + (1 - \alpha)D_{t-1} = D_{t-1} + \alpha(|T_t - \mu_{t-1}| - D_{t-1})
+\label{eq:ewma-dev}
+\end{equation}
+
+To eliminate expensive silicon multipliers and floating-point units in the router pipeline, the weighting factor $\alpha$ is chosen as an inverse power of two:
+\begin{equation}
+\alpha = 2^{-S}, \quad S \in \{2, 3, 4\}
+\end{equation}
+For $S = 3$ ($\alpha = 1/8$), multiplication by $\alpha$ reduces to a 3-bit arithmetic right shift (\texttt{>>> 3}).
+
+An anomaly is flagged whenever the current thermal excursion exceeds a dynamic statistical boundary:
+\begin{equation}
+\mathrm{Anomaly} \iff |T_t - \mu_{t-1}| > K \cdot D_{t-1}
+\label{eq:anomaly-thresh}
+\end{equation}
+Choosing $K = 3$ corresponds to approximately $3\sigma$ statistical deviation. In hardware, $3 \cdot D = (D \ll 1) + D$, which requires only a single wire shift and one standard-cell adder!
+
+\section{Intrinsic Physical Unclonable Functions (PUFs)}
+\label{sec:noc-puf}
+
+Storing cryptographic keys in on-chip non-volatile memory exposes SoCs to physical probing attacks. Instead, \textbf{NoC-based Physical Unclonable Functions (PUFs)} exploit intrinsic deep-submicron manufacturing variations across identically laid out crossbar wires~\cite{Grover2025PUF}:
+
+\begin{itemize}
+    \item \textbf{Sub-Nanosecond Path Mismatches}: Microscopic variations in copper wire line width, edge roughness, and transistor threshold voltages ($V_{th}$) create subtle, deterministic delay differences between symmetrical router paths.
+    \item \textbf{Arbiter Race Conditions}: When challenge pulses are injected simultaneously along two symmetrical crossbar routes, an SR latch arbiter acts as a race arbiter, generating an unclonable output bit $R \in \{0, 1\}$.
+    \item \textbf{Die-to-Die Authentication}: A 32-bit challenge word selects input-output port pairs across adjacent chiplets. Before inter-die packets are forwarded, the receiver verifies the sender's PUF signature, immediately discarding spoofed flits injected by malicious or counterfeit silicon.
+\end{itemize}
+
+\section{Synthesizable SystemVerilog Hardware Monitor}
+\label{sec:security-rtl}
+
+The complete synthesizable SystemVerilog module for the zero-multiplier WMA thermal anomaly detector is provided in \texttt{code/wma\_thermal\_detector.sv}. Synthesized on an open 45\,nm standard-cell library (Nangate45), the hardware consumes under 180 NAND2-equivalent gates, operating at over $2.5\,\mathrm{GHz}$ with less than $0.5\%$ router area overhead.
+
+\section{Chapter Summary \& Key Takeaways}
+\label{sec:security-summary}
+
+\begin{enumerate}
+    \item \textbf{Zero-Trust Interconnects}: Modern multi-tenant and multi-chiplet SoCs require hardware-level trust verification; software encryption cannot protect timing, headers, or thermal dissipation.
+    \item \textbf{Hardware-Friendly WMA Math}: By constraining EWMA parameters to powers of two ($\alpha = 2^{-S}$), thermal anomaly detection is achieved using shift-and-add arithmetic without multipliers.
+    \item \textbf{Intrinsic PUFs}: Interconnect wire delay variation provides an unclonable physical fingerprint for chiplet identity verification.
+    \item \textbf{Interactive Laboratory}: Readers can experience these defense mechanisms live in the \textbf{Silicon Sentinel Arcade Game} (\url{https://network-on-chip.github.io/learning/interactive/security/}).
+\end{enumerate}

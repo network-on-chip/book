@@ -1,0 +1,92 @@
+%%%%%%%%%%%%%%%%%%%% chapter.tex %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Chapter 12: Domain-Specific NoCs for LLMs, Transformers & Neuromorphic SNNs
+% Springer Nature Monograph svmono format
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Domain-Specific NoCs for LLMs, Transformers \& Neuromorphic SNNs}
+\label{chap:ai-llm-snn}
+
+\abstract*{In the first two decades of Network-on-Chip research, on-chip communication fabrics were engineered for symmetric multi-core processors running cache-coherent CPU hierarchies and stochastic, uniform traffic. Today, computing is defined by \textbf{Generative Artificial Intelligence (AI)} and \textbf{Bio-Inspired Neuromorphic Architectures}. Large Language Models (LLMs) featuring hundreds of billions of parameters (e.g., Llama, GPT, DeepSeek) and event-driven Spiking Neural Networks (SNNs) impose communication patterns fundamentally alien to traditional meshes: massive synchronous All-Reduce and All-to-All collectives across thousands of tensor cores, multi-terabyte KV-cache memory bandwidth bottlenecks, and high-fanout sparse spike multicast trees. In this chapter, we explore domain-specific interconnect innovations designed to overcome these scaling barriers: In-Network Computing where router crossbars execute gradient accumulation in-flight (PAC-NoC), wafer-scale megacore engines and Ruche wire-maximal networks (the 2,048-core 12-nm HammerBlade SoC), 3D face-to-face copper-pillar hybrid bonding providing $>16\,\mathrm{TB/s}$ of vertical DRAM bandwidth (SiloBreaker), and hypergraph spike-sharing partitioning algorithms (SNNcut and SparrowSNN).}
+
+\section{The Generative AI Communication Crisis}
+\label{sec:ai-interconnect-intro}
+
+\begin{svgraybox}
+\textbf{Architectural Intuition: The Classical Highway vs. The AI Assembly Line} \\
+Why do modern LLMs and neural networks break traditional Networks-on-Chip?
+\begin{itemize}
+    \item \textbf{Classical CPU Traffic (City Traffic)}: In a traditional computer, individual cores send small, unpredictable messages back and forth—like cars navigating street corners in a busy downtown. Standard 2D meshes handle this stochastic traffic adequately.
+    \item \textbf{Generative AI \& LLMs (The Industrial Freight Train)}: Training a 100-Billion Parameter Transformer is not random city traffic. Every fraction of a second, thousands of tensor cores simultaneously halt computation and demand to exchange billions of floating-point numbers in a synchronized \textbf{All-Reduce collective}! If packets must travel across dozens of router hops and round-trip through central DRAM, the entire supercomputer stalls in massive pipeline bubbles~\cite{Ouyang2026PAC}.
+    \item \textbf{Neuromorphic SNNs (The Forest Fire Alarm)}: Spiking brain models do not stream continuous matrices. Instead, an artificial neuron stays dead silent until its voltage crosses a threshold, then flashes a single binary spike that must be copied and delivered to hundreds of distant target neurons in a single cycle!
+\end{itemize}
+\end{svgraybox}
+
+In distributed Large Language Model systems, parallelism is partitioned across multiple dimensions:
+\begin{enumerate}
+    \item \textbf{Tensor Parallelism (TP)}: Individual matrix multiplications (GEMM) are split across cores, requiring an \textbf{All-Reduce} after every linear projection layer.
+    \item \textbf{Pipeline Parallelism (PP)}: Successive Transformer layers are partitioned across sequential nodes, generating idle compute bubbles ($1 - \frac{N}{N + P - 1}$).
+    \item \textbf{Mixture-of-Experts (MoE)}: Tokens are dynamically dispatched to specialized expert accelerators via sparse gating functions, creating severe, bursty all-to-all communication patterns.
+\end{enumerate}
+
+\section{In-Network Computing \& Hierarchical Reduction Trees}
+\label{sec:in-network-computing}
+
+In conventional on-chip networks, performing an All-Reduce requires streaming all unreduced gradient flits from source cores across the mesh to memory or a centralized master tile, performing addition, and broadcasting the results back. This incurs $2N$ global transfers and quickly saturates the bisection bandwidth.
+
+In contrast, \textbf{In-Network Computing} integrates arithmetic reduction logic directly into router crossbars~\cite{Ouyang2026PAC}:
+\begin{itemize}
+    \item \textbf{Tag-Matching Aggregation}: As flits bearing identical collective reduction tags arrive from competing input ports (North, East, South, West), router arbiters lock input buffers.
+    \item \textbf{In-Flight Arithmetic}: Rather than forwarding raw flits, an ALU tree within the crossbar adds incoming gradient values on the fly:
+    \begin{equation}
+    V_{\mathrm{accum}} = \sum_{p \in \mathrm{Participating}} V_p
+    \label{eq:in-network-sum}
+    \end{equation}
+    \item \textbf{Bandwidth Elimination}: In a 4-ary aggregation tree, $75\%$ of collective flits are consumed and reduced inside the router fabric, cutting multi-head attention backward latency by more than $2\times$~\cite{Ouyang2026PAC}.
+\end{itemize}
+
+\section{Wafer-Scale Engines \& Ruche Wire-Maximal Topologies}
+\label{sec:wafer-scale-ruche}
+
+Scaling AI accelerators to tens of thousands of cores requires transcending single-die reticle boundaries ($\approx 858\,\mathrm{mm}^2$):
+
+\begin{itemize}
+    \item \textbf{Wafer-Scale Interconnects (Theseus)}: By patterning entire $300\,\mathrm{mm}$ silicon wafers as continuous computation engines, cross-reticle communication replaces off-package PCIe/Ethernet cables with on-silicon metal wires~\cite{Zhu2025}. Hardware bypass multiplexers route traffic dynamically around reticle boundary manufacturing defects.
+    \item \textbf{Ruche Networks in Silicon (HammerBlade)}: In the 12-nm FinFET 2,048-core HammerBlade SoC, researchers deployed \textbf{Ruche Networks}~\cite{Gao2026}. Thick upper metal layers (M7/M8) have significantly lower RC wire delays than lower tracks. Ruche networks exploit this physical asymmetry to construct multi-hop express links that skip 2 or 4 intermediate routers in a single clock cycle without adding radix ports to intermediate crossbars, setting world records in CoreMark efficiency.
+\end{itemize}
+
+\section{3D Face-to-Face Hybrid Bonding \& Memory Silo Breaking}
+\label{sec:hybrid-bonding-silos}
+
+Because auto-regressive LLM token generation is fundamentally memory-bandwidth bound, traditional TSV-based 3D stacking (such as HBM) creates severe communication bottlenecks. 
+
+In \textbf{SiloBreaker}~\cite{Wu2026Silo}, logic dies and DRAM are bonded face-to-face using \textbf{hybrid bonding}:
+\begin{itemize}
+    \item \textbf{Ultra-Dense Copper Pillars}: Pitch sizes as small as $3\,\mu\mathrm{m}$ achieve interconnect densities of over $110{,}000\,\mathrm{connections/mm^2}$.
+    \item \textbf{Terabyte-Class Bandwidth}: Hybrid bonding delivers over $16\,\mathrm{TB/s}$ of vertical DRAM bandwidth directly into on-chip router tiles.
+    \item \textbf{Architecture-Scheduling Co-Design}: By co-scheduling matrix multiplications to match the physical vertical memory channels, memory starvation bubbles are eliminated.
+\end{itemize}
+
+\section{Neuromorphic Spiking Interconnects: AER \& SNNcut}
+\label{sec:neuromorphic-snncut}
+
+Spiking Neural Networks (SNNs) process information using asynchronous event-driven pulses (spikes) encoded in \textbf{Address-Event Representation (AER)}:
+\begin{itemize}
+    \item \textbf{The Multicast Challenge}: A single biological axon spike must often fan out to hundreds of post-synaptic neurons across the die. Transmitting hundreds of unicast packets saturates router queues.
+    \item \textbf{Spike-Sharing Graph Partitioning (SNNcut)}: By formulating neuron placement as a hypergraph min-cut problem, neurons sharing overlapping post-synaptic targets are clustered onto the same core~\cite{Xing2026SNNcut,Bai2026Sparrow}. A single multicast flit is transmitted across the NoC, where local fanout logic distributes the spike locally, cutting inter-core flit traffic by $>60\%$.
+\end{itemize}
+
+\section{Synthesizable SystemVerilog Reduction Crossbar}
+\label{sec:reduction-rtl}
+
+The complete synthesizable SystemVerilog module implementing on-the-fly crossbar reduction is provided in \texttt{code/in\_network\_reduction\_router.sv}. Synthesized on an open 45\,nm standard-cell library, the reduction crossbar operates at over $1.8\,\mathrm{GHz}$ and completes 4-input floating-point accumulation in a single cycle.
+
+\section{Chapter Summary \& Key Takeaways}
+\label{sec:ai-summary}
+
+\begin{enumerate}
+    \item \textbf{From Packets to Collectives}: Modern AI workloads require NoCs optimized for synchronous All-Reduce and All-to-All collective operations rather than stochastic point-to-point traffic.
+    \item \textbf{In-Network Computing}: Performing gradient reduction directly inside router crossbars reduces collective flit traffic by up to $75\%$, eliminating memory bandwidth bottlenecks.
+    \item \textbf{Ruche Networks}: Upper metal routing tracks can be exploited to bypass intermediate routers without increasing crossbar switch radix.
+    \item \textbf{Hybrid Bonding}: Face-to-face copper pillar bonding delivers over $16\,\mathrm{TB/s}$ of vertical DRAM bandwidth, breaking the memory wall for on-device LLM serving.
+    \item \textbf{Interactive Laboratories}: Readers can experience AI collective acceleration in \textbf{Transformer Titan} (\url{https://network-on-chip.github.io/learning/interactive/transformer/}) and spike multicasting in \textbf{Neuromorphic Nexus} (\url{https://network-on-chip.github.io/learning/interactive/neuromorphic/}).
+\end{enumerate}
