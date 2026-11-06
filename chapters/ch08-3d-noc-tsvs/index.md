@@ -228,7 +228,7 @@ The companion simulation script [`code/tsv_vertical_mesh_sim.py`](code/tsv_verti
 ### 8.7.1 Simulation Execution & Results
 
 ```bash
-$ python3 share/book/chapters/ch08-3d-noc-tsvs/code/tsv_vertical_mesh_sim.py
+$ python3 code/tsv_vertical_mesh_sim.py
 === 3D Network-on-Chip (3D-NoC) Simulation Results ===
 Topology: 4x4x3 Mesh (48 Router Tiles across 3 Silicon Tiers)
 
@@ -279,37 +279,36 @@ Compare the propagation delay of a vertical TSV link versus a planar intermediat
 3. Calculate the Elmore delay of the planar wire: $\tau_{\text{planar}} = R_d C_{\text{wire}} + R_{\text{wire}} C_{\text{wire}} / 2$.
 4. Determine the speedup of the vertical TSV link over the planar wire.
 
-#### Solution:
+??? success "Reveal Detailed Solution"
+    1. **TSV Resistance & Capacitance**:
 
-1. **TSV Resistance & Capacitance**:
+        $$A_{\text{tsv}} = \pi \left(\frac{d_{\text{tsv}}}{2}\right)^2 = \pi \times (2 \times 10^{-6})^2 = 1.2566 \times 10^{-11}\text{ m}^2$$
 
-    $$A_{\text{tsv}} = \pi \left(\frac{d_{\text{tsv}}}{2}\right)^2 = \pi \times (2 \times 10^{-6})^2 = 1.2566 \times 10^{-11}\text{ m}^2$$
+        $$R_{\text{tsv}} = (1.7 \times 10^{-8}\ \Omega\cdot\text{m}) \times \frac{40 \times 10^{-6}\text{ m}}{1.2566 \times 10^{-11}\text{ m}^2} = 0.0541\ \Omega = 54.1\text{ m}\Omega$$
 
-    $$R_{\text{tsv}} = (1.7 \times 10^{-8}\ \Omega\cdot\text{m}) \times \frac{40 \times 10^{-6}\text{ m}}{1.2566 \times 10^{-11}\text{ m}^2} = 0.0541\ \Omega = 54.1\text{ m}\Omega$$
+        $$C_{\text{tsv}} = \frac{2 \pi \epsilon_r \epsilon_0 h_{\text{tsv}}}{\ln\left(\frac{r + t_{\text{ox}}}{r}\right)} = \frac{2 \pi \times 3.9 \times (8.854 \times 10^{-12}) \times (40 \times 10^{-6})}{\ln\left(\frac{2.15}{2.00}\right)} = \frac{8.683 \times 10^{-15}}{0.07232} = 120.1\text{ fF}$$
 
-    $$C_{\text{tsv}} = \frac{2 \pi \epsilon_r \epsilon_0 h_{\text{tsv}}}{\ln\left(\frac{r + t_{\text{ox}}}{r}\right)} = \frac{2 \pi \times 3.9 \times (8.854 \times 10^{-12}) \times (40 \times 10^{-6})}{\ln\left(\frac{2.15}{2.00}\right)} = \frac{8.683 \times 10^{-15}}{0.07232} = 120.1\text{ fF}$$
+    2. **TSV Elmore Delay**:
 
-2. **TSV Elmore Delay**:
+        $$\tau_{\text{tsv}} = R_d C_{\text{tsv}} + \frac{R_{\text{tsv}} C_{\text{tsv}}}{2} \approx (400\ \Omega) \times (120.1 \times 10^{-15}\text{ F}) = 48.04\text{ ps}$$
 
-    $$\tau_{\text{tsv}} = R_d C_{\text{tsv}} + \frac{R_{\text{tsv}} C_{\text{tsv}}}{2} \approx (400\ \Omega) \times (120.1 \times 10^{-15}\text{ F}) = 48.04\text{ ps}$$
+        (The $R_{\text{tsv}} C_{\text{tsv}} / 2$ term is $54.1 \times 10^{-3} \times 120.1 \times 10^{-15} / 2 = 3.25 \times 10^{-15}\text{ s} = 0.003\text{ ps}$, which is completely negligible).
 
-    (The $R_{\text{tsv}} C_{\text{tsv}} / 2$ term is $54.1 \times 10^{-3} \times 120.1 \times 10^{-15} / 2 = 3.25 \times 10^{-15}\text{ s} = 0.003\text{ ps}$, which is completely negligible).
+    3. **Planar Wire Elmore Delay**:
 
-3. **Planar Wire Elmore Delay**:
+        $$R_{\text{wire}} = 80\ \Omega/\text{mm} \times 1.5\text{ mm} = 120\ \Omega$$
 
-    $$R_{\text{wire}} = 80\ \Omega/\text{mm} \times 1.5\text{ mm} = 120\ \Omega$$
+        $$C_{\text{wire}} = 180\text{ fF/mm} \times 1.5\text{ mm} = 270\text{ fF}$$
 
-    $$C_{\text{wire}} = 180\text{ fF/mm} \times 1.5\text{ mm} = 270\text{ fF}$$
+        $$\tau_{\text{planar}} = R_d C_{\text{wire}} + \frac{R_{\text{wire}} C_{\text{wire}}}{2} = (400 \times 270 \times 10^{-15}) + \left(\frac{120 \times 270 \times 10^{-15}}{2}\right)$$
 
-    $$\tau_{\text{planar}} = R_d C_{\text{wire}} + \frac{R_{\text{wire}} C_{\text{wire}}}{2} = (400 \times 270 \times 10^{-15}) + \left(\frac{120 \times 270 \times 10^{-15}}{2}\right)$$
+        $$\tau_{\text{planar}} = 108.0\text{ ps} + 16.2\text{ ps} = 124.2\text{ ps}$$
 
-    $$\tau_{\text{planar}} = 108.0\text{ ps} + 16.2\text{ ps} = 124.2\text{ ps}$$
+    4. **Speedup**:
 
-4. **Speedup**:
+        $$\text{Speedup} = \frac{\tau_{\text{planar}}}{\tau_{\text{tsv}}} = \frac{124.2\text{ ps}}{48.04\text{ ps}} \approx 2.59\times$$
 
-    $$\text{Speedup} = \frac{\tau_{\text{planar}}}{\tau_{\text{tsv}}} = \frac{124.2\text{ ps}}{48.04\text{ ps}} \approx 2.59\times$$
-
-    The vertical TSV transmits data **$2.59\times$ faster** than the planar wire, while consuming less than half the capacitive dynamic switching energy ($120\text{ fF}$ vs. $270\text{ fF}$).
+        The vertical TSV transmits data **$2.59\times$ faster** than the planar wire, while consuming less than half the capacitive dynamic switching energy ($120\text{ fF}$ vs. $270\text{ fF}$).
 
 ---
 
@@ -319,31 +318,41 @@ A 3-tier 3D-IC stack dissipates power uniformly across each layer: $P_0 = P_1 = 
 2. Compute the exact temperatures of Tier 0, Tier 1, and Tier 2.
 3. What is the temperature differential between the top tier and bottom tier?
 
-#### Solution:
+??? success "Reveal Detailed Solution"
+    1. **Derivation**:
+        - The total heat from all three tiers must pass through the heat sink:
 
-1. **Derivation**:
-    - The total heat from all three tiers must pass through the heat sink:
+            $$T_0 = T_{\text{amb}} + R_{\text{hs}} \cdot (P_0 + P_1 + P_2) = T_{\text{amb}} + R_{\text{hs}} \cdot P_{\text{total}}$$
 
-        $$T_0 = T_{\text{amb}} + R_{\text{hs}} \cdot (P_0 + P_1 + P_2) = T_{\text{amb}} + R_{\text{hs}} \cdot P_{\text{total}}$$
+        - The heat from Tier 1 and Tier 2 conducts down through the lower bonding interface into Tier 0:
 
-    - The heat from Tier 1 and Tier 2 conducts down through the lower bonding interface into Tier 0:
+            $$T_1 = T_0 + R_{\text{inter}} \cdot (P_1 + P_2)$$
 
-        $$T_1 = T_0 + R_{\text{inter}} \cdot (P_1 + P_2)$$
+        - The heat from Tier 2 conducts down through the upper bonding interface into Tier 1:
 
-    - The heat from Tier 2 conducts down through the upper bonding interface into Tier 1:
+            $$T_2 = T_1 + R_{\text{inter}} \cdot P_2$$
 
-        $$T_2 = T_1 + R_{\text{inter}} \cdot P_2$$
+    2. **Numerical Computation**:
 
-2. **Numerical Computation**:
+        $$T_0 = 40.0^\circ\text{C} + (0.40\text{ K/W}) \times (75.0\text{ W}) = 40.0 + 30.0 = 70.0^\circ\text{C}$$
 
-    $$T_0 = 40.0^\circ\text{C} + (0.40\text{ K/W}) \times (75.0\text{ W}) = 40.0 + 30.0 = 70.0^\circ\text{C}$$
+        $$T_1 = 70.0^\circ\text{C} + (0.35\text{ K/W}) \times (25.0 + 25.0\text{ W}) = 70.0 + (0.35 \times 50.0) = 70.0 + 17.5 = 87.5^\circ\text{C}$$
 
-    $$T_1 = 70.0^\circ\text{C} + (0.35\text{ K/W}) \times (25.0 + 25.0\text{ W}) = 70.0 + (0.35 \times 50.0) = 70.0 + 17.5 = 87.5^\circ\text{C}$$
+        $$T_2 = 87.5^\circ\text{C} + (0.35\text{ K/W}) \times (25.0\text{ W}) = 87.5 + 8.75 = 96.25^\circ\text{C}$$
 
-    $$T_2 = 87.5^\circ\text{C} + (0.35\text{ K/W}) \times (25.0\text{ W}) = 87.5 + 8.75 = 96.25^\circ\text{C}$$
+    3. **Thermal Stacking Differential**:
 
-3. **Thermal Stacking Differential**:
+        $$\Delta T = T_2 - T_0 = 96.25^\circ\text{C} - 70.0^\circ\text{C} = 26.25^\circ\text{C}$$
 
-    $$\Delta T = T_2 - T_0 = 96.25^\circ\text{C} - 70.0^\circ\text{C} = 26.25^\circ\text{C}$$
+        The top tier operates **$26.25^\circ\text{C}$ hotter** than the bottom tier due entirely to vertical thermal resistance accumulation.
 
-    The top tier operates **$26.25^\circ\text{C}$ hotter** than the bottom tier due entirely to vertical thermal resistance accumulation.
+---
+
+## References & Bibliography
+
+1. **[Pavlidis2009]** V. F. Pavlidis and E. G. Friedman, *Three-Dimensional Integrated Circuit Design*, Morgan Kaufmann, Burlington, MA, 2009. ISBN: 978-0-12-374343-5.
+2. **[Loi2011]** I. Loi, F. Angiolini, S. Fujita, S. Mitra, and L. Benini, "Characterization and Implementation of Fault-Tolerant Vertical Links for 3-D Networks-on-Chip," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 30, no. 1, pp. 124–134, Jan. 2011. [DOI: 10.1109/TCAD.2010.2065990](https://doi.org/10.1109/TCAD.2010.2065990).
+3. **[Seiculescu2010]** C. Seiculescu, S. Murali, L. Benini, and G. De Micheli, "SunFloor 3D: A Tool for Networks on Chip Topology Synthesis for 3-D Systems on Chips," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 29, no. 12, pp. 1987–2000, Dec. 2010. [DOI: 10.1109/TCAD.2010.2061610](https://doi.org/10.1109/TCAD.2010.2061610).
+4. **[More2018]** A. More, V. Pano, and B. Taskin, "Vertical Arbitration-Free 3-D NoCs," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 37, no. 9, pp. 1853–1866, Sept. 2018. [DOI: 10.1109/TCAD.2017.2768415](https://doi.org/10.1109/TCAD.2017.2768415).
+5. **[AlAlousi2026]** A. Al-Alousi, M. Li, and H. Meng, "Vendor-Independent Design Space Exploration and Resource Optimization Framework for 3-D Networks-on-Chip Using Hypergraph-Genetic Algorithm Integration," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 5, pp. 2236–2248, May 2026. [DOI: 10.1109/TCAD.2025.3616073](https://doi.org/10.1109/TCAD.2025.3616073).
+6. **[Chao2013]** C.-H. Chao, K.-C. Chen, and A.-Y. Wu, "Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 11, pp. 2118–2131, Nov. 2013. [DOI: 10.1109/TVLSI.2012.2227852](https://doi.org/10.1109/TVLSI.2012.2227852).

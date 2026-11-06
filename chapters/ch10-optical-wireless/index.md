@@ -187,3 +187,13 @@ Eliminating waveguide crossings inside the switching elements reduces insertion 
 2. **The Laser Flashlight**: If a lightpath suffers $10\text{ dB}$ of loss, what fraction of the light arrives at the photodetector? If the receiver needs $0.01\text{ mW}$, how powerful must the laser be?
 3. **The Hot CPU**: A processor heats up by $15^\circ\text{C}$. If the ring resonator drifts by $0.10\text{ nm/}^\circ\text{C}$, how many nanometers did the resonant wavelength move?
 4. **Walkie-Talkie vs. Whisper**: Why is an on-chip wireless broadcast faster for cache invalidation than sending 63 separate point-to-point electrical packets through a mesh?
+
+---
+
+## References & Bibliography
+
+1. **[Kao2026]** W.-Y. Kao, T.-J. Lin, and Y.-W. Chang, "Provably Good Physically Aware WRONoC Design for Customized and Fault-Tolerant Topologies With Parallel Switching Elements and Sequence-Based Models," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 3, pp. 650–663, Mar. 2026. [DOI: 10.1145/3658617.3697557](https://doi.org/10.1145/3658617.3697557).
+2. **[Ye2013]** Y. Ye, J. Xu, X. Wu, W. Zhang, X. Wang, M. Nikdast, Z. Wang, and W. Liu, "System-Level Modeling and Analysis of Thermal Effects in Optical Networks-on-Chip," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 2, pp. 292–305, Feb. 2013. [DOI: 10.1109/TVLSI.2012.2185524](https://doi.org/10.1109/TVLSI.2012.2185524).
+3. **[Shahmoradi2026]** M. Shahmoradi, A. Yelboğa, E. Alarcón, K. K. Tokgöz, and S. Abadal, "Channel-Aware Behavioral Power Modeling of CMOS OOK Transceivers for Wireless Network-on-Chip Systems," *IEEE Transactions on Circuits and Systems I: Regular Papers*, vol. 73, no. 4, pp. 1620–1633, Apr. 2026. [DOI: 10.5281/zenodo.19449802](https://doi.org/10.5281/zenodo.19449802).
+4. **[Abadal2018]** S. Abadal, E. Alarcón, A. Cabellos-Aparicio, M. C. Lemme, and M. Nemirovsky, "Graphene-Enabled Wireless Communication for Manycore Architectures," *IEEE Communications Magazine*, vol. 56, no. 6, pp. 30–36, June 2018. [DOI: 10.1109/MCOM.2018.1700609](https://doi.org/10.1109/MCOM.2018.1700609).
+5. **[Taghvaee2022]** M. Taghvaee et al., "Fault-Tolerant Wireless Network-on-Chip Architecture for Multi-Core Systems," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 41, no. 10, pp. 3478–3491, Oct. 2022. [DOI: 10.1109/TCAD.2021.3131580](https://doi.org/10.1109/TCAD.2021.3131580).

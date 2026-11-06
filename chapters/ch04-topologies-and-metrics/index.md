@@ -356,13 +356,14 @@ The following table summarizes the graph-theoretic, microarchitectural, and phys
 
 ---
 
-## 4.9 References & Bibliography
+## References & Bibliography
 
-1. **G. Passas, M. Katevenis, and D. Pnevmatikatos**, "Crossbar NoCs Are Scalable Beyond 100 Nodes," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, Vol. 31, No. 4, pp. 573–585, April 2012. DOI: [10.1109/TCAD.2011.2176730](https://doi.org/10.1109/TCAD.2011.2176730).
-2. **M. Jun, S. Yoo, and E.-Y. Chung**, "Topology Synthesis of Cascaded Crossbar Switches," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, Vol. 28, No. 6, pp. 926–930, June 2009. DOI: [10.1109/TCAD.2009.2017079](https://doi.org/10.1109/TCAD.2009.2017079).
-3. **V. Dumitriu and G. N. Khan**, "Throughput-Oriented NoC Topology Generation and Analysis for High Performance SoCs," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, Vol. 17, No. 10, pp. 1433–1446, October 2009. DOI: [10.1109/TVLSI.2008.2006798](https://doi.org/10.1109/TVLSI.2008.2006798).
-4. **J. Kim, J. Balfour, and W. J. Dally**, "Flattened Butterfly Topology for On-Chip Networks," *Proceedings of the 40th Annual IEEE/ACM International Symposium on Microarchitecture (MICRO)*, pp. 172–182, 2007. DOI: [10.1109/MICRO.2007.28](https://doi.org/10.1109/MICRO.2007.28).
-5. **J. Kim, W. J. Dally, S. Scott, and D. Abts**, "Technology-Driven, Highly-Scalable Dragonfly Topology," *Proceedings of the 35th Annual International Symposium on Computer Architecture (ISCA)*, pp. 77–88, 2008. DOI: [10.1109/ISCA.2008.19](https://doi.org/10.1109/ISCA.2008.19).
-6. **C. Clos**, "A Study of Non-Blocking Switching Networks," *Bell System Technical Journal*, Vol. 32, No. 2, pp. 406–424, 1953.
-7. **C. E. Leiserson**, "Fat-Trees: Universal Networks for Hardware-Efficient Supercomputing," *IEEE Transactions on Computers*, Vol. C-34, No. 10, pp. 892–901, October 1985. DOI: [10.1109/TC.1985.1676519](https://doi.org/10.1109/TC.1985.1676519).
-8. **W. J. Dally and B. Towles**, *Principles and Practices of Interconnection Networks*, Morgan Kaufmann, 2004.
+1. **[Passas2012]** G. Passas, M. Katevenis, and D. Pnevmatikatos, "Crossbar NoCs Are Scalable Beyond 100 Nodes," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 31, no. 4, pp. 573–585, Apr. 2012. [DOI: 10.1109/TCAD.2011.2176730](https://doi.org/10.1109/TCAD.2011.2176730).
+2. **[Jun2009]** M. Jun, S. Yoo, and E.-Y. Chung, "Topology Synthesis of Cascaded Crossbar Switches," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 28, no. 6, pp. 926–930, June 2009. [DOI: 10.1109/TCAD.2009.2017079](https://doi.org/10.1109/TCAD.2009.2017079).
+3. **[Dumitriu2009]** V. Dumitriu and G. N. Khan, "Throughput-Oriented NoC Topology Generation and Analysis for High Performance SoCs," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 17, no. 10, pp. 1433–1446, Oct. 2009. [DOI: 10.1109/TVLSI.2008.2006798](https://doi.org/10.1109/TVLSI.2008.2006798).
+4. **[Kim2007]** J. Kim, J. Balfour, and W. J. Dally, "Flattened Butterfly Topology for On-Chip Networks," in *Proceedings of the 40th Annual IEEE/ACM International Symposium on Microarchitecture (MICRO)*, 2007, pp. 172–182. [DOI: 10.1109/MICRO.2007.28](https://doi.org/10.1109/MICRO.2007.28).
+5. **[Kim2008]** J. Kim, W. J. Dally, S. Scott, and D. Abts, "Technology-Driven, Highly-Scalable Dragonfly Topology," in *Proceedings of the 35th Annual International Symposium on Computer Architecture (ISCA)*, 2008, pp. 77–88. [DOI: 10.1109/ISCA.2008.19](https://doi.org/10.1109/ISCA.2008.19).
+6. **[Besta2014]** M. Besta and T. Hoefler, "Slim Fly: A Low-Diameter Network for High-Performance Computing," in *Proceedings of the International Conference for High Performance Computing, Networking, Storage and Analysis (SC)*, 2014, pp. 343–354. [DOI: 10.1109/SC.2014.34](https://doi.org/10.1109/SC.2014.34).
+7. **[Clos1953]** C. Clos, "A Study of Non-Blocking Switching Networks," *Bell System Technical Journal*, vol. 32, no. 2, pp. 406–424, 1953.
+8. **[Leiserson1985]** C. E. Leiserson, "Fat-Trees: Universal Networks for Hardware-Efficient Supercomputing," *IEEE Transactions on Computers*, vol. C-34, no. 10, pp. 892–901, Oct. 1985. [DOI: 10.1109/TC.1985.1676519](https://doi.org/10.1109/TC.1985.1676519).
+9. **[DallyPrinciples]** W. J. Dally and B. Towles, *Principles and Practices of Interconnection Networks*, Morgan Kaufmann, San Francisco, CA, 2004.

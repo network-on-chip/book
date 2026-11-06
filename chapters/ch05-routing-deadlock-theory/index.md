@@ -319,12 +319,14 @@ Lijing Zhu, Huaxi Gu, Yun Tan, and Guangming Zhang (*IEEE Transactions on Circui
 
 ---
 
-## 5.10 References & Bibliography
+## References & Bibliography
 
-1. **W. J. Dally and C. L. Seitz**, "Deadlock-Free Message Routing in Multiprocessor Interconnection Networks," *IEEE Transactions on Computers*, Vol. C-36, No. 5, pp. 547–553, May 1987. DOI: [10.1109/TC.1987.1676939](https://doi.org/10.1109/TC.1987.1676939).
-2. **J. Duato**, "A New Theory of Deadlock-Free Adaptive Routing in Wormhole Networks," *IEEE Transactions on Parallel and Distributed Systems*, Vol. 4, No. 12, pp. 1320–1331, Dec. 1993. DOI: [10.1109/71.257110](https://doi.org/10.1109/71.257110).
-3. **C. J. Glass and L. M. Ni**, "The Turn Model for Adaptive Routing," *Journal of the ACM*, Vol. 41, No. 5, pp. 874–902, Sept. 1994. DOI: [10.1145/185675.185682](https://doi.org/10.1145/185675.185682).
-4. **G.-M. Chiu**, "The Odd-Even Turn Model for Adaptive Routing," *IEEE Transactions on Parallel and Distributed Systems*, Vol. 11, No. 7, pp. 729–738, July 2000. DOI: [10.1109/71.877843](https://doi.org/10.1109/71.877843).
-5. **Y. Jia, Z. Zhang, C. Fu, L. Wan, and J. Han**, "PCMT: Prioritizing Coherence Message Types for NoC Protocol-Level Deadlock Freedom," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, Vol. 45, No. 4, pp. 1949–1962, April 2026. DOI: [10.1109/TCAD.2025.3524944](https://doi.org/10.1109/TCAD.2025.3524944).
-6. **L. Zhu, H. Gu, Y. Tan, and G. Zhang**, "ScaDA-Rou: A Scalable, Deadlock-Free, and Adaptive Routing for 3-D Multi-Chiplet System," *IEEE Transactions on Circuits and Systems–II: Express Briefs*, Vol. 73, No. 4, pp. 433–437, April 2026. DOI: [10.1109/TCSII.2025.3526101](https://doi.org/10.1109/TCSII.2025.3526101).
-7. **W. J. Dally and B. Towles**, *Principles and Practices of Interconnection Networks*, Morgan Kaufmann, 2004.
+1. **[Dally1987]** W. J. Dally and C. L. Seitz, "Deadlock-Free Message Routing in Multiprocessor Interconnection Networks," *IEEE Transactions on Computers*, vol. C-36, no. 5, pp. 547–553, May 1987. [DOI: 10.1109/TC.1987.1676939](https://doi.org/10.1109/TC.1987.1676939).
+2. **[Duato1993]** J. Duato, "A New Theory of Deadlock-Free Adaptive Routing in Wormhole Networks," *IEEE Transactions on Parallel and Distributed Systems*, vol. 4, no. 12, pp. 1320–1331, Dec. 1993. [DOI: 10.1109/71.257110](https://doi.org/10.1109/71.257110).
+3. **[Glass1994]** C. J. Glass and L. M. Ni, "The Turn Model for Adaptive Routing," *Journal of the ACM*, vol. 41, no. 5, pp. 874–902, Sept. 1994. [DOI: 10.1145/185675.185682](https://doi.org/10.1145/185675.185682).
+4. **[Chiu2000]** G.-M. Chiu, "The Odd-Even Turn Model for Adaptive Routing," *IEEE Transactions on Parallel and Distributed Systems*, vol. 11, no. 7, pp. 729–738, July 2000. [DOI: 10.1109/71.877843](https://doi.org/10.1109/71.877843).
+5. **[Jia2026]** Y. Jia, Z. Zhang, C. Fu, L. Wan, and J. Han, "PCMT: Prioritizing Coherence Message Types for NoC Protocol-Level Deadlock Freedom," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 45, no. 4, pp. 1949–1962, Apr. 2026. [DOI: 10.1109/TCAD.2025.3524944](https://doi.org/10.1109/TCAD.2025.3524944).
+6. **[Zhu2026]** L. Zhu, H. Gu, Y. Tan, and G. Zhang, "ScaDA-Rou: A Scalable, Deadlock-Free, and Adaptive Routing for 3-D Multi-Chiplet System," *IEEE Transactions on Circuits and Systems–II: Express Briefs*, vol. 73, no. 4, pp. 433–437, Apr. 2026. [DOI: 10.1109/TCSII.2025.3526101](https://doi.org/10.1109/TCSII.2025.3526101).
+7. **[Schroeder1991]** M. D. Schroeder et al., "Autonet: A High-Speed, Self-Configuring Local Area Network Using Point-to-Point Links," *IEEE Journal on Selected Areas in Communications*, vol. 9, no. 8, pp. 1318–1335, Oct. 1991. [DOI: 10.1109/49.105178](https://doi.org/10.1109/49.105178).
+8. **[Mejia2006]** A. Mejia, J. Flich, J. Duato, S.-A. Reinemo, and T. Skeie, "Segment-Based Routing: An Efficient Fault-Tolerant Routing Methodology for Meshes and Tori," in *Proceedings of the 20th International Parallel and Distributed Processing Symposium (IPDPS)*, 2006. [DOI: 10.1109/IPDPS.2006.1639316](https://doi.org/10.1109/IPDPS.2006.1639316).
+9. **[DallyPrinciples]** W. J. Dally and B. Towles, *Principles and Practices of Interconnection Networks*, Morgan Kaufmann Publishers, San Francisco, CA, 2004.

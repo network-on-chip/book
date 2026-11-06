@@ -323,7 +323,7 @@ The companion simulation script [`code/thermal_rc_mesh_sim.py`](code/thermal_rc_
 ### 7.7.1 Simulation Execution & Results
 
 ```bash
-$ python3 share/book/chapters/ch07-thermal-fault-tolerance/code/thermal_rc_mesh_sim.py
+$ python3 code/thermal_rc_mesh_sim.py
 === Thermal RC & Kalman Estimation Simulation Results ===
 Grid Scale: 4x4 Mesh (16 Router-Tile Nodes)
 Ambient Temp: 45.0 °C
@@ -372,23 +372,22 @@ A multi-core tile fabricated in a 7nm FinFET process has a footprint of $1.2\tex
 2. If the tile's power dissipation steps abruptly from a nominal $1.5\text{ W}$ to a hotspot power of $6.5\text{ W}$, determine how many milliseconds elapse before the tile's temperature rises by $63.2\%$ of its total temperature increase.
 3. Compare $\tau_{\text{th}}$ with the clock period of a $2.5\text{ GHz}$ on-chip router ($T_{\text{clk}} = 0.4\text{ ns}$). How many clock cycles does thermal inertia represent?
 
-#### Solution:
+??? success "Reveal Detailed Solution"
+    1. The lumped thermal time constant is:
 
-1. The lumped thermal time constant is:
+        $$\tau_{\text{th}} = R_v \cdot C_{\text{th}} = (15.0\text{ K/W}) \times (3.6 \times 10^{-3}\text{ J/K}) = 0.054\text{ s} = 54.0\text{ ms}$$
 
-    $$\tau_{\text{th}} = R_v \cdot C_{\text{th}} = (15.0\text{ K/W}) \times (3.6 \times 10^{-3}\text{ J/K}) = 0.054\text{ s} = 54.0\text{ ms}$$
+    2. By definition of a first-order exponential step response:
 
-2. By definition of a first-order exponential step response:
+        $$\Delta T(t) = \Delta T_{\text{steady}} \left(1 - e^{-t / \tau_{\text{th}}}\right)$$
 
-    $$\Delta T(t) = \Delta T_{\text{steady}} \left(1 - e^{-t / \tau_{\text{th}}}\right)$$
+        At $t = \tau_{\text{th}}$, the temperature reaches $1 - e^{-1} \approx 63.2\%$ of the steady-state rise. Therefore, exactly **$54.0\text{ ms}$** elapses.
 
-    At $t = \tau_{\text{th}}$, the temperature reaches $1 - e^{-1} \approx 63.2\%$ of the steady-state rise. Therefore, exactly **$54.0\text{ ms}$** elapses.
+    3. At $f_{\text{clk}} = 2.5\text{ GHz}$, the clock cycle time is $T_{\text{clk}} = 1 / (2.5 \times 10^9) = 0.4\text{ ns}$. The number of clock cycles spanned by the thermal time constant is:
 
-3. At $f_{\text{clk}} = 2.5\text{ GHz}$, the clock cycle time is $T_{\text{clk}} = 1 / (2.5 \times 10^9) = 0.4\text{ ns}$. The number of clock cycles spanned by the thermal time constant is:
+        $$N_{\text{cycles}} = \frac{54.0 \times 10^{-3}\text{ s}}{0.4 \times 10^{-9}\text{ s/cycle}} = 135,000,000\text{ cycles}$$
 
-    $$N_{\text{cycles}} = \frac{54.0 \times 10^{-3}\text{ s}}{0.4 \times 10^{-9}\text{ s/cycle}} = 135,000,000\text{ cycles}$$
-
-    This dramatic gap of $1.35 \times 10^8$ clock cycles demonstrates that thermal inertia is vastly slower than flit-by-flit switching, proving why reactive thermal management lags behind dynamic packet bursts.
+        This dramatic gap of $1.35 \times 10^8$ clock cycles demonstrates that thermal inertia is vastly slower than flit-by-flit switching, proving why reactive thermal management lags behind dynamic packet bursts.
 
 ---
 
@@ -397,22 +396,32 @@ An on-chip interconnect link operates at a steady-state temperature of $T_1 = 60
 1. Compute the ratio of interconnect Mean Time to Failure: $\frac{MTTF(T_2)}{MTTF(T_1)}$.
 2. By what percentage is the interconnect's expected operating life reduced?
 
-#### Solution:
+??? success "Reveal Detailed Solution"
+    1. According to Black's Equation:
 
-1. According to Black's Equation:
+        $$\frac{MTTF(T_2)}{MTTF(T_1)} = \exp\left[\frac{E_a}{k_B} \left(\frac{1}{T_2} - \frac{1}{T_1}\right)\right]$$
 
-    $$\frac{MTTF(T_2)}{MTTF(T_1)} = \exp\left[\frac{E_a}{k_B} \left(\frac{1}{T_2} - \frac{1}{T_1}\right)\right]$$
+        Compute the reciprocal temperature difference:
 
-    Compute the reciprocal temperature difference:
+        $$\frac{1}{T_2} - \frac{1}{T_1} = \frac{1}{358.15} - \frac{1}{333.15} = 0.0027921 - 0.0030016 = -2.095 \times 10^{-4}\text{ K}^{-1}$$
 
-    $$\frac{1}{T_2} - \frac{1}{T_1} = \frac{1}{358.15} - \frac{1}{333.15} = 0.0027921 - 0.0030016 = -2.095 \times 10^{-4}\text{ K}^{-1}$$
+        Compute the exponent:
 
-    Compute the exponent:
+        $$\frac{E_a}{k_B} \left(\frac{1}{T_2} - \frac{1}{T_1}\right) = \frac{1.442 \times 10^{-19}}{1.3806 \times 10^{-23}} \times (-2.095 \times 10^{-4}) = 10444.7 \times (-2.095 \times 10^{-4}) = -2.188$$
 
-    $$\frac{E_a}{k_B} \left(\frac{1}{T_2} - \frac{1}{T_1}\right) = \frac{1.442 \times 10^{-19}}{1.3806 \times 10^{-23}} \times (-2.095 \times 10^{-4}) = 10444.7 \times (-2.095 \times 10^{-4}) = -2.188$$
+        Therefore:
 
-    Therefore:
+        $$\frac{MTTF(T_2)}{MTTF(T_1)} = e^{-2.188} \approx 0.112$$
 
-    $$\frac{MTTF(T_2)}{MTTF(T_1)} = e^{-2.188} \approx 0.112$$
+    2. The interconnect lifetime drops to just **$11.2\%$** of its baseline lifetime—representing a catastrophic **$88.8\%$ reduction in reliability** due to a $25^\circ\text{C}$ hotspot!
 
-2. The interconnect lifetime drops to just **$11.2\%$** of its baseline lifetime—representing a catastrophic **$88.8\%$ reduction in reliability** due to a $25^\circ\text{C}$ hotspot!
+---
+
+## References & Bibliography
+
+1. **[Huang2006]** W. Huang, S. Ghosh, S. Velusamy, K. Sankaranarayanan, K. Skadron, and M. R. Stan, "HotSpot: A Compact Thermal Modeling Methodology for Early-Stage VLSI Design," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 14, no. 5, pp. 501–513, May 2006. [DOI: 10.1109/TVLSI.2006.876103](https://doi.org/10.1109/TVLSI.2006.876103).
+2. **[Fu2019]** Y. Fu, L. Li, H. Pan, K. Wang, F. Feng, Q. Chen, and C. Zhang, "Thermal Sensor Placement and Thermal Reconstruction Under Gaussian and Non-Gaussian Sensor Noises for 3-D NoC," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 38, no. 11, pp. 2110–2123, Nov. 2019. [DOI: 10.1109/TCAD.2018.2878178](https://doi.org/10.1109/TCAD.2018.2878178).
+3. **[Fu2017]** Y. Fu, L. Li, K. Wang, and C. Zhang, "Kalman Predictor-Based Proactive Dynamic Thermal Management for 3-D NoC Systems With Noisy Thermal Sensors," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 36, no. 11, pp. 1869–1882, Nov. 2017. [DOI: 10.1109/TCAD.2017.2661808](https://doi.org/10.1109/TCAD.2017.2661808).
+4. **[Kakoulli2012]** E. Kakoulli, V. Soteriou, and T. Theocharides, "Intelligent Hotspot Prediction for Network-on-Chip-Based Multicore Systems," *IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems*, vol. 31, no. 3, pp. 418–431, Mar. 2012. [DOI: 10.1109/TCAD.2011.2170568](https://doi.org/10.1109/TCAD.2011.2170568).
+5. **[Fu2014]** B. Fu, Y. Han, H. Li, and X. Li, "ZoneDefense: A Fault-Tolerant Routing for 2-D Meshes Without Virtual Channels," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 22, no. 1, pp. 113–126, Jan. 2014. [DOI: 10.1109/TVLSI.2012.2235188](https://doi.org/10.1109/TVLSI.2012.2235188).
+6. **[Chao2013]** C.-H. Chao, K.-C. Chen, and A.-Y. Wu, "Routing-Based Traffic Migration and Buffer Allocation Schemes for 3-D Network-on-Chip Systems With Thermal Limit," *IEEE Transactions on Very Large Scale Integration (VLSI) Systems*, vol. 21, no. 11, pp. 2118–2131, Nov. 2013. [DOI: 10.1109/TVLSI.2012.2227852](https://doi.org/10.1109/TVLSI.2012.2227852).
