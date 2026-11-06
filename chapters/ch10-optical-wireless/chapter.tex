@@ -21,14 +21,14 @@ Why replace copper wires with light beams and wireless radio waves?
 \end{itemize}
 \end{svgraybox}
 
-In standard computer chips, packets travel across a grid of electronic routers. Every time a packet moves from one core to another, it has to stop at a router, wait in an electronic FIFO queue, fight for crossbar switch access, and recharge the copper wires leading to the next hop. Across a large 64-core chip, this multi-hop journey can take 15 to 20 clock cycles, wasting precious time and generating large amounts of heat ($P = \alpha C V^2 f$).
+In standard computer chips, packets travel across a grid of electronic routers. Every time a packet moves from one core to another, it has to stop at a router, wait in an electronic FIFO queue, fight for crossbar switch access, and recharge the copper wires leading to the next hop. Across a large 64-core chip, this multi-hop journey can take 15 to 20 clock cycles, wasting precious time and generating large amounts of heat ($P = \alpha C V^2 f$)~\cite{Borkar1999}.
 
 To escape the limitations of metallic copper, computer architects have turned to the physics of light and radio:
 
 \begin{enumerate}
-    \item \textbf{Optical Networks-on-Chip (ONoC, Lightwaves)}: Photons have no mass and carry no electrical charge. When guided through microscopic silicon pipes (waveguides), photons travel at the phase velocity of light in silicon ($v = c / n_{\mathrm{Si}} \approx 85{,}000\,\mathrm{km/s}$). Once an optical laser is turned on, the light carries data across the entire chip with near-zero data-dependent dynamic loss. Furthermore, by using \textbf{Wavelength Division Multiplexing (WDM)}, architects can shine 16 to 64 different colors (wavelengths) of light down a single waveguide at the same time, multiplying bandwidth by dozens of times without adding more wires.
+    \item \textbf{Optical Networks-on-Chip (ONoC, Lightwaves)}: Photons have no mass and carry no electrical charge. When guided through microscopic silicon pipes (waveguides), photons travel at the phase velocity of light in silicon ($v = c / n_{\mathrm{Si}} \approx 85{,}000\,\mathrm{km/s}$). Once an optical laser is turned on, the light carries data across the entire chip with near-zero data-dependent dynamic loss~\cite{Vantrease2008,Kurian2010}. Furthermore, by using \textbf{Wavelength Division Multiplexing (WDM)}, architects can shine 16 to 64 different colors (wavelengths) of light down a single waveguide at the same time, multiplying bandwidth by dozens of times without adding more wires~\cite{Little1997,Kao2026}.
     
-    \item \textbf{Wireless Networks-on-Chip (WNoC, Radio Waves)}: Instead of sending signals through physical pipes or wires, on-chip transceivers transmit radio waves at extremely high frequencies ($30\text{--}100\,\mathrm{GHz}$ millimeter-waves and $100\text{--}300\,\mathrm{GHz}$ sub-terahertz waves) through microscopic antennas. Radio waves travel across the chip in a single clock cycle, providing a high-speed broadcast channel where all cores can receive synchronization signals and AI data updates simultaneously.
+    \item \textbf{Wireless Networks-on-Chip (WNoC, Radio Waves)}: Instead of sending signals through physical pipes or wires, on-chip transceivers transmit radio waves at extremely high frequencies ($30\text{--}100\,\mathrm{GHz}$ millimeter-waves and $100\text{--}300\,\mathrm{GHz}$ sub-terahertz waves) through microscopic antennas. Radio waves travel across the chip in a single clock cycle, providing a high-speed broadcast channel where all cores can receive synchronization signals and AI data updates simultaneously~\cite{Deb2012,Abadal2018,Shahmoradi2026}.
 \end{enumerate}
 
 \section{Silicon Nanophotonics: Guiding Light Inside a Chip}
@@ -43,7 +43,7 @@ How can a silicon microchip guide light? Silicon nanophotonics takes advantage o
 - Silicon has a high refractive index ($n_{\mathrm{Si}} \approx 3.48$).
 - Silicon dioxide glass ($\mathrm{SiO_2}$) has a lower refractive index ($n_{\mathrm{ox}} \approx 1.45$).
 
-When a beam of light travels inside a silicon strip surrounded by glass, it hits the glass boundary at a shallow angle. Because the refractive index drops from 3.48 to 1.45, $100\%$ of the light bounces back into the silicon! This traps light inside sub-micron silicon channels called \textbf{optical waveguides} (typically $450\,\mathrm{nm}$ wide and $220\,\mathrm{nm}$ tall)—hundreds of times thinner than a human hair.
+When a beam of light travels inside a silicon strip surrounded by glass, it hits the glass boundary at a shallow angle. Because the refractive index drops from 3.48 to 1.45, $100\%$ of the light bounces back into the silicon! This traps light inside sub-micron silicon channels called \textbf{optical waveguides} (typically $450\,\mathrm{nm}$ wide and $220\,\mathrm{nm}$ tall)—hundreds of times thinner than a human hair~\cite{Little1997,Kao2026}.
 
 \subsection{Micro-Ring Resonators (MRRs): The Optical Filter}
 
@@ -70,7 +70,7 @@ yielding the classic resonance relation:
     m \lambda_{\mathrm{res}} = 2 \pi R \cdot n_{\mathrm{eff}}
     \label{eq:mrr-resonance}
 \end{equation}
-where $m \in \mathbb{N}^+$ is the azimuthal mode order, $R$ is the ring radius ($5\text{--}10\,\mu\mathrm{m}$), and $n_{\mathrm{eff}}$ is the effective modal index ($2.4\text{--}2.5$).
+where $m \in \mathbb{N}^+$ is the azimuthal mode order, $R$ is the ring radius ($5\text{--}10\,\mu\mathrm{m}$), and $n_{\mathrm{eff}}$ is the effective modal index ($2.4\text{--}2.5$)~\cite{Little1997,Ye2013}.
 
 \subsubsection{Transfer Matrix Method and Spectral Metrics}
 Under the Transfer Matrix Method (TMM), let $t_1, t_2$ denote the through-coupling amplitude transmission coefficients at the bus and drop couplers, and let $a = \exp(-\alpha_{\mathrm{loss}} \pi R)$ represent the internal cavity round-trip amplitude attenuation. The optical power transfer functions at the \textbf{Through Port} and \textbf{Drop Port} are:
@@ -91,7 +91,7 @@ Key spectral characteristics governing WDM multiplexing density include:
     \begin{equation}
     Q = \frac{\lambda_{\mathrm{res}}}{\Delta \lambda_{3\mathrm{dB}}} = \omega_{\mathrm{res}} \tau_{\mathrm{cavity}} \approx 10{,}000\text{ to }30{,}000
     \label{eq:q_factor}
-    \end{equation}
+    \end{equation}~\cite{Little1997}
 \end{itemize}
 
 \subsection{Switching Element Architectures: CSE vs. PSE}
@@ -108,7 +108,7 @@ As analyzed by Kao et al.~\cite{Kao2026} and illustrated in Fig.~\ref{fig:kao-mr
 \begin{enumerate}
     \item \textbf{Crossing Switching Elements (CSEs)}: In CSE structures (Fig.~\ref{fig:kao-mrr-structures}a and b), the ring is placed at a perpendicular 90-degree intersection of two waveguides. While this fits neatly into a grid, perpendicular waveguide crossings act like tiny bumps in the road: every crossing scatters light away, causing $0.1\text{--}0.2\,\mathrm{dB}$ of loss. In a large network with dozens of crossings, the light dims significantly.
     
-    \item \textbf{Parallel Switching Elements (PSEs)}: In PSE structures (Fig.~\ref{fig:kao-mrr-structures}c), the ring is placed between two parallel waveguides. Light transfers smoothly without needing any perpendicular crossings.
+    \item \textbf{Parallel Switching Elements (PSEs)}: In PSE structures (Fig.~\ref{fig:kao-mrr-structures}c), the ring is placed between two parallel waveguides. Light transfers smoothly without needing any perpendicular crossings~\cite{Kao2026,Kao2026WR}.
 \end{enumerate}
 
 \begin{figure}[htbp]
@@ -125,7 +125,7 @@ By assembling PSEs into \textbf{Add-Drop Filters (ADFs)} (Fig.~\ref{fig:kao-adf-
 
 \subsection{Where Does the Light Go?}
 
-As a lightwave travels from the continuous-wave laser, through a modulator, across the routing network, and into a Germanium photodetector, it loses a tiny fraction of its brightness at every physical step:
+As a lightwave travels from the continuous-wave laser, through a modulator, across the routing network, and into a Germanium photodetector, it loses a tiny fraction of its brightness at every physical step~\cite{Vantrease2008,Ye2013,Kao2026}:
 \begin{equation}
     L_{\mathrm{path}}(\mathrm{dB}) = L_{\mathrm{prop}} + L_{\mathrm{bend}} + L_{\mathrm{cross}} + L_{\mathrm{thru}} + L_{\mathrm{drop}} + L_{\mathrm{mod}}
     \label{eq:optical-loss-sum}
@@ -146,7 +146,7 @@ The photodetector receiver needs at least $-20\,\mathrm{dBm}$ ($0.01\,\mathrm{mW
     \label{eq:laser-opt-power}
 \end{equation}
 
-Laser Wall-Plug Efficiency ($\eta_{\mathrm{wpe}}$) is typically around $20\%$, meaning the laser consumes $5\times$ more electrical wall power than the optical light it puts out:
+Laser Wall-Plug Efficiency ($\eta_{\mathrm{wpe}}$) is typically around $20\%$, meaning the laser consumes $5\times$ more electrical wall power than the optical light it puts out~\cite{Kurian2010,Vantrease2008}:
 \begin{equation}
     P_{\mathrm{laser\_elec}} = \frac{10^{(P_{\mathrm{laser\_opt}} / 10)}}{\eta_{\mathrm{wpe}}} \quad (\mathrm{mW})
     \label{eq:laser-elec-power}
@@ -175,9 +175,9 @@ As temperature rises, silicon expands optically, causing the resonant wavelength
     \frac{d\lambda_{\mathrm{res}}}{dT} \approx 0.08\text{--}0.11\,\mathrm{nm/^\circ C}
     \label{eq:resonance-drift}
 \end{equation}
-In dense WDM networks, separate color channels are packed just $0.4\text{ to }0.8\,\mathrm{nm}$ apart. If a core heats up by just $8^\circ\mathrm{C}$, the ring drifts by $0.8\,\mathrm{nm}$—completely jumping into the adjacent channel and garbling the data!
+In dense WDM networks, separate color channels are packed just $0.4\text{ to }0.8\,\mathrm{nm}$ apart. If a core heats up by just $8^\circ\mathrm{C}$, the ring drifts by $0.8\,\mathrm{nm}$—completely jumping into the adjacent channel and garbling the data!~\cite{Ye2013,Wang2021ACO}
 
-To keep rings tuned, engineers place tiny electric microheaters around each ring. A feedback sensor continuously measures temperature, adjusting the microheater to keep the resonator locked onto its target wavelength. While effective, thermal tuning consumes $15\text{--}20\,\mathrm{mW}$ per nanometer of shift, adding several watts of power across a large chip.
+To keep rings tuned, engineers place tiny electric microheaters around each ring. A feedback sensor continuously measures temperature, adjusting the microheater to keep the resonator locked onto its target wavelength. While effective, thermal tuning consumes $15\text{--}20\,\mathrm{mW}$ per nanometer of shift, adding several watts of power across a large chip~\cite{Ye2013,Liu2025Energy}.
 
 \section{Wireless Networks-on-Chip (WNoC): Radio Inside the CPU}
 \label{sec:wnoc-foundations}
@@ -187,7 +187,7 @@ To keep rings tuned, engineers place tiny electric microheaters around each ring
 Passing messages through a 64-core grid of routers is like whispering a message down 14 rows of desks in a classroom. A wireless link is like speaking into a \textbf{walkie-talkie}: every core in the room hears the broadcast in a single clock cycle! On-chip antennas under $1\,\mathrm{mm}$ radiate $60\,\mathrm{GHz}$ millimeter waves, providing lightning-fast broadcast shortcuts for cache coherence and AI reduction collectives.
 \end{svgraybox}
 
-While optical waveguides excel at high-speed point-to-point lightpaths, **Wireless Networks-on-Chip (WNoC)** use electromagnetic radio waves to provide instantaneous broadcast shortcuts.
+While optical waveguides excel at high-speed point-to-point lightpaths, **Wireless Networks-on-Chip (WNoC)** use electromagnetic radio waves to provide instantaneous broadcast shortcuts~\cite{Deb2012,Abadal2018}.
 
 \begin{figure}[htbp]
 \centering
@@ -220,7 +220,7 @@ where $G_{tx}, G_{rx}$ are the antenna gains, $\epsilon_{\mathrm{eff}} \approx \
 \label{eq:substrate_alpha}
 \end{equation}
 
-In standard CMOS bulk silicon ($\rho \approx 10\,\Omega\cdot\mathrm{cm}$), conductive displacement currents in the substrate dissipate up to $15\text{--}25\,\mathrm{dB/mm}$ of RF power into heat, severely throttling link reach. To overcome this attenuation, advanced WNoC fabrics deploy \textbf{High-Resistivity Silicon (HRS, $\rho > 1\text{ k}\Omega\cdot\mathrm{cm}$)} or patterned ground shield planes under the antenna, slashing substrate attenuation to under $2\,\mathrm{dB/mm}$.
+In standard CMOS bulk silicon ($\rho \approx 10\,\Omega\cdot\mathrm{cm}$), conductive displacement currents in the substrate dissipate up to $15\text{--}25\,\mathrm{dB/mm}$ of RF power into heat, severely throttling link reach. To overcome this attenuation, advanced WNoC fabrics deploy \textbf{High-Resistivity Silicon (HRS, $\rho > 1\text{ k}\Omega\cdot\mathrm{cm}$)} or patterned ground shield planes under the antenna, slashing substrate attenuation to under $2\,\mathrm{dB/mm}$~\cite{Deb2012,Shahmoradi2026}.
 
 \subsection{Energy-per-Bit and Transceiver Optimization}
 The total energy dissipated per transmitted bit across the wireless link is governed by the aggregate transceiver power dissipation and data rate:
@@ -257,12 +257,12 @@ To exploit the vast transmission bandwidth of silicon nanophotonics, researchers
 Optical crossbars utilize two primary waveguide connectivity topologies:
 \begin{enumerate}
     \item \textbf{Single-Writer Multiple-Reader (SWMR)}:
-    Each node owns a dedicated optical waveguide and modulates optical power onto it exclusively (no write contention). The waveguide snakes past all other nodes in the network. Every potential receiving node contains an active Micro-Ring Resonator tuned to that waveguide's wavelength. While SWMR eliminates write arbitration, it requires broadcasting or multi-reader address filtering at receivers.
+    Each node owns a dedicated optical waveguide and modulates optical power onto it exclusively (no write contention). The waveguide snakes past all other nodes in the network. Every potential receiving node contains an active Micro-Ring Resonator tuned to that waveguide's wavelength. While SWMR eliminates write arbitration, it requires broadcasting or multi-reader address filtering at receivers~\cite{Vantrease2008}.
     \item \textbf{Multiple-Writer Single-Reader (MWSR)}:
     Each destination node owns a dedicated waveguide, and any source node can write to it by actuating an MRR. Because multiple senders may attempt to inject light into the same waveguide simultaneously, MWSR mandates \textbf{Optical Arbitration}:
     \begin{itemize}
         \item \textbf{Electro-Optic Token Rings}: An optical or electrical token circulates continuously among nodes. A node must capture the token before modulating data onto the shared optical channel.
-        \item \textbf{Optical Reservation Channels}: A designated reservation wavelength precedes the data payload, asserting priority and suppressing conflicting transmissions.
+        \item \textbf{Optical Reservation Channels}: A designated reservation wavelength precedes the data payload, asserting priority and suppressing conflicting transmissions~\cite{Kurian2010,Vantrease2008}.
     \end{itemize}
 \end{enumerate}
 
@@ -275,13 +275,13 @@ In the landmark \textbf{Corona} architecture (Vantrease et al., ISCA 2008~\cite{
 \index{Broadcast Acceleration}
 \index{W-MESI}
 
-Because on-chip wireless channels operate in a shared electromagnetic medium, multiple antennas radiating simultaneously on the same carrier frequency cause destructive RF interference. To coordinate access, Wireless NoCs deploy lightweight hardware \textbf{Medium Access Control (MAC)} protocols.
+Because on-chip wireless channels operate in a shared electromagnetic medium, multiple antennas radiating simultaneously on the same carrier frequency cause destructive RF interference. To coordinate access, Wireless NoCs deploy lightweight hardware \textbf{Medium Access Control (MAC)} protocols~\cite{Deb2012,Abadal2018,Taghvaee2022}.
 
 \subsection{Hardware MAC Protocols for On-Chip RF Channels}
 \begin{itemize}
     \item \textbf{Time-Division Multiple Access (TDMA)}: The RF carrier is partitioned into static time slots assigned to individual tiles. While TDMA is contention-free and simple to implement in hardware, it suffers from severe channel underutilization under non-uniform traffic.
     \item \textbf{Token-Passing Distributed MAC}: A lightweight digital token circulates around a dedicated 1-bit wired ring. Only the tile holding the token is permitted to activate its RF power amplifier, eliminating collisions while providing dynamic bandwidth allocation.
-    \item \textbf{Code-Division Multiple Access (CDMA)}: Nodes modulate data using mutually orthogonal pseudorandom spreading codes (such as Walsh-Hadamard or Orthogonal Variable Spreading Factor, OVSF). Multiple cores transmit simultaneously on the same RF frequency band; receivers apply correlation despreading to extract the intended signal, achieving multi-access concurrency.
+    \item \textbf{Code-Division Multiple Access (CDMA)}: Nodes modulate data using mutually orthogonal pseudorandom spreading codes (such as Walsh-Hadamard or Orthogonal Variable Spreading Factor, OVSF). Multiple cores transmit simultaneously on the same RF frequency band; receivers apply correlation despreading to extract the intended signal, achieving multi-access concurrency~\cite{Deb2012,Abadal2018}.
 \end{itemize}
 
 \subsection{Broadcast Acceleration in Cache Coherence Protocols (W-MESI)}
@@ -293,12 +293,12 @@ Under the \textbf{Wireless-Accelerated MESI Protocol (W-MESI)}:
     \item Because millimeter-wave signals propagate across the $20\,\mathrm{mm}$ die in less than $130\,\mathrm{ps}$, \textbf{all cores receive the invalidation probe in a single clock cycle}.
     \item Sharers invalidate local L1 cache lines concurrently, aggregating acknowledgments through a wired wired-OR reduction line.
 \end{enumerate}
-By eliminating multi-hop invalidation serialization, W-MESI cuts read-miss and write-invalidation latencies by \textbf{up to $75\%$}, dramatically accelerating thread synchronization and parallel barrier primitives in manycore processors.
+By eliminating multi-hop invalidation serialization, W-MESI cuts read-miss and write-invalidation latencies by \textbf{up to $75\%$}, dramatically accelerating thread synchronization and parallel barrier primitives in manycore processors~\cite{Deb2012,Abadal2018,Taghvaee2022}.
 
 \section{Hardware Implementation: Synthesizable Photonic MRR Switch}
 \label{sec:photonic-verilog}
 
-Listing~\ref{lst:photonic-mrr-verilog} shows the synthesizable Verilog module implementing an electro-optic Micro-Ring Resonator controller with closed-loop proportional thermal resonance tracking and pulse-width modulated (PWM) microheater actuation.
+Listing~\ref{lst:photonic-mrr-verilog} shows the synthesizable Verilog module implementing an electro-optic Micro-Ring Resonator controller with closed-loop proportional thermal resonance tracking and pulse-width modulated (PWM) microheater actuation~\cite{Ye2013,Kao2026,Wang2021ACO}.
 
 \begin{lstlisting}[language=Verilog, caption={Synthesizable Photonic MRR Switch Controller with Closed-Loop Thermal Tuning (\texttt{photonic\_mrr\_switch.v})}, label={lst:photonic-mrr-verilog}]
 module photonic_mrr_switch #(
@@ -379,7 +379,7 @@ endmodule
 \section{Simulation Model \& Numerical Verification}
 \label{sec:optical-sim-verification}
 
-The Python model \texttt{onoc\_optical\_loss\_sim.py} simulates end-to-end optical insertion loss, laser power, and thermal tuning in an $8 \times 8$ mesh ONoC (64 compute nodes, $20\,\mathrm{mm} \times 20\,\mathrm{mm}$ die area) comparing traditional Crossing Switching Elements (CSEs) against Parallel Switching Elements (PSEs). Table~\ref{tab:onoc-results} summarizes the experimental metrics.
+The Python model \texttt{onoc\_optical\_loss\_sim.py} simulates end-to-end optical insertion loss, laser power, and thermal tuning in an $8 \times 8$ mesh ONoC (64 compute nodes, $20\,\mathrm{mm} \times 20\,\mathrm{mm}$ die area) comparing traditional Crossing Switching Elements (CSEs) against Parallel Switching Elements (PSEs)~\cite{Ye2013,Kao2026,Kao2026WR,Liu2025Energy}. Table~\ref{tab:onoc-results} summarizes the experimental metrics.
 
 \begin{table}[htbp]
 \centering
@@ -439,23 +439,23 @@ Explore the interactive emerging physics simulators on the \textbf{NoC Learning 
 \label{sec:ch10_exercises}
 
 \begin{enumerate}
-    \item \textbf{The Optical Tuning Fork}: An optical cavity has radius $R = 6.0\,\mu\mathrm{m}$ and effective refractive index $n_{\mathrm{eff}} = 2.45$ at optical wavelength $\lambda_0 = 1550\,\mathrm{nm}$.
+    \item \textbf{The Optical Tuning Fork}~\cite{Little1997,Kao2026}: An optical cavity has radius $R = 6.0\,\mu\mathrm{m}$ and effective refractive index $n_{\mathrm{eff}} = 2.45$ at optical wavelength $\lambda_0 = 1550\,\mathrm{nm}$.
     \begin{enumerate}
         \item Calculate the optical round-trip path length $L = 2 \pi R$.
         \item Determine the integer resonant mode order $m = L \cdot n_{\mathrm{eff}} / \lambda_0$.
         \item Explain in plain English what happens if light of wavelength $1540\,\mathrm{nm}$ enters the waveguide.
     \end{enumerate}
 
-    \item \textbf{The Laser Flashlight}: An optical path has $3.5\,\mathrm{cm}$ of waveguide ($0.25\,\mathrm{dB/cm}$), 16 bends ($0.005\,\mathrm{dB/bend}$), 30 crossings ($0.12\,\mathrm{dB/crossing}$), 20 unselected MRRs ($0.015\,\mathrm{dB/thru}$), and 2 drop MRRs ($0.50\,\mathrm{dB/drop}$). Modulator loss is $1.5\,\mathrm{dB}$ and receiver sensitivity is $-21.0\,\mathrm{dBm}$.
+    \item \textbf{The Laser Flashlight}~\cite{Vantrease2008,Kao2026,Ye2013}: An optical path has $3.5\,\mathrm{cm}$ of waveguide ($0.25\,\mathrm{dB/cm}$), 16 bends ($0.005\,\mathrm{dB/bend}$), 30 crossings ($0.12\,\mathrm{dB/crossing}$), 20 unselected MRRs ($0.015\,\mathrm{dB/thru}$), and 2 drop MRRs ($0.50\,\mathrm{dB/drop}$). Modulator loss is $1.5\,\mathrm{dB}$ and receiver sensitivity is $-21.0\,\mathrm{dBm}$.
     \begin{enumerate}
         \item Calculate the total end-to-end insertion loss $L_{\mathrm{path}}$ in decibels.
         \item For a $3.0\,\mathrm{dB}$ operating margin, compute the required laser optical power in milliwatts.
         \item If laser wall-plug efficiency is $\eta_{\mathrm{wpe}} = 18\%$, calculate the total electrical power consumed.
     \end{enumerate}
 
-    \item \textbf{The Hot CPU}: If chip temperature fluctuates by $20^\circ\mathrm{C}$ and $d\lambda / dT = 0.10\,\mathrm{nm/^\circ C}$, compute the wavelength shift and the total power needed to stabilize 128 MRRs with $20.0\,\mathrm{mW/nm}$ microheaters.
+    \item \textbf{The Hot CPU}~\cite{Ye2013,Wang2021ACO}: If chip temperature fluctuates by $20^\circ\mathrm{C}$ and $d\lambda / dT = 0.10\,\mathrm{nm/^\circ C}$, compute the wavelength shift and the total power needed to stabilize 128 MRRs with $20.0\,\mathrm{mW/nm}$ microheaters.
 
-    \item \textbf{Walkie-Talkie vs. Whisper}: Why is an on-chip $60\,\mathrm{GHz}$ wireless broadcast faster for cache invalidation than sending 63 separate point-to-point electrical packets through a mesh network?
+    \item \textbf{Walkie-Talkie vs. Whisper}~\cite{Deb2012,Abadal2018,Taghvaee2022}: Why is an on-chip $60\,\mathrm{GHz}$ wireless broadcast faster for cache invalidation than sending 63 separate point-to-point electrical packets through a mesh network?
 \end{enumerate}
 
 \section{References \& Further Reading}
@@ -470,6 +470,7 @@ Explore the interactive emerging physics simulators on the \textbf{NoC Learning 
     \item \textbf{[Ye2013]} Y.~Ye et al., ``System-Level Modeling and Analysis of Thermal Effects in Optical Networks-on-Chip,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~21, no.~2, pp.~292--305, 2013. \url{https://doi.org/10.1109/TVLSI.2012.2185524}
     \item \textbf{[Shahmoradi2026]} M.~Shahmoradi, A.~Yelbo{\u{g}}a, E.~Alarc{\'o}n, K.~K.~Tokg{\"o}z, and S.~Abadal, ``Channel-Aware Behavioral Power Modeling of CMOS OOK Transceivers for Wireless Network-on-Chip Systems,'' \emph{IEEE Transactions on Circuits and Systems I: Regular Papers}, vol.~73, no.~4, pp.~1620--1633, 2026. \url{https://doi.org/10.5281/zenodo.19449802}
     \item \textbf{[Abadal2018]} S.~Abadal, E.~Alarc{\'o}n, A.~Cabellos-Aparicio, M.~C.~Lemme, and M.~Nemirovsky, ``Graphene-Enabled Wireless Communication for Manycore Architectures,'' \emph{IEEE Communications Magazine}, vol.~56, no.~6, pp.~30--36, 2018. \url{https://doi.org/10.1109/MCOM.2018.1700609}
+    \item \textbf{[Taghvaee2022]} M.~Taghvaee et al., ``Fault-Tolerant Wireless Network-on-Chip for Multi-Core Architectures,'' \emph{IEEE Transactions on Computers}, vol.~71, no.~8, pp.~1890--1903, 2022. \url{https://doi.org/10.1109/TC.2021.3112836}
     \item \textbf{[Wang2021ACO]} K.~Wang et al., ``Ant Colony Optimization-Based Thermal-Aware Adaptive Routing Mechanism for Optical NoCs,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~29, no.~5, pp.~950--963, 2021. \url{https://doi.org/10.1109/TVLSI.2021.3059132}
     \item \textbf{[Fang2026RLRM]} J.~Fang et al., ``RLRM: Reinforcement Learning-Based Routing for Ring-Augmented 2D-Mesh Optical Network-on-Chip,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~5, pp.~1550--1563, 2026. \url{https://doi.org/10.1109/TVLSI.2026.3681120}
     \item \textbf{[Kao2026WR]} W.-Y.~Kao et al., ``Provably Good Physically Aware WRONoC Design for Customized Communication Requirements,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~45, no.~3, pp.~650--663, 2026. \url{https://doi.org/10.1109/TCAD.2025.3618810}
