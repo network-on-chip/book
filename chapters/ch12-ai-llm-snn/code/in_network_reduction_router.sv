@@ -106,3 +106,4 @@ module in_network_reduction_router #(
     end
 
 endmodule
+

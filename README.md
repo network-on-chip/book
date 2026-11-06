@@ -1,7 +1,7 @@
 # Network-on-Chip (NoC) and Advanced Interconnects: The Book
 
 [![Learning Platform](https://img.shields.io/badge/Companion%20Platform-NoC%20Learning%20Hub-0f766e?logo=bookstack&logoColor=white)](https://network-on-chip.github.io/learning/)
-[![Textbook](https://img.shields.io/badge/Textbook-10%20Core%20Chapters-2563eb)](https://network-on-chip.github.io/learning/textbook/)
+[![Textbook](https://img.shields.io/badge/Textbook-12%20Core%20Chapters-2563eb)](https://network-on-chip.github.io/learning/textbook/)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-green?logo=creativecommons&logoColor=white)](https://creativecommons.org/licenses/by/4.0/)
 
 An authoritative, open-access textbook synthesizing the physical fundamentals, router microarchitecture, deadlock theory, advanced packaging, and emerging frontiers of on-chip and multi-chip communication fabrics.
@@ -14,7 +14,7 @@ This textbook bridges the gap between classical computer architecture theory and
 
 ### Core Distinctions
 1. **First-Principles Rigor**: Detailed mathematical modeling of wire physics (Mayadas-Shatzkes, Elmore delay), arbitration theorems (iSLIP, wavefront), channel dependency graph (CDG) cycles, and compact thermal RC dynamics.
-2. **State-of-the-Art Silicon Synthesis**: Direct dissection of landmark processors, from the Intel 48-core SCC and 2,048-core HammerBlade to NVIDIA Simba and 3D stacked systems.
+2. **State-of-the-Art Silicon Synthesis**: Direct dissection of landmark processors, from the Intel 48-core SCC and 2,048-core HammerBlade to NVIDIA Simba, PAC-NoC, and 3D stacked systems.
 3. **Dual-Track Web Symbiosis**: Every chapter links directly to interactive arcade games, simulators, and live quizzes on the companion website: [network-on-chip.github.io/learning](https://network-on-chip.github.io/learning/).
 4. **Reproducible Implementations**: Code artifacts provided in synthesizable Verilog, SystemVerilog, and Python.
 
@@ -39,6 +39,8 @@ For the full detailed curriculum and enhancement milestones, see the [Master Pla
   - **[Chapter 9: Multi-Chiplet Interconnects, 2.5D Systems & UCIe](chapters/ch09-chiplets-ucie/index.md)**
 - **Part V: Emerging Frontiers**
   - **[Chapter 10: Optical & Wireless Networks-on-Chip (ONoC / WNoC)](chapters/ch10-optical-wireless/index.md)**
+  - **[Chapter 11: Hardware Security & Trust in On-Chip Networks](chapters/ch11-security/index.md)**
+  - **[Chapter 12: Domain-Specific NoCs for LLMs, Transformers & SNNs](chapters/ch12-ai-llm-snn/index.md)**
 
 ---
 
@@ -56,7 +58,7 @@ share/book/
 ├── svind.ist                 # Springer index formatting style
 ├── book.tex                  # Master root document (\documentclass[graybox,envcountchap,sectrefs]{svmono})
 ├── book.bib                  # Unified BibTeX bibliography (TVLSI, TCAD, JSSC, TCAS)
-├── book.pdf                  # Compiled 214-page camera-ready Springer monograph PDF
+├── book.pdf                  # Compiled 262-page camera-ready Springer monograph PDF
 ├── compile.sh                # 4-pass automated build pipeline (pdflatex + bibtex + makeindex)
 ├── Makefile                  # Build automation (make pdf, make clean)
 ├── frontmatter/              # Dedication, Preface, and List of Acronyms
@@ -64,7 +66,10 @@ share/book/
 ├── chapters/                 # Modular chapters with LaTeX, Markdown, figures & RTL/Python code
 │   ├── ch01-interconnect-crisis/      (chapter.tex, index.md, figures/, code/)
 │   ├── ch02-switching-flow-control/   (chapter.tex, index.md, figures/, code/)
-│   └── ch03-router-microarchitecture/ (chapter.tex, index.md, figures/, code/)
+│   ├── ch03-router-microarchitecture/ (chapter.tex, index.md, figures/, code/)
+│   ├── ...
+│   ├── ch11-security/                 (chapter.tex, index.md, code/wma_thermal_detector.sv)
+│   └── ch12-ai-llm-snn/               (chapter.tex, index.md, code/in_network_reduction_router.sv)
 └── backmatter/               # Appendix (open-source RTL & PDKs) and Checkpoint Solutions
 ```
 

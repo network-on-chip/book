@@ -282,8 +282,8 @@ gantt
 
 ### Phase 5: Part V (Chapters 10–12) & Tracks 7–12 Web Expansion
 - [ ] Chapter 10: Optical & wireless interconnects, MRRs, mmWave link budgets.
-- [ ] Chapter 11: Hardware security, Trojan defense, PUFs, side-channel mitigation.
-- [ ] Chapter 12: LLM wafer-scale networks, Transformer All-Reduce, SNN neuromorphic routers.
+- [x] Chapter 11: Hardware security, Trojan defense, PUFs, side-channel mitigation.
+- [x] Chapter 12: LLM wafer-scale networks, Transformer All-Reduce, SNN neuromorphic routers.
 - [ ] Web: Build new **Silicon Sentinel NoC Security Simulator** (`interactive/security.md`).
 - [ ] Web: Expand MkDocs navigation to 12 full tracks.
 - [ ] Web: Scale `scripts/quiz_generator.py` to 120+ verified questions across 3 tiers.

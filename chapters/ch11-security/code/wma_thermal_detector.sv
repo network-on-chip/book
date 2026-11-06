@@ -96,3 +96,4 @@ module wma_thermal_detector #(
     end
 
 endmodule
+

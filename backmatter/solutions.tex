@@ -204,3 +204,104 @@
 
     \item[Walkie-Talkie vs. Whisper] Unicast electrical packet replication requires sending 63 sequential packets through intermediate routers, incurring dozens of pipeline stages and crossbar arbitrations ($>20$--$50$ cycles). A $60\,\mathrm{GHz}$ wireless antenna radiates electromagnetic waves across the die at the speed of light in silicon dioxide ($c / \sqrt{\epsilon_r} \approx 150\,\mu\mathrm{m/ps}$), broadcasting the invalidation message to all 63 cores simultaneously in a **single clock cycle** ($<1\,\mathrm{ns}$).
 \end{description}
+
+\section*{Chapter 11: Hardware Security \& Trust in On-Chip Networks}
+
+\begin{description}
+    \item[The Thermal Trojan \& Junction Melting]
+    \begin{itemize}
+        \item Under idle traffic:
+        \begin{equation*}
+        T_{\mathrm{idle}} = T_{\mathrm{amb}} + P_{\mathrm{base}} \cdot R_{\mathrm{th}} = 45^\circ\mathrm{C} + 1.6 \times 12.5 = 45 + 20 = \mathbf{65.0^\circ\mathrm{C}}
+        \end{equation*}
+        \item Under Trojan attack ($P_{\mathrm{total}} = 1.6 + 4.8 = 6.4\,\mathrm{W}$):
+        \begin{equation*}
+        T_{\mathrm{attack}} = T_{\mathrm{amb}} + P_{\mathrm{total}} \cdot R_{\mathrm{th}} = 45^\circ\mathrm{C} + 6.4 \times 12.5 = 45 + 80 = \mathbf{125.0^\circ\mathrm{C}}
+        \end{equation*}
+        \item The thermal RC time constant is $\tau_{\mathrm{th}} = R_{\mathrm{th}} C_{\mathrm{th}} = 12.5 \times 2.0 \times 10^{-3} = 0.025\,\mathrm{s} = 25.0\,\mathrm{ms}$. \\
+        The temperature evolution follows $T(t) = T_{\mathrm{attack}} - (T_{\mathrm{attack}} - T_{\mathrm{idle}}) e^{-t / \tau_{\mathrm{th}}}$. Setting $T(t) = 95^\circ\mathrm{C}$:
+        \begin{equation*}
+        95 = 125 - (125 - 65) e^{-t / 25} \implies 60 e^{-t / 25} = 30 \implies e^{-t / 25} = 0.5
+        \end{equation*}
+        Solving for $t$: $t_{\mathrm{trigger}} = 25 \times \ln(2) = 25 \times 0.6931 = \mathbf{17.33\,\mathrm{ms}}$. Emergency DTM throttles within $17.3\,\mathrm{ms}$.
+    \end{itemize}
+
+    \item[Zero-Multiplier Shift-and-Add Arithmetic]
+    \begin{itemize}
+        \item With $\alpha = 2^{-3} = 1/8$, $\mu_t = \mu_{t-1} + \frac{1}{8}(T_t - \mu_{t-1})$. The division by 8 is synthesized as an arithmetic right shift by 3 bits (\texttt{>>> 3}), replacing an area-heavy multiplier with 0 logic gates (hardwired bit shifts).
+        \item $3 \cdot D_{t-1} = (D_{t-1} \ll 1) + D_{t-1}$, which requires exactly one wire routing shift and one adder.
+        \item To preserve 3 fractional bits for $\alpha = 1/8$ across an 8-bit temperature input ($0\text{--}255$), the fixed-point format requires at least $8 + 3 = 11$ bits (format \texttt{UQ8.3}). Adding sign margin for difference error requires a 12-bit signed accumulator to avoid overflow.
+    \end{itemize}
+
+    \item[Timing Covert Channel Capacity]
+    \begin{itemize}
+        \item $\mathrm{SNR} = \frac{\Delta \tau^2}{\sigma_{\mathrm{jitter}}^2} = \frac{12^2}{6^2} = \frac{144}{36} = \mathbf{4.0}$. \\
+        The covert capacity upper bound is $C_{\mathrm{covert}} = \frac{1}{2} \log_2(1 + 4.0) = \frac{1}{2} \log_2(5) \approx \mathbf{1.161\,\mathrm{bits/packet}}$.
+        \item With LFSR jitter injected, total noise variance is $\sigma_{\mathrm{total}}^2 = 6^2 + 36^2 = 36 + 1296 = 1332$. \\
+        $\mathrm{SNR}_{\mathrm{masked}} = \frac{144}{1332} \approx 0.1081$. \\
+        New capacity: $C_{\mathrm{masked}} = \frac{1}{2} \log_2(1 + 0.1081) \approx \mathbf{0.074\,\mathrm{bits/packet}}$.
+        \item Bandwidth reduction: $\frac{1.161 - 0.074}{1.161} = \mathbf{93.6\%}$ reduction.
+    \end{itemize}
+
+    \item[Interconnect Intrinsic PUFs]
+    \begin{itemize}
+        \item Because the two crossbar paths are symmetrically drawn, their delay difference $\Delta t = t_{\mathrm{path\_A}} - t_{\mathrm{path\_B}}$ is distributed normally as $\mathcal{N}(0, 2\sigma^2) = \mathcal{N}(0, 32\,\mathrm{ps}^2)$ with mean zero. By symmetry of the Gaussian distribution around zero, $P(\Delta t < 0) = \mathbf{0.50}$ (50.0\%).
+        \item A 50\% probability of producing bit 0 or 1 yields maximal Shannon entropy: $H(R) = - (0.5 \log_2 0.5 + 0.5 \log_2 0.5) = \mathbf{1.0\,\mathrm{bit/cell}}$.
+        \item The variations stem from atomic-scale line edge roughness and random dopant fluctuations (quantum-scale fabrication jitter) that are physically unique to each die and impossible to reproduce or reverse-engineer from the GDSII layout.
+    \end{itemize}
+\end{description}
+
+\section*{Chapter 12: Domain-Specific NoCs for LLMs, Transformers \& SNNs}
+
+\begin{description}
+    \item[Ring All-Reduce vs. In-Network Reduction Trees]
+    \begin{itemize}
+        \item In a Ring All-Reduce with $N = 64$ nodes and $M = 256\,\mathrm{MB} = 2.048 \times 10^9\,\mathrm{bits}$: \\
+        Total data transferred per node: $V_{\mathrm{node}} = 2 \frac{63}{64} \times 2.048 \times 10^9 = 4.032 \times 10^9\,\mathrm{bits}$. \\
+        Link transmission time at $100\,\mathrm{Gb/s}$:
+        \begin{equation*}
+        t_{\mathrm{ring}} = \frac{4.032 \times 10^9\,\mathrm{bits}}{100 \times 10^9\,\mathrm{bits/s}} = \mathbf{0.04032\,\mathrm{s}} = \mathbf{40.32\,\mathrm{ms}}
+        \end{equation*}
+        \item In a 4-ary In-Network Reduction Tree (height $H = 3$), nodes transmit local slices ($M/N = 4\,\mathrm{MB} = 3.2 \times 10^7\,\mathrm{bits}$) up the tree where routers sum them in-flight, and the root broadcasts the reduced $4\,\mathrm{MB}$ slices down. Total node transmission volume is $2 \times (M/N) = 6.4 \times 10^7\,\mathrm{bits}$.
+        \begin{equation*}
+        t_{\mathrm{tree}} = \frac{6.4 \times 10^7}{100 \times 10^9} + H \cdot t_{\mathrm{hop\_latency}} \approx 0.00064\,\mathrm{s} + 3 \times 1.5\,\mathrm{ns} \approx \mathbf{0.640\,\mathrm{ms}}
+        \end{equation*}
+        \item Speedup: $S = \frac{40.32\,\mathrm{ms}}{0.640\,\mathrm{ms}} \approx \mathbf{63.0\times}$ across the tensor slice!
+    \end{itemize}
+
+    \item[Ruche Express Link Wire Physics]
+    \begin{itemize}
+        \item Resistance per millimeter ($L = 1000\,\mu\mathrm{m}$): \\
+        For M3 ($w = 0.050\,\mu\mathrm{m}$): number of squares is $1000 / 0.050 = 20{,}000\,\square$. \\
+        $R_{\mathrm{wire, M3}} = 20{,}000 \times 0.35\,\Omega = \mathbf{7{,}000\,\Omega/mm}$. \\
+        For M8 ($w = 0.500\,\mu\mathrm{m}$): number of squares is $1000 / 0.500 = 2{,}000\,\square$. \\
+        $R_{\mathrm{wire, M8}} = 2{,}000 \times 0.035\,\Omega = \mathbf{70\,\Omega/mm}$ ($100\times$ lower!).
+        \item For a $3.0\,\mathrm{mm}$ link ($3000\,\mu\mathrm{m}$): \\
+        $R_{\mathrm{M3}} = 21{,}000\,\Omega$, $C_{\mathrm{M3}} = 3000 \times 0.22\,\mathrm{fF} = 660\,\mathrm{fF}$. \\
+        $\tau_{\mathrm{Elmore, M3}} = 0.38 \times 21{,}000 \times 660 \times 10^{-15} = 5.266 \times 10^{-9}\,\mathrm{s} = \mathbf{5{,}266\,\mathrm{ps}}$ ($5.27\,\mathrm{ns}$). \\
+        $R_{\mathrm{M8}} = 210\,\Omega$, $C_{\mathrm{M8}} = 3000 \times 0.15\,\mathrm{fF} = 450\,\mathrm{fF}$. \\
+        $\tau_{\mathrm{Elmore, M8}} = 0.38 \times 210 \times 450 \times 10^{-15} = 3.591 \times 10^{-11}\,\mathrm{s} = \mathbf{35.91\,\mathrm{ps}}$.
+        \item Clock period is $T_{\mathrm{clk}} = 500\,\mathrm{ps}$. The M8 Ruche wire traverses $3\,\mathrm{mm}$ (skipping 4 router tiles) in $35.9\,\mathrm{ps} \ll 500\,\mathrm{ps}$ within a single clock cycle, whereas the M3 wire requires more than 10 clock cycles without repeaters!
+    \end{itemize}
+
+    \item[Hybrid Bonding \& The LLM Memory Wall]
+    \begin{itemize}
+        \item Weights to read per token: $70 \times 10^9 \times 2\,\mathrm{bytes} = 140\,\mathrm{GB/token}$. \\
+        Required memory bandwidth: $140\,\mathrm{GB/token} \times 80\,\mathrm{tokens/s} = \mathbf{11{,}200\,\mathrm{GB/s}} = \mathbf{11.2\,\mathrm{TB/s}}$.
+        \item Standard HBM3 provides $3.2\,\mathrm{TB/s} < 11.2\,\mathrm{TB/s}$. An HBM3 system cannot sustain $80\,\mathrm{tokens/s}$ (it is throttled to at most $3.2 / 0.14 = \mathbf{22.8\,\mathrm{tokens/s}}$).
+        \item The hybrid-bonded system delivers $16.4\,\mathrm{TB/s}$. Supported token generation throughput is:
+        \begin{equation*}
+        \mathrm{Throughput}_{\max} = \frac{16.4\,\mathrm{TB/s}}{0.14\,\mathrm{TB/token}} = \mathbf{117.1\,\mathrm{tokens/second}}
+        \end{equation*}
+    \end{itemize}
+
+    \item[AER Spike Multicasting \& SNNcut Hypergraph Partitioning]
+    \begin{itemize}
+        \item Firing count: $1{,}024 \times 0.10 = 102.4 \approx 102$ neurons. \\
+        Under naive unicast routing, each firing neuron injects 256 individual packets: \\
+        $\mathrm{Total}_{\mathrm{unicast}} = 102 \times 256 = \mathbf{26{,}112\,\mathrm{packets}}$.
+        \item Under SNNcut hypergraph partitioning, target neurons are grouped such that each axon targets only 6 cores on average, transmitting a single multicast packet per target core: \\
+        $\mathrm{Total}_{\mathrm{SNNcut}} = 102 \times 6 = \mathbf{612\,\mathrm{packets}}$.
+        \item Bandwidth reduction: $\frac{26{,}112 - 612}{26{,}112} = \frac{25{,}500}{26{,}112} = \mathbf{97.65\%}$ reduction in network packet volume!
+    \end{itemize}
+\end{description}

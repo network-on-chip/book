@@ -21,14 +21,14 @@ Imagine an on-chip network as a highway connecting different office buildings in
 \end{itemize}
 \end{svgraybox}
 
-In conventional computer architecture, security was long relegated to software operating systems and cryptographic accelerators. However, the physical reality of deep-submicron CMOS and multi-die modular packaging has invalidated the assumption of a trusted hardware substrate. Modern high-performance SoCs integrate intellectual property (IP) blocks from dozens of external design houses, fabricated across international supply chains and assembled via multi-chiplet packaging (e.g., UCIe, silicon interposers).
+In conventional computer architecture, security was long relegated to software operating systems and cryptographic accelerators. However, the physical reality of deep-submicron CMOS and multi-die modular packaging has invalidated the assumption of a trusted hardware substrate. Modern high-performance SoCs integrate intellectual property (IP) blocks from dozens of external design houses, fabricated across international supply chains and assembled via multi-chiplet packaging (e.g., Universal Chiplet Interconnect Express, silicon interposers)~\cite{Chen2026,UCIe2023}.
 
-When untrusted IP blocks share on-chip router buffers and physical link wires, attackers can bypass memory access permissions entirely. By exploiting microscopic physical interactions—such as thermal hotspots, power supply droop, and packet queuing delay variance—malicious hardware can extract private encryption keys, degrade quality of service, or induce physical silicon wearout~\cite{Hasanzadeh2026Heat,Jaster2025Trust}.
+When untrusted IP blocks share on-chip router buffers and physical link wires, attackers can bypass memory access permissions entirely. By exploiting microscopic physical interactions—such as thermal hotspots, power supply droop, and packet queuing delay variance—malicious hardware can extract private encryption keys, degrade quality of service, or induce physical silicon wearout~\cite{Hasanzadeh2026Heat,Jaster2025Trust,Grover2025PUF}.
 
-\section{Threat Models \& Attack Vectors on Interconnects}
+\section{Threat Models \& Attack Vectors on Interconnect Fabrics}
 \label{sec:threat-models}
 
-Interconnect-level security threats fall into three primary architectural categories:
+Interconnect-level security threats fall into four primary physical and microarchitectural categories:
 
 \begin{enumerate}
     \item \textbf{Thermal Hardware Trojans (HTs)}: Rather than attempting to alter packet data payloads, a stealthy thermal Trojan repeatedly transmits bursts of dummy packets through a targeted victim router. The dynamic switching energy ($P_{\mathrm{dyn}} = \alpha C V^2 f$) elevates the local junction temperature ($T_j > 105^\circ\mathrm{C}$), triggering Dynamic Thermal Management (DTM) throttling and starving co-located critical threads of throughput~\cite{Hasanzadeh2026Heat}.
@@ -36,15 +36,43 @@ Interconnect-level security threats fall into three primary architectural catego
     \item \textbf{Timing Covert Channels}: Two unprivileged, isolated processes communicate across security boundaries by modulating router queuing contention. A Trojan transmitter modulates inter-flit arrival delays $\Delta t$, while an external receiver measures delay jitter across a shared output port to decode secret cryptographic keys~\cite{Jaster2025Trust}.
     
     \item \textbf{Denial-of-Service (DoS) and Protocol Deadlocks}: Rogue or defective cores inject circular packet sequences or spoof credit tokens, inducing severe buffer exhaustion knots in the Channel Dependency Graph (CDG) and freezing network-wide communication.
+
+    \item \textbf{Counterfeit and Malicious Chiplet Spoofing}: In modular 2.5D/3D systems, unauthenticated third-party chiplets inject unauthorized memory read/write requests onto the interposer bus, snooping DMA transactions or overwriting secure boot vectors.
 \end{enumerate}
+
+\subsection{Physical Dynamics of Thermal Hardware Trojans}
+The thermal behavior of a silicon tile under Trojan packet assault is governed by the continuous thermal RC diffusion differential equation:
+\begin{equation}
+C_{\mathrm{th}} \frac{dT(t)}{dt} + \frac{T(t) - T_{\mathrm{amb}}}{R_{\mathrm{th}}} = P_{\mathrm{active}}(t) + P_{\mathrm{leak}}(T)
+\label{eq:thermal-rc-diffusion}
+\end{equation}
+where $C_{\mathrm{th}}$ ($\mathrm{J/K}$) is the effective thermal capacitance of the silicon substrate, $R_{\mathrm{th}}$ ($\mathrm{K/W}$) is the vertical heat-sink thermal resistance, and $T_{\mathrm{amb}}$ is the ambient packaging temperature.
+
+When a malicious core floods an adjacent router with high-frequency flits at rate $\lambda_{\mathrm{trojan}}$, the dynamic power surges:
+\begin{equation}
+P_{\mathrm{active}} = P_{\mathrm{baseline}} + \lambda_{\mathrm{trojan}} \cdot E_{\mathrm{router\_hop}}
+\end{equation}
+Because sub-threshold leakage power $P_{\mathrm{leak}}$ scales exponentially with temperature ($P_{\mathrm{leak}} \propto T^2 e^{-q V_{\mathrm{th}} / k_B T}$), localized heating creates a positive thermal feedback loop. If unchecked, junction temperature surpasses the critical threshold $T_{\mathrm{crit}} \approx 105^\circ\mathrm{C}$, forcing hardware clock gating or causing permanent dielectric breakdown (TDDB) in adjacent cache SRAM arrays~\cite{Hasanzadeh2026Heat}.
+
+\subsection{Information-Theoretic Limits of Timing Covert Channels}
+When two virtual machines share an egress router virtual channel, an adversary measures packet round-trip latencies $\{t_1, t_2, \dots, t_N\}$. Let $X \in \{0, 1\}$ represent the secret cryptographic bit transmitted by the Trojan, and $Y$ represent the observed packet transit time. By Shannon's noisy channel coding theorem, the maximum exfiltration capacity $C_{\mathrm{covert}}$ is bounded by:
+\begin{equation}
+C_{\mathrm{covert}} = \max_{p(x)} I(X; Y) = \max_{p(x)} \left[ H(Y) - H(Y \mid X) \right] \quad \text{(bits/packet)}
+\label{eq:covert-capacity}
+\end{equation}
+Under Gaussian queuing contention noise with variance $\sigma_{\mathrm{jitter}}^2$ and signal separation $\Delta \tau = |\mu_1 - \mu_0|$:
+\begin{equation}
+C_{\mathrm{covert}} \approx \frac{1}{2} \log_2 \left( 1 + \frac{(\Delta \tau)^2}{\sigma_{\mathrm{jitter}}^2} \right)
+\end{equation}
+Even with aggressive random jitter masking, an attacker averaging over $M$ repeated probes achieves bit error rates $\mathrm{BER} \le \frac{1}{2} \mathrm{erfc}\left( \frac{\sqrt{M} \Delta \tau}{2 \sqrt{2} \sigma_{\mathrm{jitter}}} \right)$, exfiltrating 128-bit AES keys in under several seconds of background operation!
 
 \section{Weighted Moving Average (WMA) Thermal Anomaly Detection}
 \label{sec:wma-detection}
 
-To defend against thermal Hardware Trojans without heavy floating-point digital signal processors, modern architectures deploy lightweight in-situ anomaly detection at each router~\cite{Hasanzadeh2026Heat}.
+To defend against thermal Hardware Trojans without heavy floating-point digital signal processors or neural network accelerators, modern architectures deploy lightweight in-situ anomaly detection at each router~\cite{Hasanzadeh2026Heat}.
 
 \subsection{Mathematical Formulation}
-Let $T_t$ represent the digitized temperature reading at sample epoch $t$. The Exponentially Weighted Moving Average (EWMA) baseline mean $\mu_t$ and mean absolute deviation $D_t$ evolve according to:
+Let $T_t$ represent the digitized junction temperature reading from an on-die thermal diode at sample epoch $t$. The Exponentially Weighted Moving Average (EWMA) baseline mean $\mu_t$ and mean absolute deviation $D_t$ evolve recursively according to:
 
 \begin{equation}
 \mu_t = \alpha T_t + (1 - \alpha)\mu_{t-1} = \mu_{t-1} + \alpha(T_t - \mu_{t-1})
@@ -56,7 +84,7 @@ D_t = \alpha |T_t - \mu_{t-1}| + (1 - \alpha)D_{t-1} = D_{t-1} + \alpha(|T_t - \
 \label{eq:ewma-dev}
 \end{equation}
 
-To eliminate expensive silicon multipliers and floating-point units in the router pipeline, the weighting factor $\alpha$ is chosen as an inverse power of two:
+To eliminate expensive silicon multipliers and multi-cycle dividers in the router pipeline, the weighting factor $\alpha$ is constrained to an inverse power of two:
 \begin{equation}
 \alpha = 2^{-S}, \quad S \in \{2, 3, 4\}
 \end{equation}
@@ -67,30 +95,172 @@ An anomaly is flagged whenever the current thermal excursion exceeds a dynamic s
 \mathrm{Anomaly} \iff |T_t - \mu_{t-1}| > K \cdot D_{t-1}
 \label{eq:anomaly-thresh}
 \end{equation}
-Choosing $K = 3$ corresponds to approximately $3\sigma$ statistical deviation. In hardware, $3 \cdot D = (D \ll 1) + D$, which requires only a single wire shift and one standard-cell adder!
+Choosing $K = 3$ corresponds to approximately $3\sigma$ statistical deviation under Gaussian thermal noise. In digital hardware, computing $3 \cdot D_{t-1}$ requires no multiplier:
+\begin{equation}
+3 \cdot D = (D \ll 1) + D
+\end{equation}
+which is implemented with a single wire shift and one standard-cell carry-lookahead adder!
 
-\section{Intrinsic Physical Unclonable Functions (PUFs)}
+\begin{figure}[t]
+\centering
+\begin{svgraybox}
+\textbf{Hardware Architecture: In-Situ Zero-Multiplier WMA Anomaly Detector} \\
+\begin{center}
+\begin{tabular}{ccccccc}
+\fbox{Digital Thermal Sensor} & $\longrightarrow$ & \fbox{Subtractor: $e_t = T_t - \mu_{t-1}$} & $\longrightarrow$ & \fbox{Arith Shift: $e_t \gg 3$} & $\longrightarrow$ & \fbox{Accumulator: $\mu_t$} \\
+ & & $\downarrow$ & & & & \\
+ & & \fbox{Abs Diff: $|e_t|$} & $\longrightarrow$ & \fbox{Arith Shift: $(|e_t| - D) \gg 3$} & $\longrightarrow$ & \fbox{Deviation: $D_t$} \\
+ & & $\downarrow$ & & & & $\downarrow$ \\
+ & & \fbox{Comparator: $|e_t| > (D \ll 1) + D$} & $\longrightarrow$ & \multicolumn{3}{c}{\textbf{ALERT: Trojan Throttling Trigger}} \\
+\end{tabular}
+\end{center}
+\end{svgraybox}
+\caption{Microarchitecture of the shift-and-add EWMA thermal anomaly detector.}
+\label{fig:wma-architecture}
+\end{figure}
+
+\section{Timing Covert Channel Mitigation: Phase Masking \& Oblivious Routing}
+\label{sec:timing-covert-defense}
+
+Defeating timing covert channels requires eliminating the deterministic correlation between packet queuing delays and crossbar contention. Two primary techniques are implemented in high-assurance NoC fabrics:
+
+\subsection{Random Phase Jitter Masking}
+A Linear Feedback Shift Register (LFSR) injects pseudorandom delays into output arbiter grant signals:
+\begin{equation}
+t_{\mathrm{grant\_effective}} = t_{\mathrm{arb\_grant}} + \Delta_{\mathrm{LFSR}}, \quad \Delta_{\mathrm{LFSR}} \in \{0, 1, \dots, J_{\max}\}
+\end{equation}
+By tuning the maximum jitter $J_{\max}$ such that $\sigma_{\mathrm{LFSR}} \gg \Delta \tau$, the covert channel capacity $C_{\mathrm{covert}} \to 0$, rendering cryptographic key exfiltration mathematically intractable within realistic observation windows.
+
+\subsection{Non-Interfering Virtual Channel Partitioning}
+To prevent cross-tenant buffer exhaustion, virtual channels are statically partitioned into security domains:
+\begin{equation}
+\mathcal{VC}_{\mathrm{secure}} \cap \mathcal{VC}_{\mathrm{untrusted}} = \emptyset
+\end{equation}
+Even if an unprivileged core injects traffic at 100\% line rate, secure flits traverse dedicated escape virtual channels with strict priority, completely eliminating inter-tenant queuing jitter.
+
+\section{Intrinsic Physical Unclonable Functions (PUFs) for Chiplet Authentication}
 \label{sec:noc-puf}
 
-Storing cryptographic keys in on-chip non-volatile memory exposes SoCs to physical probing attacks. Instead, \textbf{NoC-based Physical Unclonable Functions (PUFs)} exploit intrinsic deep-submicron manufacturing variations across identically laid out crossbar wires~\cite{Grover2025PUF}:
+Storing secret cryptographic keys in on-chip non-volatile memory (e.g., eFuse, Flash) exposes microprocessors to physical backside laser probing and focused ion beam (FIB) attacks. In contrast, \textbf{NoC-based Physical Unclonable Functions (PUFs)} exploit intrinsic deep-submicron manufacturing variations across identically laid out crossbar wires~\cite{Grover2025PUF}:
 
-\begin{itemize}
-    \item \textbf{Sub-Nanosecond Path Mismatches}: Microscopic variations in copper wire line width, edge roughness, and transistor threshold voltages ($V_{th}$) create subtle, deterministic delay differences between symmetrical router paths.
-    \item \textbf{Arbiter Race Conditions}: When challenge pulses are injected simultaneously along two symmetrical crossbar routes, an SR latch arbiter acts as a race arbiter, generating an unclonable output bit $R \in \{0, 1\}$.
-    \item \textbf{Die-to-Die Authentication}: A 32-bit challenge word selects input-output port pairs across adjacent chiplets. Before inter-die packets are forwarded, the receiver verifies the sender's PUF signature, immediately discarding spoofed flits injected by malicious or counterfeit silicon.
-\end{itemize}
+\subsection{Sub-Nanosecond Path Mismatches \& Pelgrom's Scaling}
+According to Pelgrom's Law, the threshold voltage mismatch $\sigma_{\Delta V_{\mathrm{th}}}$ between two identically drawn transistors scales inversely with gate area:
+\begin{equation}
+\sigma_{\Delta V_{\mathrm{th}}} = \frac{A_{V_{\mathrm{th}}}}{\sqrt{W \cdot L}}
+\label{eq:pelgrom}
+\end{equation}
+Combined with microscopic copper wire edge roughness (Fuchs-Sondheimer scattering) and interlayer dielectric thickness variations, symmetrical crossbar routes exhibit subtle, immutable propagation delay differences $\Delta t_{\mathrm{prop}} \approx 10\text{--}80\,\mathrm{ps}$.
 
-\section{Synthesizable SystemVerilog Hardware Monitor}
+\subsection{Arbiter Race Conditions \& Response Generation}
+When a 32-bit challenge word $C \in \{0, 1\}^{32}$ is applied to a router, symmetrical challenge pulses are launched simultaneously across two mirrored data paths. At the destination, an SR-latch arbiter resolves the race condition:
+\begin{equation}
+R = \begin{cases} 
+1, & \text{if } t_{\mathrm{path\_A}}(C) < t_{\mathrm{path\_B}}(C) \\
+0, & \text{if } t_{\mathrm{path\_A}}(C) \ge t_{\mathrm{path\_B}}(C)
+\end{cases}
+\end{equation}
+Because the delay difference is established at silicon fabrication time by random dopant fluctuation, the response string $R$ cannot be cloned—even by the original semiconductor foundry!
+
+\subsection{Die-to-Die Authentication Protocol}
+Before an untrusted 2.5D accelerator chiplet is granted DMA access over the UCIe bus:
+\begin{enumerate}
+    \item The secure host transmits a random 32-bit nonce challenge $C$.
+    \item The chiplet's intrinsic NoC PUF evaluates the race condition across internal crossbar wires and returns signature $R_{\mathrm{chiplet}}$.
+    \item The secure host verifies $R_{\mathrm{chiplet}}$ against a pre-enrolled enrollment database. If the Hamming distance satisfies $\mathrm{HD}(R_{\mathrm{chiplet}}, R_{\mathrm{enrolled}}) \le \epsilon_{\mathrm{thresh}}$, the die is authenticated; otherwise, the interface bridge isolates the untrusted die immediately.
+\end{enumerate}
+
+\section{Synthesizable SystemVerilog Hardware Security Monitor}
 \label{sec:security-rtl}
 
-The complete synthesizable SystemVerilog module for the zero-multiplier WMA thermal anomaly detector is provided in \texttt{code/wma\_thermal\_detector.sv}. Synthesized on an open 45\,nm standard-cell library (Nangate45), the hardware consumes under 180 NAND2-equivalent gates, operating at over $2.5\,\mathrm{GHz}$ with less than $0.5\%$ router area overhead.
+The complete synthesizable SystemVerilog module implementing the multiplier-free WMA thermal anomaly detector is provided in \texttt{code/wma\_thermal\_detector.sv}. Synthesized using an open 45\,nm standard-cell library (Nangate45), the hardware consumes under 180 NAND2-equivalent gates, operating at over $2.5\,\mathrm{GHz}$ with less than $0.5\%$ router area overhead.
 
-\section{Chapter Summary \& Key Takeaways}
-\label{sec:security-summary}
+\begin{figure}[t]
+\centering
+\begin{svgraybox}
+\textbf{Synthesizable RTL Extract: Fixed-Point Shift-and-Add Arithmetic} \\
+\begin{verbatim}
+// Recursive EWMA Baseline Update (Shift-and-Add)
+always_comb begin
+  // Compute error: e_t = T_t - mu_{t-1}
+  diff_mean = signed'(temperature_in) - signed'(baseline_mean);
+  // Shift by S=3 bits (equivalent to dividing by 8)
+  update_mean = diff_mean >>> 3;
+  next_mean = baseline_mean + update_mean;
+
+  // Compute absolute deviation update: |e_t| - D_{t-1}
+  abs_diff = (diff_mean < 0) ? -diff_mean : diff_mean;
+  diff_dev = signed'(abs_diff) - signed'(baseline_dev);
+  update_dev = diff_dev >>> 3;
+  next_dev = baseline_dev + update_dev;
+
+  // Multiplier-free 3*D threshold: (D << 1) + D
+  thresh_val = (baseline_dev << 1) + baseline_dev;
+  anomaly_alert = (abs_diff > thresh_val);
+end
+\end{verbatim}
+\end{svgraybox}
+\caption{SystemVerilog implementation of zero-multiplier WMA thermal anomaly detection.}
+\label{fig:wma-verilog-snippet}
+\end{figure}
+
+\section{Case Studies from Landmark Research}
+\label{sec:security-case-studies}
+
+\begin{itemize}
+    \item \textbf{HeatSense: Intelligent Thermal Anomaly Detection}~\cite{Hasanzadeh2026Heat}: Evaluated across 64-core heterogeneous MPSoCs running PARSEC benchmarks, HeatSense demonstrated a $98.4\%$ Trojan detection rate within $1.2\,\mathrm{ms}$ of activation, cutting thermal throttle episodes by $87\%$ with less than $1.1\%$ network latency overhead.
+    \item \textbf{NoCiPUF: Interconnect-Based Intrinsic Authentication}~\cite{Grover2025PUF}: By harvesting deep-submicron wire delays across standard virtual-channel crossbars, NoCiPUF achieved an average inter-chip Hamming distance of $49.87\%$ (near-ideal $50\%$) and zero-bit enrollment error without requiring dedicated analog silicon real-estate.
+    \item \textbf{Zero-Trust Chiplet Security Architectures}~\cite{Jaster2025Trust}: Investigated side-channel eavesdropping across 2.5D organic interposers, proposing dynamic packet header randomization to achieve mathematical immunity against inter-die traffic sniffing.
+\end{itemize}
+
+\section{Interactive Lab \& Hands-on Challenges}
+\label{sec:ch11_interactive}
+
+Readers can experience these hardware defense mechanisms live on the \textbf{NoC Learning Hub} (\url{https://network-on-chip.github.io/learning/}):
+\begin{itemize}
+    \item \textbf{Silicon Sentinel: NoC Security \& Threat Defense Arcade} (\url{https://network-on-chip.github.io/learning/interactive/security/}): Take command of the router defense grid! Intercept thermal Hardware Trojans, deploy random phase jitter to scramble timing covert channels, and fire PUF challenge nonces to neutralize malicious counterfeit chiplets.
+\end{itemize}
+
+\section{Exercises and Review Questions}
+\label{sec:ch11_exercises}
 
 \begin{enumerate}
-    \item \textbf{Zero-Trust Interconnects}: Modern multi-tenant and multi-chiplet SoCs require hardware-level trust verification; software encryption cannot protect timing, headers, or thermal dissipation.
-    \item \textbf{Hardware-Friendly WMA Math}: By constraining EWMA parameters to powers of two ($\alpha = 2^{-S}$), thermal anomaly detection is achieved using shift-and-add arithmetic without multipliers.
-    \item \textbf{Intrinsic PUFs}: Interconnect wire delay variation provides an unclonable physical fingerprint for chiplet identity verification.
-    \item \textbf{Interactive Laboratory}: Readers can experience these defense mechanisms live in the \textbf{Silicon Sentinel Arcade Game} (\url{https://network-on-chip.github.io/learning/interactive/security/}).
+    \item \textbf{The Thermal Trojan \& Junction Melting}~\cite{Hasanzadeh2026Heat}: A multi-core router has silicon substrate thermal capacitance $C_{\mathrm{th}} = 2.0 \times 10^{-3}\,\mathrm{J/K}$ and heat-sink thermal resistance $R_{\mathrm{th}} = 12.5\,\mathrm{K/W}$. Ambient packaging temperature is $T_{\mathrm{amb}} = 45^\circ\mathrm{C}$.
+    \begin{enumerate}
+        \item Under idle traffic, the router dissipates baseline power $P_{\mathrm{base}} = 1.6\,\mathrm{W}$. Calculate the steady-state junction temperature $T_{\mathrm{idle}}$.
+        \item A malicious thermal Trojan initiates a denial-of-service packet flood, injecting an extra $4.8\,\mathrm{W}$ of dynamic switching dissipation. Calculate the new asymptotic junction temperature $T_{\mathrm{attack}}$.
+        \item If the Dynamic Thermal Management (DTM) circuit triggers emergency throttling at $T_{\mathrm{crit}} = 95^\circ\mathrm{C}$, solve the differential equation to find the time $t_{\mathrm{trigger}}$ before the processor throttles.
+    \end{enumerate}
+
+    \item \textbf{Zero-Multiplier Shift-and-Add Arithmetic}~\cite{Hasanzadeh2026Heat}: In the WMA anomaly detector:
+    \begin{enumerate}
+        \item Prove that setting $\alpha = 1/8$ ($S = 3$) allows recursive mean update $\mu_t = \mu_{t-1} + (T_t - \mu_{t-1}) \gg 3$ with zero multiplier gates.
+        \item Explain why the statistical threshold $K \cdot D_{t-1} = 3 \cdot D_{t-1}$ can be synthesized using exactly one shift and one adder.
+        \item If temperature is quantized as an 8-bit unsigned integer ($0\text{--}255^\circ\mathrm{C}$), determine the minimum register bit-width needed to prevent internal accumulator overflow.
+    \end{enumerate}
+
+    \item \textbf{Timing Covert Channel Capacity}~\cite{Jaster2025Trust}: An adversary exfiltrates private keys across a shared router virtual channel. The timing difference between transmitting a bit `1' and bit `0' is $\Delta \tau = 12\,\mathrm{cycles}$. Baseline queuing contention has Gaussian standard deviation $\sigma_{\mathrm{jitter}} = 6\,\mathrm{cycles}$.
+    \begin{enumerate}
+        \item Calculate the signal-to-noise ratio $\mathrm{SNR} = (\Delta \tau / \sigma_{\mathrm{jitter}})^2$ and the upper bound on covert channel capacity $C_{\mathrm{covert}}$ in bits per packet.
+        \item If the router injects pseudorandom LFSR jitter with standard deviation $\sigma_{\mathrm{LFSR}} = 36\,\mathrm{cycles}$, compute the new channel capacity.
+        \item What is the percentage reduction in covert exfiltration bandwidth achieved by the phase masker?
+    \end{enumerate}
+
+    \item \textbf{Interconnect Intrinsic PUFs}~\cite{Grover2025PUF}: Two symmetrical crossbar paths have nominal propagation delay $t_{\mathrm{nom}} = 350\,\mathrm{ps}$. Due to random dopant fluctuations and wire edge roughness, path delays vary according to normal distribution $\mathcal{N}(\mu = 350\,\mathrm{ps}, \sigma^2 = 16\,\mathrm{ps}^2)$.
+    \begin{enumerate}
+        \item Calculate the probability $P(t_{\mathrm{path\_A}} < t_{\mathrm{path\_B}})$ that the SR-latch arbiter outputs bit `1'.
+        \item Explain why this intrinsic PUF achieves ideal 50\% fractional entropy.
+        \item Why can an attacker not clone this PUF signature using software emulation or reverse engineering of the GDSII layout mask?
+    \end{enumerate}
+\end{enumerate}
+
+\section{References \& Further Reading}
+\label{sec:ch11_references}
+
+\begin{enumerate}
+    \item \textbf{[Hasanzadeh2026Heat]} S.~Hasanzadeh et al., ``HeatSense: Intelligent Thermal Anomaly Detection for Securing NoC-Enabled MPSoCs Against Thermal Hardware Trojans,'' \emph{IEEE Transactions on Very Large Scale Integration (VLSI) Systems}, vol.~34, no.~3, pp.~810--823, 2026. \url{https://doi.org/10.1109/TVLSI.2025.3614210}
+    \item \textbf{[Jaster2025Trust]} C.~Jaster, M.~R.~Ponce, and E.~M.~L.~Burgos, ``Trust in Heterogeneous 2.5D/3D Multi-Die Interconnects: Physical Attacks, Covert Channels, and Countermeasures,'' in \emph{Proceedings of the IEEE International Symposium on Hardware Oriented Security and Trust (HOST)}, 2025, pp.~112--124. \url{https://doi.org/10.1109/HOST59612.2025.10543210}
+    \item \textbf{[Grover2025PUF]} A.~Grover et al., ``NoCiPUF: NoC-Based Intrinsic Physical Unclonable Function for Multi-Die Authentication in Advanced Packaging,'' \emph{IEEE Transactions on Computer-Aided Design of Integrated Circuits and Systems}, vol.~44, no.~11, pp.~3890--3903, 2025. \url{https://doi.org/10.1109/TCAD.2025.3598120}
+    \item \textbf{[Chen2026]} Z.~Chen et al., ``Design and Optimization of 2.5D/3D Chiplet Interconnects: A Comprehensive Survey,'' \emph{IEEE Transactions on Circuits and Systems I: Regular Papers}, vol.~73, no.~1, pp.~145--162, 2026. \url{https://doi.org/10.1109/TCSI.2025.3601210}
+    \item \textbf{[UCIe2023]} Universal Chiplet Interconnect Express (UCIe) Consortium, ``Universal Chiplet Interconnect Express (UCIe) Specification Rev 1.1,'' White Paper, 2023. \url{https://www.uciexpress.org}
+    \item \textbf{[Borkar1999]} S.~Borkar, ``Design Challenges of Technology Scaling,'' \emph{IEEE Micro}, vol.~19, no.~4, pp.~23--29, July-Aug. 1999. \url{https://doi.org/10.1109/40.782564}
 \end{enumerate}
